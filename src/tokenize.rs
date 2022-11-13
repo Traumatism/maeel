@@ -40,7 +40,7 @@ pub fn tokenize(code: &str) -> Stack<Token> {
                     }
                 }
 
-                tokens.push(Token::Number(content.parse::<isize>().unwrap()))
+                tokens.push(Token::Number(content.parse::<isize>().unwrap()));
             }
             _ => panic!(),
         }

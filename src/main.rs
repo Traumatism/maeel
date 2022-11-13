@@ -4,7 +4,6 @@ use tokenize::tokenize;
 
 mod stack;
 mod tokenize;
-mod tree;
 mod utils;
 mod vm;
 
@@ -18,12 +17,14 @@ fn main() {
             std::io::stdin().read_line(&mut input),     // read the user input
         );
 
-        let _tokens = tokenize(&input);
+        let tokens = tokenize(&input);
+
+        println!("{:?}", tokens);
     }
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_operators {
 
     #[test]
     fn sub() {

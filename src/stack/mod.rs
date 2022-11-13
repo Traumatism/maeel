@@ -1,8 +1,22 @@
 pub mod node;
 
+use std::fmt::Debug;
+
 use crate::stack::node::Node;
 
-/// Stack value structure implementation
+#[derive(Clone, Debug)]
+/// Stack data structure implementation
+/// ```
+/// /*
+///    node
+///   /    \
+/// value   node
+///        /    \
+///      value   node
+///             /    \
+///           value  none
+/// */
+/// ```
 pub struct Stack<T> {
     stack: Option<Node<T>>,
 }
@@ -32,6 +46,17 @@ impl<T> Stack<T> {
                 Some(stack.value)
             }
             _ => None,
+        }
+    }
+}
+
+impl<T: Clone + Debug> Stack<T> {
+    #[allow(dead_code)]
+    pub fn repr(&self) {
+        let cloned = &mut (*self).clone();
+
+        while let Some(node) = cloned.pop() {
+            println!("{:?}", node)
         }
     }
 }

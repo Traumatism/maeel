@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 
-use std::ops::{Add, Mul, Sub};
+use std::{
+    fmt::{Debug, Display},
+    ops::{Add, Mul, Sub},
+};
 
 use crate::stack::Stack;
 
@@ -26,6 +29,20 @@ impl<T> MaeelMachine<T> {
     /// Push a new value to the Maeel stack
     pub fn push(&mut self, value: T) {
         self.stack.push(value)
+    }
+}
+
+impl<T: Display> MaeelMachine<T> {
+    /// Pop the top value and print it
+    pub fn print(&mut self) {
+        println!("{}", self.stack.pop().unwrap())
+    }
+}
+
+impl<T: Debug> MaeelMachine<T> {
+    /// Pop the top value and print it (debug)
+    pub fn printdb(&mut self) {
+        println!("{:?}", self.stack.pop().unwrap())
     }
 }
 
