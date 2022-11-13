@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-/// Stack data structure implementation
+/// Stack data type implementation
 /// - https://en.wikipedia.org/wiki/Stack_(abstract_data_type)
 pub struct Stack<T> {
     values: Vec<T>,
