@@ -18,9 +18,7 @@ fn main() {
             std::io::stdin().read_line(&mut input),     // read the user input
         );
 
-        let tokens = tokenize(&input);
-
-        println!("{}", tokens)
+        let _tokens = tokenize(&input);
     }
 }
 
