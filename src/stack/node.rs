@@ -1,3 +1,6 @@
+use std::fmt::Debug;
+
+#[derive(Clone, Debug)]
 /// A node in the stack
 pub struct Node<T> {
     pub value: T,
