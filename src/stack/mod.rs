@@ -1,16 +1,6 @@
-use std::mem;
+pub mod node;
 
-/// A node in the stack
-pub struct Node<T> {
-    value: T,
-    next: Option<Box<Node<T>>>,
-}
-
-impl<T> Node<T> {
-    fn new(value: T) -> Node<T> {
-        Self { value, next: None }
-    }
-}
+use crate::stack::node::Node;
 
 /// Stack value structure implementation
 pub struct Stack<T> {
@@ -18,6 +8,7 @@ pub struct Stack<T> {
 }
 
 impl<T> Stack<T> {
+    /// Create a new empty stack
     pub fn new() -> Stack<T> {
         Stack { stack: None }
     }
@@ -26,7 +17,7 @@ impl<T> Stack<T> {
     pub fn push(&mut self, value: T) {
         let mut node = Node::new(value);
 
-        if let Some(stack) = mem::replace(&mut self.stack, None) {
+        if let Some(stack) = std::mem::replace(&mut self.stack, None) {
             node.next = Some(Box::new(stack))
         }
 
@@ -35,7 +26,7 @@ impl<T> Stack<T> {
 
     /// Pop the top-most value from the stack
     pub fn pop(&mut self) -> Option<T> {
-        match mem::replace(&mut self.stack, None) {
+        match std::mem::replace(&mut self.stack, None) {
             Some(stack) => {
                 self.stack = stack.next.map(|n| *n);
                 Some(stack.value)
