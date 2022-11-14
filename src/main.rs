@@ -1,13 +1,18 @@
 use std::io::Write;
 
+use parse::parse;
 use tokenize::tokenize;
+use vm::MaeelMachine;
 
+mod parse;
 mod stack;
 mod tokenize;
 mod utils;
 mod vm;
 
 fn main() {
+    let mut vm: MaeelMachine<isize> = crate::vm::MaeelMachine::new();
+
     loop {
         let mut input = String::new();
 
@@ -17,9 +22,9 @@ fn main() {
             std::io::stdin().read_line(&mut input),     // read the user input
         );
 
-        let tokens = tokenize(&input);
+        parse(&mut tokenize(&input), &mut vm);
 
-        println!("{:?}", tokens);
+        println!("{:?}", vm.print())
     }
 }
 
