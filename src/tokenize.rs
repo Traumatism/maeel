@@ -2,9 +2,16 @@ use crate::stack::Stack;
 use crate::utils::Peeker;
 
 #[derive(Debug)]
+pub enum Operator {
+    Plus,
+    Minus,
+}
+
+#[derive(Debug)]
 pub enum Token {
     Number(isize),
     Identifier(String),
+    Operator(Operator),
 }
 
 pub fn tokenize(code: &str) -> Stack<Token> {
@@ -14,6 +21,8 @@ pub fn tokenize(code: &str) -> Stack<Token> {
     while let Some(char) = chars.next() {
         match char {
             ' ' | '\n' => {}
+            '+' => tokens.push(Token::Operator(Operator::Plus)),
+            '-' => tokens.push(Token::Operator(Operator::Minus)),
             'a'..='z' => {
                 let mut content = String::from(char);
 
