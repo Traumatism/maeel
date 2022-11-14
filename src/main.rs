@@ -24,7 +24,7 @@ fn main() {
 
         parse(&mut tokenize(&input), &mut vm);
 
-        println!("{:?}", vm.print())
+        vm.print()
     }
 }
 

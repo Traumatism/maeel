@@ -35,14 +35,18 @@ impl<T> MaeelMachine<T> {
 impl<T: Display> MaeelMachine<T> {
     /// Pop the top value and print it
     pub fn print(&mut self) {
-        println!("{}", self.stack.pop().unwrap())
+        let value = self.stack.pop().unwrap();
+        println!("{}", value);
+        self.stack.push(value)
     }
 }
 
 impl<T: Debug> MaeelMachine<T> {
     /// Pop the top value and print it (debug)
     pub fn printdb(&mut self) {
-        println!("{:?}", self.stack.pop().unwrap())
+        let value = self.stack.pop().unwrap();
+        println!("{:?}", value);
+        self.stack.push(value)
     }
 }
 
