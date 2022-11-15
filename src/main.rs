@@ -23,13 +23,23 @@ fn main() {
         );
 
         parse(&mut tokenize(&input), &mut vm);
-
-        vm.print()
     }
 }
 
 #[cfg(test)]
-mod tests_operators {
+mod tests {
+    #[test]
+    fn base() {
+        let mut vm = crate::vm::MaeelMachine::new();
+
+        vm.push(1); // tail
+        vm.push(2); // mid
+        vm.push(3); // head
+
+        assert_eq!(vm.pop(), Some(3)); // head
+        assert_eq!(vm.pop(), Some(2)); // mid
+        assert_eq!(vm.pop(), Some(1)); // tail
+    }
 
     #[test]
     fn sub() {

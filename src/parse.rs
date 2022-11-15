@@ -6,20 +6,24 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut MaeelMachine<isize>) {
     while let Some(token) = tokens.pop() {
         match token {
             Token::Operator(operator) => {
-                let (a, b) = match (
-                    tokens
-                        .pop()
-                        .unwrap_or_else(|| Token::Number(vm.pop().expect("Missing `a`"))),
-                    tokens
-                        .pop()
-                        .unwrap_or_else(|| Token::Number(vm.pop().expect("Missing `b`"))),
-                ) {
+                // Check for a and b in the expression,
+                // if they are not present, take them from
+                // the VM stack.
+                let a = tokens
+                    .pop()
+                    .unwrap_or_else(|| Token::Number(vm.pop().expect("Missing `a`")));
+
+                let b = tokens
+                    .pop()
+                    .unwrap_or_else(|| Token::Number(vm.pop().expect("Missing `b`")));
+
+                let (a_val, b_val) = match (a, b) {
                     (Token::Number(a), Token::Number(b)) => (a, b),
                     _ => panic!("`a` and `b` must be integers"),
                 };
 
-                vm.push(a);
-                vm.push(b);
+                vm.push(a_val);
+                vm.push(b_val);
 
                 match operator {
                     Operator::Plus => vm.add(),
@@ -27,6 +31,8 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut MaeelMachine<isize>) {
                 }
             }
             Token::Number(value) => vm.push(value),
+            Token::Dump => vm.dump(),
+
             _ => panic!(),
         }
     }
