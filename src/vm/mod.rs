@@ -1,11 +1,10 @@
 #![allow(dead_code)]
 
-use std::{
-    fmt::{Debug, Display},
-    ops::{Add, Mul, Sub},
-};
+use std::fmt::{Debug, Display};
 
 use crate::stack::Stack;
+
+mod ops;
 
 /// Stack machine implementation
 /// - https://en.wikipedia.org/wiki/Stack-oriented_programming
@@ -33,11 +32,25 @@ impl<T> MaeelMachine<T> {
 }
 
 impl<T: Display> MaeelMachine<T> {
-    /// Pop the top value and print it
+    /// Print the top value
     pub fn print(&mut self) {
         let value = self.stack.pop().unwrap();
         println!("{}", value);
         self.stack.push(value)
+    }
+
+    pub fn dump(&mut self) {
+        let mut values = Vec::new();
+
+        while let Some(value) = self.pop() {
+            values.push(value)
+        }
+
+        let values_str = values.iter().map(|v| format!("{}", v));
+        let max_size = values_str.clone().max().unwrap().len();
+
+        values_str
+            .for_each(|value| println!("| {}{} |", value, " ".repeat(max_size - value.len())));
     }
 }
 
@@ -47,38 +60,5 @@ impl<T: Debug> MaeelMachine<T> {
         let value = self.stack.pop().unwrap();
         println!("{:?}", value);
         self.stack.push(value)
-    }
-}
-
-impl<T: Add<Output = T>> MaeelMachine<T> {
-    /// Pop the two top-most values from the stack
-    /// and push their sum
-    pub fn add(&mut self) {
-        let a = self.stack.pop();
-        let b = self.stack.pop();
-
-        self.stack.push(a.unwrap() + b.unwrap())
-    }
-}
-
-impl<T: Sub<Output = T>> MaeelMachine<T> {
-    /// Pop the two top-most values from the stack
-    /// and push their difference (second - first)
-    pub fn sub(&mut self) {
-        let a = self.stack.pop();
-        let b = self.stack.pop();
-
-        self.stack.push(b.unwrap() - a.unwrap())
-    }
-}
-
-impl<T: Mul<Output = T>> MaeelMachine<T> {
-    /// Pop the two top-most values from the stack
-    /// and push their product
-    pub fn mul(&mut self) {
-        let a = self.stack.pop();
-        let b = self.stack.pop();
-
-        self.stack.push(a.unwrap() * b.unwrap())
     }
 }

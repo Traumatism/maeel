@@ -1,10 +1,7 @@
 pub mod node;
 
-use std::fmt::Debug;
-
 use crate::stack::node::Node;
 
-#[derive(Clone, Debug)]
 /// Stack data structure implementation
 /// ```
 /// /*
@@ -18,45 +15,34 @@ use crate::stack::node::Node;
 /// */
 /// ```
 pub struct Stack<T> {
-    stack: Option<Node<T>>,
+    pub head: Option<Node<T>>,
 }
 
 impl<T> Stack<T> {
     /// Create a new empty stack
     pub fn new() -> Stack<T> {
-        Stack { stack: None }
+        Stack { head: None }
     }
 
     /// Push a value to the top of the stack
     pub fn push(&mut self, value: T) {
         let mut node = Node::new(value);
 
-        if let Some(stack) = std::mem::replace(&mut self.stack, None) {
+        if let Some(stack) = std::mem::replace(&mut self.head, None) {
             node.next = Some(Box::new(stack))
         }
 
-        self.stack = Some(node);
+        self.head = Some(node);
     }
 
     /// Pop the top-most value from the stack
     pub fn pop(&mut self) -> Option<T> {
-        match std::mem::replace(&mut self.stack, None) {
+        match std::mem::replace(&mut self.head, None) {
             Some(stack) => {
-                self.stack = stack.next.map(|n| *n);
+                self.head = stack.next.map(|n| *n);
                 Some(stack.value)
             }
             _ => None,
-        }
-    }
-}
-
-impl<T: Clone + Debug> Stack<T> {
-    #[allow(dead_code)]
-    pub fn repr(&self) {
-        let cloned = &mut (*self).clone();
-
-        while let Some(node) = cloned.pop() {
-            println!("{:?}", node)
         }
     }
 }

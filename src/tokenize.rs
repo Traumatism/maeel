@@ -9,6 +9,7 @@ pub enum Operator {
 
 #[derive(Debug)]
 pub enum Token {
+    Dump,
     Number(isize),
     Identifier(String),
     Operator(Operator),
@@ -21,6 +22,7 @@ pub fn tokenize(code: &str) -> Stack<Token> {
     while let Some(char) = chars.next() {
         match char {
             ' ' | '\n' => {}
+            '%' => tokens.push(Token::Dump),
             '+' => tokens.push(Token::Operator(Operator::Plus)),
             '-' => tokens.push(Token::Operator(Operator::Minus)),
             'a'..='z' => {
