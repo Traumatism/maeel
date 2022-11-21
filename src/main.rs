@@ -1,36 +1,20 @@
-use std::io::Write;
-
-use parse::parse;
-use tokenize::tokenize;
-use vm::MaeelMachine;
+use tokenize::{lex_into_tokens, parse_into_instructions};
 
 mod parse;
-mod stack;
 mod tokenize;
 mod utils;
 mod vm;
 
 fn main() {
-    let mut vm: MaeelMachine<isize> = crate::vm::MaeelMachine::new();
-
-    loop {
-        let mut input = String::new();
-
-        let (_, _, _) = (
-            std::io::stdout().write(">>> ".as_bytes()), // write the prompt
-            std::io::stdout().flush(),                  // flush stdout (no return)
-            std::io::stdin().read_line(&mut input),     // read the user input
-        );
-
-        parse(&mut tokenize(&input), &mut vm);
-    }
+    let content = std::fs::read_to_string("hello.mae").unwrap();
+    let mut instructions = parse_into_instructions(&mut lex_into_tokens(&content));
 }
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn base() {
-        let mut vm = crate::vm::MaeelMachine::new();
+        let mut vm = crate::vm::Stack::new();
 
         vm.push(1); // tail
         vm.push(2); // mid
@@ -43,7 +27,7 @@ mod tests {
 
     #[test]
     fn sub() {
-        let mut vm = crate::vm::MaeelMachine::new();
+        let mut vm = crate::vm::Stack::new();
 
         vm.push(5);
         vm.push(6);
@@ -55,7 +39,7 @@ mod tests {
 
     #[test]
     fn mul() {
-        let mut vm = crate::vm::MaeelMachine::new();
+        let mut vm = crate::vm::Stack::new();
 
         vm.push(5);
         vm.push(6);
@@ -67,7 +51,7 @@ mod tests {
 
     #[test]
     fn add() {
-        let mut vm = crate::vm::MaeelMachine::new();
+        let mut vm = crate::vm::Stack::new();
 
         vm.push(5.5);
         vm.push(5.6);

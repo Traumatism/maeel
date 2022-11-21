@@ -1,8 +1,7 @@
-use crate::stack::Stack;
 use crate::tokenize::{Operator, Token};
-use crate::vm::MaeelMachine;
+use crate::vm::Stack;
 
-pub fn parse(tokens: &mut Stack<Token>, vm: &mut MaeelMachine<isize>) {
+pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<isize>) {
     while let Some(token) = tokens.pop() {
         match token {
             Token::Operator(operator) => {
@@ -26,12 +25,18 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut MaeelMachine<isize>) {
                 vm.push(b_val);
 
                 match operator {
+                    Operator::Mul => vm.mul(),
                     Operator::Plus => vm.add(),
                     Operator::Minus => vm.sub(),
                 }
             }
             Token::Number(value) => vm.push(value),
             Token::Dump => vm.dump(),
+            Token::Erase => {
+                while vm.pop().is_some() {
+                    continue;
+                }
+            }
 
             _ => panic!(),
         }
