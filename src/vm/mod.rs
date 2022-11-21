@@ -1,44 +1,55 @@
-#![allow(dead_code)]
-
-use std::fmt::{Debug, Display};
-
-use crate::stack::Stack;
-
+mod node;
 mod ops;
 
-/// Stack machine implementation
-/// - https://en.wikipedia.org/wiki/Stack-oriented_programming
-/// - https://en.wikipedia.org/wiki/Stack_machine
-pub struct MaeelMachine<T> {
-    stack: Stack<T>,
+use node::Node;
+
+#[derive(Clone)]
+/// Stack data structure implementation
+/// ```
+/// /*
+///    node
+///   /    \
+/// value   node
+///        /    \
+///      value   node
+///             /    \
+///           value  none
+/// */
+/// ```
+pub struct Stack<T> {
+    pub head: Option<Node<T>>,
 }
 
-impl<T> MaeelMachine<T> {
-    pub fn new() -> Self {
-        Self {
-            stack: Stack::new(),
+impl<T> Stack<T> {
+    /// Create a new empty stack
+    pub fn new() -> Stack<T> {
+        Stack { head: None }
+    }
+
+    /// Push a value to the top of the stack
+    pub fn push(&mut self, value: T) {
+        let mut node = Node::new(value);
+
+        if let Some(stack) = std::mem::replace(&mut self.head, None) {
+            node.next = Some(Box::new(stack))
         }
+
+        self.head = Some(node);
     }
 
     /// Pop the top-most value from the stack
     pub fn pop(&mut self) -> Option<T> {
-        self.stack.pop()
-    }
-
-    /// Push a new value to the Maeel stack
-    pub fn push(&mut self, value: T) {
-        self.stack.push(value)
+        match std::mem::replace(&mut self.head, None) {
+            Some(stack) => {
+                self.head = stack.next.map(|n| *n);
+                Some(stack.value)
+            }
+            _ => None,
+        }
     }
 }
 
-impl<T: Display> MaeelMachine<T> {
-    /// Print the top value
-    pub fn print(&mut self) {
-        let value = self.stack.pop().unwrap();
-        println!("{}", value);
-        self.stack.push(value)
-    }
-
+impl<T: std::fmt::Display> Stack<T> {
     pub fn dump(&mut self) {
         let mut values = Vec::new();
 
@@ -54,11 +65,14 @@ impl<T: Display> MaeelMachine<T> {
     }
 }
 
-impl<T: Debug> MaeelMachine<T> {
-    /// Pop the top value and print it (debug)
-    pub fn printdb(&mut self) {
-        let value = self.stack.pop().unwrap();
-        println!("{:?}", value);
-        self.stack.push(value)
+impl<T: std::fmt::Debug> Stack<T> {
+    pub fn dumpdb(&mut self) {
+        let mut values = Vec::new();
+
+        while let Some(value) = self.pop() {
+            values.push(value)
+        }
+
+        values.iter().for_each(|v| println!("{:?}", v));
     }
 }
