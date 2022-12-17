@@ -1,5 +1,4 @@
-
-push 1
-push 5
-add
-%
+push 123 "a" "b" "c";
+take 3;
+reverse;
+print;
