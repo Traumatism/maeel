@@ -3,29 +3,26 @@ mod ops;
 
 use node::Node;
 
-#[derive(Clone)]
-/// Stack data structure implementation
-/// ```
-/// /*
-///    node
-///   /    \
-/// value   node
-///        /    \
-///      value   node
-///             /    \
-///           value  none
-/// */
-/// ```
+#[derive(Debug)]
+pub enum VMTypes {
+    Integer(isize),
+    Float(f64),
+    Array(Vec<VMTypes>),
+    String(String),
+}
+
 pub struct Stack<T> {
     pub head: Option<Node<T>>,
 }
 
-impl<T> Stack<T> {
+impl<T> Default for Stack<T> {
     /// Create a new empty stack
-    pub fn new() -> Stack<T> {
+    fn default() -> Stack<T> {
         Stack { head: None }
     }
+}
 
+impl<T> Stack<T> {
     /// Push a value to the top of the stack
     pub fn push(&mut self, value: T) {
         let mut node = Node::new(value);
@@ -37,6 +34,16 @@ impl<T> Stack<T> {
         self.head = Some(node);
     }
 
+    /// Pop the top-most value without checking for the existence
+    /// (might result a panic).
+    pub fn fast_pop(&mut self) -> T {
+        let stack = std::mem::replace(&mut self.head, None).unwrap();
+
+        self.head = stack.next.map(|n| *n);
+
+        stack.value
+    }
+
     /// Pop the top-most value from the stack
     pub fn pop(&mut self) -> Option<T> {
         match std::mem::replace(&mut self.head, None) {
@@ -46,33 +53,5 @@ impl<T> Stack<T> {
             }
             _ => None,
         }
-    }
-}
-
-impl<T: std::fmt::Display> Stack<T> {
-    pub fn dump(&mut self) {
-        let mut values = Vec::new();
-
-        while let Some(value) = self.pop() {
-            values.push(value)
-        }
-
-        let values_str = values.iter().map(|v| format!("{}", v));
-        let max_size = values_str.clone().max().unwrap().len();
-
-        values_str
-            .for_each(|value| println!("| {}{} |", value, " ".repeat(max_size - value.len())));
-    }
-}
-
-impl<T: std::fmt::Debug> Stack<T> {
-    pub fn dumpdb(&mut self) {
-        let mut values = Vec::new();
-
-        while let Some(value) = self.pop() {
-            values.push(value)
-        }
-
-        values.iter().for_each(|v| println!("{:?}", v));
     }
 }

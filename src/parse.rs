@@ -1,44 +1,58 @@
-use crate::tokenize::{Operator, Token};
-use crate::vm::Stack;
+use crate::tokenize::Token;
+use crate::vm::{Stack, VMTypes};
 
-pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<isize>) {
-    while let Some(token) = tokens.pop() {
-        match token {
-            Token::Operator(operator) => {
-                // Check for a and b in the expression,
-                // if they are not present, take them from
-                // the VM stack.
-                let a = tokens
-                    .pop()
-                    .unwrap_or_else(|| Token::Number(vm.pop().expect("Missing `a`")));
+pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMTypes>) {
+    let top = tokens.pop();
 
-                let b = tokens
-                    .pop()
-                    .unwrap_or_else(|| Token::Number(vm.pop().expect("Missing `b`")));
-
-                let (a_val, b_val) = match (a, b) {
-                    (Token::Number(a), Token::Number(b)) => (a, b),
-                    _ => panic!("`a` and `b` must be integers"),
+    match top {
+        Some(Token::Identifier(identifier)) => match &*identifier {
+            "push" => {
+                while let Some(next) = tokens.pop() {
+                    vm.push(match next {
+                        Token::Float(value) => VMTypes::Float(value),
+                        Token::String(value) => VMTypes::String(value),
+                        Token::Integer(value) => VMTypes::Integer(value),
+                        _ => panic!(),
+                    })
+                }
+            }
+            "pop" => {
+                vm.fast_pop();
+            }
+            "reverse" => {
+                let mut vec = {
+                    if let VMTypes::Array(vec) = vm.fast_pop() {
+                        vec
+                    } else {
+                        panic!()
+                    }
                 };
 
-                vm.push(a_val);
-                vm.push(b_val);
+                vec.reverse();
 
-                match operator {
-                    Operator::Mul => vm.mul(),
-                    Operator::Plus => vm.add(),
-                    Operator::Minus => vm.sub(),
-                }
+                vm.push(VMTypes::Array(vec));
             }
-            Token::Number(value) => vm.push(value),
-            Token::Dump => vm.dump(),
-            Token::Erase => {
-                while vm.pop().is_some() {
-                    continue;
-                }
-            }
+            "take" => {
+                let i = {
+                    if let Some(Token::Integer(n)) = tokens.pop() {
+                        n
+                    } else {
+                        panic!()
+                    }
+                };
 
+                let mut arr = Vec::new();
+
+                for _ in 0..i {
+                    arr.push(vm.fast_pop())
+                }
+
+                vm.push(VMTypes::Array(arr))
+            }
             _ => panic!(),
+        },
+        token => {
+            panic!("Panic with token: {token:?}")
         }
     }
 }

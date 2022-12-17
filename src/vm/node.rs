@@ -1,4 +1,3 @@
-#[derive(Clone)]
 /// A node in the stack
 pub struct Node<T> {
     pub value: T,
