@@ -16,40 +16,35 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMTypes>) {
                     })
                 }
             }
+            "print" => {
+                let e = vm.fast_pop();
+                println!("{:?}", &e);
+                vm.push(e);
+            }
             "pop" => {
                 vm.fast_pop();
             }
+
+            // Remove the top array
             "reverse" => {
-                let mut vec = {
-                    if let VMTypes::Array(vec) = vm.fast_pop() {
-                        vec
-                    } else {
-                        panic!()
-                    }
-                };
-
-                vec.reverse();
-
-                vm.push(VMTypes::Array(vec));
-            }
-            "take" => {
-                let i = {
-                    if let Some(Token::Integer(n)) = tokens.pop() {
-                        n
-                    } else {
-                        panic!()
-                    }
-                };
-
-                let mut arr = Vec::new();
-
-                for _ in 0..i {
-                    arr.push(vm.fast_pop())
+                if let VMTypes::Array(mut vec) = vm.fast_pop() {
+                    vec.reverse();
+                    vm.push(VMTypes::Array(vec));
+                } else {
+                    panic!()
                 }
-
-                vm.push(VMTypes::Array(arr))
             }
-            _ => panic!(),
+
+            // Pop n elements from the stack and push it as an array
+            "take" => {
+                if let Token::Integer(n) = tokens.fast_pop() {
+                    let arr = (0..n).map(|_| vm.fast_pop()).collect();
+                    vm.push(VMTypes::Array(arr))
+                } else {
+                    panic!("Expected an integer after `take` instruction")
+                }
+            }
+            identifier => panic!("Unknown identifier: {identifier}"),
         },
         token => {
             panic!("Panic with token: {token:?}")

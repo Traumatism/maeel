@@ -1,4 +1,4 @@
-push 123 "a" "b" "c";
+push "a" "b" "c";
 take 3;
 reverse;
-print;
+print
