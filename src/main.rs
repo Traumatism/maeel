@@ -1,21 +1,17 @@
-use tokenize::{lex_into_tokens, parse_into_instructions};
-
+mod enums;
 mod parse;
-mod standard;
 mod tokenize;
 mod utils;
 mod vm;
 
 fn main() {
-    let content = std::fs::read_to_string("hello.mae").unwrap();
+    let args = std::env::args().collect::<Vec<String>>();
 
-    println!("performing lexical analysis...");
-    let mut tokens = lex_into_tokens(&content);
+    let content = std::fs::read_to_string(args.get(1).unwrap()).expect("Failed to open file");
 
-    println!("parsing into instructions...  ");
-
-    let mut instructions = parse_into_instructions(&mut tokens);
-    let mut vm = vm::Stack::<vm::VMTypes>::default();
+    let mut tokens = tokenize::lex_into_tokens(&content);
+    let mut instructions = tokenize::parse_into_instructions(&mut tokens);
+    let mut vm = vm::Stack::<enums::VMType>::default();
 
     while let Some(mut instruction) = instructions.pop() {
         parse::parse(&mut instruction, &mut vm)

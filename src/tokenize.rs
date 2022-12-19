@@ -1,24 +1,6 @@
+use crate::enums::Token;
 use crate::utils::Peeker;
 use crate::vm::Stack;
-
-#[derive(Debug)]
-pub enum Operator {
-    Plus,
-    Minus,
-    Mul,
-}
-
-#[derive(Debug)]
-pub enum Token {
-    Dump,
-    At,
-    Separator,
-    String(String),
-    Integer(isize),
-    Float(f64),
-    Identifier(String),
-    Operator(Operator),
-}
 
 pub fn parse_into_instructions(tokens: &mut Stack<Token>) -> Stack<Stack<Token>> {
     let mut instructions = Stack::default();
@@ -45,16 +27,12 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
 
     while let Some(char) = chars.next() {
         match char {
-            ' ' | '\n' => {}
-            ';' => tokens.push(Token::Separator),
-            '@' => tokens.push(Token::At),
-            '%' => tokens.push(Token::Dump),
-            '*' => tokens.push(Token::Operator(Operator::Mul)),
-            '+' => tokens.push(Token::Operator(Operator::Plus)),
-            '-' => tokens.push(Token::Operator(Operator::Minus)),
-            '\'' => {
+            ' ' => {}
+            '\n' => tokens.push(Token::Separator),
+
+            '*' => {
                 while let Some(next) = chars.next() {
-                    if next == '\'' {
+                    if next == '*' {
                         break;
                     }
                 }
