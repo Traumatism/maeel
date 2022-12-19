@@ -93,11 +93,11 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                     _ => panic!("`reverse` expect an array on top of the stack"),
                 },
 
-                // Pop n elements from the stack and push it as an array
+                // Pop n elements from the stack and push them as an array
                 "take" => match vm.fast_pop() {
                     VMType::Integer(n) => {
-                        let arr = (0..n).map(|_| vm.fast_pop()).collect();
-                        vm.push(VMType::Array(arr))
+                        let array = (0..n).map(|_| vm.fast_pop()).collect();
+                        vm.push(VMType::Array(array))
                     }
                     _ => panic!("`take` expect an integer on top of the stack"),
                 },
