@@ -1,18 +1,8 @@
-mod node;
-mod ops;
-
-use node::Node;
-
-#[derive(Debug)]
-pub enum VMTypes {
-    Integer(isize),
-    Float(f64),
-    Array(Vec<VMTypes>),
-    String(String),
-}
+mod frame;
+use frame::Frame;
 
 pub struct Stack<T> {
-    pub head: Option<Node<T>>,
+    pub head: Option<Frame<T>>,
 }
 
 impl<T> Default for Stack<T> {
@@ -25,7 +15,7 @@ impl<T> Default for Stack<T> {
 impl<T> Stack<T> {
     /// Push a value to the top of the stack
     pub fn push(&mut self, value: T) {
-        let mut node = Node::new(value);
+        let mut node = Frame::new(value);
 
         if let Some(stack) = std::mem::replace(&mut self.head, None) {
             node.next = Some(Box::new(stack))
@@ -38,9 +28,7 @@ impl<T> Stack<T> {
     /// (might result a panic).
     pub fn fast_pop(&mut self) -> T {
         let stack = std::mem::replace(&mut self.head, None).unwrap();
-
         self.head = stack.next.map(|n| *n);
-
         stack.value
     }
 
