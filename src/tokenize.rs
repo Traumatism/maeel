@@ -57,7 +57,7 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                 let mut content = String::from(char);
 
                 while let Some(next) = chars.next() {
-                    if ('a'..='z').contains(&next) {
+                    if next.is_ascii_lowercase() {
                         content.push(next)
                     } else {
                         chars.previous();
@@ -72,7 +72,7 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                 let mut float = false;
 
                 while let Some(next) = chars.next() {
-                    if ('0'..='9').contains(&next) {
+                    if next.is_ascii_digit() {
                         content.push(next)
                     } else if next == '.' {
                         content.push('.');

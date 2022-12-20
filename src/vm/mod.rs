@@ -12,8 +12,38 @@ impl<T> Default for Stack<T> {
     }
 }
 
+impl<T: Clone> Stack<T> {
+    pub fn dup(&mut self) {
+        let a = self.fast_pop_1();
+
+        self.push(a.clone());
+        self.push(a)
+    }
+
+    #[allow(dead_code)]
+    pub fn peek(&mut self) -> T {
+        let a = self.fast_pop_1();
+        self.push(a.clone());
+
+        a
+    }
+}
+
 impl<T> Stack<T> {
-    /// Push a value to the top of the stack
+    pub fn clear(&mut self) {
+        while self.head.is_some() {
+            self.fast_pop_2()
+        }
+    }
+
+    pub fn swap(&mut self) {
+        let a = self.fast_pop_1();
+        let b = self.fast_pop_1();
+
+        self.push(a);
+        self.push(b);
+    }
+
     pub fn push(&mut self, value: T) {
         let mut node = Frame::new(value);
 
@@ -23,16 +53,19 @@ impl<T> Stack<T> {
 
         self.head = Some(node);
     }
+    pub fn fast_pop_2(&mut self) {
+        self.head = std::mem::replace(&mut self.head, None)
+            .unwrap()
+            .next
+            .map(|n| *n)
+    }
 
-    /// Pop the top-most value without checking for the existence
-    /// (might result a panic).
-    pub fn fast_pop(&mut self) -> T {
+    pub fn fast_pop_1(&mut self) -> T {
         let stack = std::mem::replace(&mut self.head, None).unwrap();
         self.head = stack.next.map(|n| *n);
         stack.value
     }
 
-    /// Pop the top-most value from the stack
     pub fn pop(&mut self) -> Option<T> {
         match std::mem::replace(&mut self.head, None) {
             Some(stack) => {
