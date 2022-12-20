@@ -1,10 +1,10 @@
 #[derive(Debug)]
 pub enum Token {
     Separator,
-    String(String),
-    Integer(isize),
-    Float(f64),
-    Identifier(String),
+    String(String, u16),
+    Integer(isize, u16),
+    Float(f64, u16),
+    Identifier(String, u16),
 }
 
 #[derive(Debug)]
