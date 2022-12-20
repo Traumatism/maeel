@@ -19,9 +19,9 @@ pub enum VMType {
 impl Debug for VMType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Float(x) => write!(f, "Float<{x}>"),
-            Self::Integer(n) => write!(f, "Int<{n}>"),
-            Self::String(c) => write!(f, "Str<{c}>"),
+            Self::Float(x) => write!(f, "{x}"),
+            Self::Integer(n) => write!(f, "{n}"),
+            Self::String(c) => write!(f, "'{c}'"),
             Self::Array(array) => {
                 {
                     write!(f, "Array<").unwrap();
@@ -42,9 +42,9 @@ impl Debug for VMType {
 impl Display for VMType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Float(x) => write!(f, "Float<{x}>"),
-            Self::Integer(n) => write!(f, "Int<{n}>"),
-            Self::String(c) => write!(f, "Str<{c}>"),
+            Self::Float(x) => write!(f, "{x}"),
+            Self::Integer(n) => write!(f, "{n}"),
+            Self::String(c) => write!(f, "'{c}'"),
             Self::Array(array) => {
                 {
                     write!(f, "Array<").unwrap();
