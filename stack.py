@@ -43,9 +43,9 @@ class Stack(Generic[T]):
     def swap(self):
         """Swap the two head elements"""
         a, b = self.pop(), self.pop()
- 
-        self.push(b)
+
         self.push(a)
+        self.push(b)
 
     def push(self, value: T):
         """Push a new element"""
@@ -63,10 +63,37 @@ class Stack(Generic[T]):
 
 if __name__ == "__main__":
     stack = Stack()
-    stack.push(1)
-    stack.push(2)
-    stack.push(3)
-    
-    assert stack.pop() == 3 
-    assert stack.pop() == 2
-    assert stack.pop() == 1
+
+    stack.push(1)  # 1
+    stack.push(2)  # 1 2
+    stack.push(3)  # 1 2 3
+
+    assert stack.pop() == 3  # 1 2
+    assert stack.pop() == 2  # 1
+    assert stack.pop() == 1  # (empty)
+
+    assert stack.is_empty
+
+    stack.push(1)  # 1
+    stack.push(2)  # 2
+
+    assert not stack.is_empty
+
+    stack.clear()  # (empty)
+
+    assert stack.is_empty
+
+    stack.push(1)  # 1
+    stack.push(2)  # 1 2
+
+    stack.dup()  # 1 2 2
+
+    assert stack.pop() == 2  # 1 2
+    assert stack.pop() == 2  # 1
+
+    stack.push(2)  # 1 2
+
+    stack.swap()  # 2 1
+
+    assert stack.pop() == 1  # 2
+    assert stack.pop() == 2  # (empty)
