@@ -16,9 +16,13 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                 }
             }
 
-            "range" => {
-                let (b, a) = match (vm.fast_pop(), vm.fast_pop()) {
-                    (VMType::Integer(b1), VMType::Integer(a1)) => (b1, a1),
+            "range" | "erange" => {
+                if tokens.pop().is_some() {
+                    panic!("line {identifier_line}: `{identifier}` requires no more argument.")
+                }
+
+                let (b, a) = match (vm.pop(), vm.pop()) {
+                    (Some(VMType::Integer(b1)), Some(VMType::Integer(a1))) => (b1, a1),
                     _ => {
                         panic!(
                             "line {identifier_line}: `range` requires two integers on the stack!"
@@ -26,24 +30,39 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                     }
                 };
 
+                let range: Vec<i64> = match &*identifier {
+                    "erange" => (a..=b).collect(),
+                    "range" => (a..b).collect(),
+                    _ => panic!(),
+                };
+
                 vm.push(VMType::Array(
-                    (a..b).map(VMType::Integer).collect::<Vec<VMType>>(),
+                    range
+                        .iter()
+                        .map(|n| VMType::Integer(*n))
+                        .collect::<Vec<VMType>>(),
                 ))
             }
 
             "print" | "println" => {
-                let f = if identifier == "print" {
-                    |content: String| print!("{content}")
-                } else {
-                    |content: String| println!("{content}")
+                if tokens.pop().is_some() {
+                    panic!("line {identifier_line}: `{identifier}` requires no more argument.")
+                }
+
+                let print = match &*identifier {
+                    "println" => |content| println!("{content}"),
+                    "print" => |content| print!("{content}"),
+                    _ => panic!(),
                 };
 
-                let e = vm.fast_pop();
+                let e = vm.pop().unwrap_or_else(
+                    || panic!("line {identifier_line}: `{identifier}` requires string|integer|float on the stack!")
+                );
 
                 match &e {
-                        VMType::Float(x) => f(format!("{x}")),
-                        VMType::Integer(n) => f(format!("{n}")),
-                        VMType::String(c) => f(c.to_string()),
+                        VMType::Float(x) => print(x.to_string()),
+                        VMType::Integer(n) => print(n.to_string()),
+                        VMType::String(c) => print(c.to_string()),
                         _ => panic!("line {identifier_line}: `{identifier}` requires string|integer|float on the stack!"),
                     }
 
@@ -51,12 +70,21 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
             }
 
             "pop" => {
+                if tokens.pop().is_some() {
+                    panic!("line {identifier_line}: `{identifier}` requires no more argument.")
+                }
+
                 vm.fast_pop();
             }
 
-            "product" => match vm.fast_pop() {
-                VMType::Array(array) => {
-                    let product = array
+            "product" => {
+                if tokens.pop().is_some() {
+                    panic!("line {identifier_line}: `{identifier}` requires no more argument.")
+                }
+
+                match vm.pop() {
+                    Some(VMType::Array(array)) => {
+                        let product = array
                             .iter()
                             .map(|element| match element {
                                 VMType::Integer(n) => *n as f64,
@@ -65,16 +93,22 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                             })
                             .product::<f64>();
 
-                    vm.push(VMType::Float(product));
+                        vm.push(VMType::Float(product));
+                    }
+                    _ => panic!(
+                        "line {identifier_line}: `product` requires [integer|float] on the stack!"
+                    ),
                 }
-                _ => panic!(
-                    "line {identifier_line}: `product` requires [integer|float] on the stack!"
-                ),
-            },
+            }
 
-            "sum" => match vm.fast_pop() {
-                VMType::Array(array) => {
-                    let sum = array
+            "sum" => {
+                if tokens.pop().is_some() {
+                    panic!("line {identifier_line}: `{identifier}` requires no more argument.")
+                }
+
+                match vm.pop() {
+                    Some(VMType::Array(array)) => {
+                        let sum = array
                             .iter()
                             .map(|element| match element {
                                 VMType::Integer(n) => *n as f64,
@@ -83,32 +117,49 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                             })
                             .sum::<f64>();
 
-                    vm.push(VMType::Float(sum))
+                        vm.push(VMType::Float(sum))
+                    }
+                    _ => panic!(
+                        "line {identifier_line}: `sum` requires [integer|float] on the stack!"
+                    ),
                 }
-                _ => panic!("line {identifier_line}: `sum` requires [integer|float] on the stack!"),
-            },
+            }
 
-            "reverse" => match vm.fast_pop() {
-                VMType::Array(mut array) => {
-                    array.reverse();
-                    vm.push(VMType::Array(array))
+            "reverse" => {
+                if tokens.pop().is_some() {
+                    panic!("line {identifier_line}: `{identifier}` requires no more argument.")
                 }
-                _ => panic!("`reverse` expect an array on top of the stack"),
-            },
+
+                match vm.pop() {
+                    Some(VMType::Array(mut array)) => {
+                        array.reverse();
+                        vm.push(VMType::Array(array))
+                    }
+                    _ => panic!("`reverse` expect an array on top of the stack"),
+                }
+            }
 
             "join" => {
-                let join_string = match vm.fast_pop() {
-                    VMType::String(content) => content,
+                if tokens.pop().is_some() {
+                    panic!("line {identifier_line}: `{identifier}` requires no more argument.")
+                }
+
+                let join_string = match vm.pop() {
+                    Some(VMType::String(content)) => content,
                     _ => panic!("line {identifier_line}: `join` requires a string and a [string] on the stack!"),
                 };
 
-                let joined = match vm.fast_pop() {
-                    VMType::Array(array) => array
+                let to_string = |element: &VMType| {
+                    match element {
+                        VMType::String(content) => content.clone(),
+                        _ => panic!("line {identifier_line}: `join` requires a string and a [string] on the stack!"),
+                    }
+                };
+
+                let joined = match vm.pop() {
+                    Some(VMType::Array(array)) => array
                         .iter()
-                        .map(|element| match element {
-                            VMType::String(content) => content.clone(),
-                            _ => panic!("line {identifier_line}: `join` requires a string and a [string] on the stack!"),
-                        })
+                        .map(to_string)
                         .collect::<Vec<String>>()
                         .join(&join_string),
                     _ => panic!("line {identifier_line}: `join` requires a string and a [string] on the stack!"),
@@ -117,13 +168,19 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                 vm.push(VMType::String(joined));
             }
 
-            "take" => match vm.fast_pop() {
-                VMType::Integer(n) => {
-                    let array = (0..n).map(|_| vm.fast_pop()).collect();
-                    vm.push(VMType::Array(array))
+            "take" => {
+                if tokens.pop().is_some() {
+                    panic!("line {identifier_line}: `{identifier}` requires no more argument.")
                 }
-                _ => panic!("line {identifier_line}: `take` requires an integer on the stack!"),
-            },
+
+                match vm.pop() {
+                    Some(VMType::Integer(n)) => {
+                        let array = (0..n).map(|_| vm.fast_pop()).collect();
+                        vm.push(VMType::Array(array))
+                    }
+                    _ => panic!("line {identifier_line}: `take` requires an integer on the stack!"),
+                }
+            }
             identifier => panic!("line {identifier_line}: unkown identifier: `{identifier}`!"),
         },
         _ => panic!(),

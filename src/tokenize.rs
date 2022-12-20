@@ -86,7 +86,7 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                 if float {
                     tokens.push(Token::Float(content.parse::<f64>().unwrap(), line))
                 } else {
-                    tokens.push(Token::Integer(content.parse::<isize>().unwrap(), line))
+                    tokens.push(Token::Integer(content.parse::<i64>().unwrap(), line))
                 }
             }
             _ => panic!(),
