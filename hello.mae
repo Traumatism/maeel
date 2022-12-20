@@ -7,7 +7,7 @@ print
 pop
 println 
 pop
-push 0 100
+push 0 101
 range
 sum
 push "1 + 2 + 3 + ... + 100 = "

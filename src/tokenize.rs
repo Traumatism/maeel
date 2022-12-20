@@ -17,7 +17,6 @@ pub fn parse_into_instructions(tokens: &mut Stack<Token>) -> Stack<Stack<Token>>
     }
 
     instructions.push(current_instruction);
-
     instructions
 }
 
@@ -25,11 +24,15 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
     let mut chars = Peeker::new(code.chars().collect());
     let mut tokens = Stack::default();
 
+    let mut line = 0;
+
     while let Some(char) = chars.next() {
         match char {
             ' ' => {}
-            '\n' => tokens.push(Token::Separator),
-
+            '\n' => {
+                line += 1;
+                tokens.push(Token::Separator)
+            }
             '*' => {
                 while let Some(next) = chars.next() {
                     if next == '*' {
@@ -37,7 +40,6 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                     }
                 }
             }
-
             '"' => {
                 let mut content = String::new();
 
@@ -49,7 +51,7 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                     content.push(next)
                 }
 
-                tokens.push(Token::String(content))
+                tokens.push(Token::String(content, line))
             }
             'a'..='z' => {
                 let mut content = String::from(char);
@@ -63,7 +65,7 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                     }
                 }
 
-                tokens.push(Token::Identifier(content))
+                tokens.push(Token::Identifier(content, line))
             }
             '0'..='9' => {
                 let mut content = String::from(char);
@@ -82,9 +84,9 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                 }
 
                 if float {
-                    tokens.push(Token::Float(content.parse::<f64>().unwrap()))
+                    tokens.push(Token::Float(content.parse::<f64>().unwrap(), line))
                 } else {
-                    tokens.push(Token::Integer(content.parse::<isize>().unwrap()))
+                    tokens.push(Token::Integer(content.parse::<isize>().unwrap(), line))
                 }
             }
             _ => panic!(),

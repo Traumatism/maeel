@@ -1,21 +1,22 @@
-use maeel::vm::{Stack, VMTypes};
+use maeel::enums::VMType;
+use maeel::vm::Stack;
 
 use criterion::{criterion_group, criterion_main, Criterion};
 
-fn fast_pop(vm: &mut Stack<VMTypes>) {
-    vm.push(VMTypes::String(String::from("hello"))); // tail
-    vm.push(VMTypes::Integer(12)); // mid
-    vm.push(VMTypes::Float(1.1)); // head
+fn fast_pop(vm: &mut Stack<VMType>) {
+    vm.push(VMType::String(String::from("hello"))); // tail
+    vm.push(VMType::Integer(12)); // mid
+    vm.push(VMType::Float(1.1)); // head
 
     vm.fast_pop();
     vm.fast_pop();
     vm.fast_pop();
 }
 
-fn normal_pop(vm: &mut Stack<VMTypes>) {
-    vm.push(VMTypes::String(String::from("hello"))); // tail
-    vm.push(VMTypes::Integer(12)); // mid
-    vm.push(VMTypes::Float(1.1)); // head
+fn normal_pop(vm: &mut Stack<VMType>) {
+    vm.push(VMType::String(String::from("hello"))); // tail
+    vm.push(VMType::Integer(12)); // mid
+    vm.push(VMType::Float(1.1)); // head
 
     vm.pop();
     vm.pop();
