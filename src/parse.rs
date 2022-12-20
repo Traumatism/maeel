@@ -177,6 +177,6 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
             }
             identifier => panic!("line {identifier_line}: unkown identifier: `{identifier}`!"),
         },
-        _ => panic!(),
+        other => panic!("{:?}", other.unwrap()),
     }
 }
