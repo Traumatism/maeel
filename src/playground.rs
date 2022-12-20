@@ -1,25 +1,26 @@
-use crate::{
-    enums::VMType,
-    parse::parse,
-    tokenize::{lex_into_tokens, parse_into_instructions},
-    vm::Stack,
-};
+use crate::enums;
+use crate::parse;
+use crate::tokenize;
+use crate::vm;
 
 #[derive(Default)]
 pub struct Playground {
-    vm: Stack<VMType>,
+    vm: vm::Stack<enums::VMType>,
 }
 
 impl Playground {
+    #[allow(dead_code, unused)]
     pub fn evaluate_expression(&mut self, expression: impl Into<String>) {
-        let mut instructions = parse_into_instructions(&mut lex_into_tokens(&expression.into()));
+        let mut instructions =
+            tokenize::parse_into_instructions(&mut tokenize::lex_into_tokens(&expression.into()));
 
         while let Some(mut instruction) = instructions.pop() {
-            parse(&mut instruction, &mut self.vm)
+            parse::parse(&mut instruction, &mut self.vm)
         }
     }
 
-    pub fn get_output(&mut self) -> Vec<VMType> {
+    #[allow(dead_code, unused)]
+    pub fn get_output(&mut self) -> Vec<enums::VMType> {
         let mut output = Vec::new();
 
         while let Some(next) = self.vm.pop() {

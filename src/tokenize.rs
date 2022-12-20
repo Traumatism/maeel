@@ -1,6 +1,35 @@
 use crate::enums::Token;
-use crate::utils::Peeker;
 use crate::vm::Stack;
+
+pub struct Peeker<T: Clone> {
+    values: Vec<T>,
+    cursor: usize,
+}
+
+impl<T: Clone> Iterator for Peeker<T> {
+    type Item = T;
+
+    fn next(&mut self) -> Option<T> {
+        if self.cursor >= self.values.len() {
+            return None;
+        }
+
+        self.cursor += 1;
+
+        Some(self.values[self.cursor - 1].to_owned())
+    }
+}
+
+impl<T: Clone> Peeker<T> {
+    pub fn new(values: Vec<T>) -> Self {
+        Self { values, cursor: 0 }
+    }
+
+    pub fn previous(&mut self) -> Option<T> {
+        self.cursor -= 2;
+        self.next()
+    }
+}
 
 pub fn parse_into_instructions(tokens: &mut Stack<Token>) -> Stack<Stack<Token>> {
     let mut instructions = Stack::default();
@@ -22,6 +51,7 @@ pub fn parse_into_instructions(tokens: &mut Stack<Token>) -> Stack<Stack<Token>>
 
 pub fn lex_into_tokens(code: &str) -> Stack<Token> {
     let mut chars = Peeker::new(code.chars().collect());
+
     let mut tokens = Stack::default();
 
     let mut line = 0;
@@ -34,7 +64,7 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                 tokens.push(Token::Separator)
             }
             '*' => {
-                while let Some(next) = chars.next() {
+                for next in chars.by_ref() {
                     if next == '*' {
                         break;
                     }
@@ -43,7 +73,7 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
             '"' => {
                 let mut content = String::new();
 
-                while let Some(next) = chars.next() {
+                for next in chars.by_ref() {
                     if next == '"' {
                         break;
                     }

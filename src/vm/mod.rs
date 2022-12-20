@@ -6,7 +6,6 @@ pub struct Stack<T> {
 }
 
 impl<T> Default for Stack<T> {
-    /// Create a new empty stack
     fn default() -> Stack<T> {
         Stack { head: None }
     }

@@ -6,8 +6,11 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
         None => (),
         Some(Token::Identifier(identifier, identifier_line)) => match &*identifier {
             "dup" => vm.dup(),
+
             "swap" => vm.swap(),
+
             "clear" => vm.clear(),
+
             "push" => {
                 while let Some(next) = tokens.pop() {
                     vm.push(match next {
@@ -18,6 +21,7 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                     })
                 }
             }
+
             "range" | "erange" => {
                 if tokens.pop().is_some() {
                     panic!("line {identifier_line}: `{identifier}` requires no more argument.")
@@ -44,6 +48,7 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                         .collect::<Vec<VMType>>(),
                 ))
             }
+
             "print" | "println" => {
                 if tokens.pop().is_some() {
                     panic!("line {identifier_line}: `{identifier}` requires no more argument.")
@@ -68,6 +73,7 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
 
                 vm.push(e);
             }
+
             "pop" => {
                 if tokens.pop().is_some() {
                     panic!("line {identifier_line}: `{identifier}` requires no more argument.")
@@ -75,6 +81,7 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
 
                 vm.fast_pop_2()
             }
+
             "product" => {
                 if tokens.pop().is_some() {
                     panic!("line {identifier_line}: `{identifier}` requires no more argument.")
@@ -98,6 +105,7 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                     ),
                 }
             }
+
             "sum" => {
                 if tokens.pop().is_some() {
                     panic!("line {identifier_line}: `{identifier}` requires no more argument.")
@@ -121,6 +129,7 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                     ),
                 }
             }
+
             "reverse" => {
                 if tokens.pop().is_some() {
                     panic!("line {identifier_line}: `{identifier}` requires no more argument.")
@@ -134,6 +143,7 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
                     _ => panic!("`reverse` expect an array on top of the stack"),
                 }
             }
+
             "join" => {
                 if tokens.pop().is_some() {
                     panic!("line {identifier_line}: `{identifier}` requires no more argument.")
@@ -162,6 +172,7 @@ pub fn parse(tokens: &mut Stack<Token>, vm: &mut Stack<VMType>) {
 
                 vm.push(VMType::String(joined));
             }
+
             "take" => {
                 if tokens.pop().is_some() {
                     panic!("line {identifier_line}: `{identifier}` requires no more argument.")
