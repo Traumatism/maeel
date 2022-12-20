@@ -1,4 +1,3 @@
-/// A stack frame
 pub struct Frame<T> {
     pub value: T,
     pub next: Option<Box<Frame<T>>>,
