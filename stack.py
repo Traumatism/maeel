@@ -29,7 +29,7 @@ class Stack(Generic[T]):
     @property
     def is_empty(self) -> bool:
         """Check if the stack is empty"""
-        return self.head == None
+        return self.head is None
 
     def clear(self):
         """Clear the stack"""
