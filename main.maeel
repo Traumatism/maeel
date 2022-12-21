@@ -1,5 +1,1 @@
-"hello" "world"
-swap
-2 take
-" " join
-println
+let start 1 let end 50 "1x2x3x...x50=" print pop start end range product println pop "1+2+3+...+50=" print pop start end range sum println pop
