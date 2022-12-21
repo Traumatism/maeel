@@ -21,10 +21,23 @@ impl Parser {
         while let Some(token) = tokens.pop() {
             match token {
                 Token::Separator => panic!("Separator error (shouldn't be happening)"),
+
                 Token::Str(content, _) => self.vm.stack.push(VMType::Str(content)),
+
                 Token::Integer(n, _) => self.vm.stack.push(VMType::Integer(n)),
+
                 Token::Float(x, _) => self.vm.stack.push(VMType::Float(x)),
+
                 Token::Identifier(identifier, line) => match &*identifier {
+                    "proc" => {
+                        let _name = match tokens.fast_pop_1() {
+                            Token::Identifier(name, _) => name,
+                            _ => panic!("line {line}: syntax: `proc name`"),
+                        };
+
+                        todo!()
+                    }
+
                     "let" => {
                         let name = match tokens.fast_pop_1() {
                             Token::Identifier(name, _) => name,
@@ -40,21 +53,33 @@ impl Parser {
 
                         self.vm.vars.insert(name, value);
                     }
+
                     "dup" => self.vm.stack.dup(),
+
                     "swap" => self.vm.stack.swap(),
+
                     "clear" => self.vm.stack.clear(),
+
                     "pop" => {
                         self.vm.stack.pop().unwrap_or_else(|| {
                             panic!("line {line}: `pop` requires at least one value on the stack!");
                         });
                     }
+
                     "range" | "erange" => self.parse_range(identifier, line),
+
                     "print" | "println" => self.parse_print(identifier, line),
+
                     "sum" => self.parse_sum(line),
+
                     "join" => self.parse_join(line),
+
                     "take" => self.parse_take(line),
+
                     "reverse" => self.parse_reverse(line),
+
                     "product" => self.parse_product(line),
+
                     identifier => self
                         .vm
                         .stack

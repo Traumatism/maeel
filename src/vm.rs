@@ -1,21 +1,20 @@
-mod frame;
 use crate::enums::VMType;
-use frame::Frame;
-
 use std::collections::BTreeMap;
 
-#[allow(dead_code)]
+#[derive(Default)]
 pub struct VM {
     pub vars: BTreeMap<String, VMType>,
     pub stack: Stack<VMType>,
 }
 
-impl Default for VM {
-    fn default() -> Self {
-        Self {
-            vars: BTreeMap::default(),
-            stack: Stack::default(),
-        }
+pub struct Frame<T> {
+    pub value: T,
+    pub next: Option<Box<Frame<T>>>,
+}
+
+impl<T> Frame<T> {
+    pub fn new(value: T) -> Frame<T> {
+        Self { value, next: None }
     }
 }
 
