@@ -31,7 +31,7 @@ impl<T: Clone> Peeker<T> {
     }
 }
 
-pub fn parse_into_instructions(tokens: &mut Stack<Token>) -> Stack<Stack<Token>> {
+pub fn parse_into_instructions(tokens: &mut Vec<Token>) -> Stack<Stack<Token>> {
     let mut instructions = Stack::default();
     let mut current_instruction = Stack::default();
 
@@ -49,23 +49,19 @@ pub fn parse_into_instructions(tokens: &mut Stack<Token>) -> Stack<Stack<Token>>
     instructions
 }
 
-pub fn lex_into_tokens(code: &str) -> Stack<Token> {
+pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut chars = Peeker::new(code.chars().collect());
-
-    let mut tokens = Stack::default();
-
-    let mut line = 0;
+    let mut tokens = Vec::new();
+    let mut line = 1;
 
     while let Some(char) = chars.next() {
         match char {
-            ' ' => {}
-            '\n' => {
-                line += 1;
-                tokens.push(Token::Separator)
-            }
-            '*' => {
+            ' ' => (),
+            ';' => tokens.push(Token::Separator),
+            '\n' => line += 1,
+            '(' => {
                 for next in chars.by_ref() {
-                    if next == '*' {
+                    if next == ')' {
                         break;
                     }
                 }
@@ -74,24 +70,24 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                 let mut content = String::new();
 
                 for next in chars.by_ref() {
-                    if next == '"' {
-                        break;
+                    match next {
+                        '"' => break,
+                        _ => content.push(next),
                     }
-
-                    content.push(next)
                 }
 
-                tokens.push(Token::String(content, line))
+                tokens.push(Token::Str(content, line))
             }
             'a'..='z' => {
                 let mut content = String::from(char);
 
                 while let Some(next) = chars.next() {
-                    if next.is_ascii_lowercase() {
-                        content.push(next)
-                    } else {
-                        chars.previous();
-                        break;
+                    match next {
+                        'a'..='z' => content.push(next),
+                        _ => {
+                            chars.previous();
+                            break;
+                        }
                     }
                 }
 
@@ -102,22 +98,23 @@ pub fn lex_into_tokens(code: &str) -> Stack<Token> {
                 let mut float = false;
 
                 while let Some(next) = chars.next() {
-                    if next.is_ascii_digit() {
-                        content.push(next)
-                    } else if next == '.' {
-                        content.push('.');
-                        float = true
-                    } else {
-                        chars.previous();
-                        break;
+                    match next {
+                        '0'..='9' => content.push(next),
+                        '.' => {
+                            float = true;
+                            content.push('.')
+                        }
+                        _ => {
+                            chars.previous();
+                            break;
+                        }
                     }
                 }
 
-                if float {
-                    tokens.push(Token::Float(content.parse::<f64>().unwrap(), line))
-                } else {
-                    tokens.push(Token::Integer(content.parse::<i64>().unwrap(), line))
-                }
+                tokens.push(match float {
+                    true => Token::Float(content.parse::<f64>().unwrap(), line),
+                    false => Token::Integer(content.parse::<i64>().unwrap(), line),
+                });
             }
             _ => panic!(),
         }
