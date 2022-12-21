@@ -21,6 +21,11 @@ start end range product println pop
 start end range sum println pop
 ```
 
+Note the program could have been written on a single line:
+```
+let start 1 let end 50 "1x2x3x...x50=" print pop start end range product println pop "1+2+3+...+50=" print pop start end range sum println pop
+```
+
 ## manipulate strings
 
 ```
