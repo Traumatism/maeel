@@ -3,7 +3,7 @@ use std::fmt::{Debug, Display};
 #[derive(Debug)]
 pub enum Token {
     Separator,
-    String(String, u16),
+    Str(String, u16),
     Integer(i64, u16),
     Float(f64, u16),
     Identifier(String, u16),
@@ -12,7 +12,7 @@ pub enum Token {
 pub enum VMType {
     Float(f64),
     Integer(i64),
-    String(String),
+    Str(String),
     Array(Vec<VMType>),
 }
 
@@ -21,7 +21,7 @@ impl Debug for VMType {
         match self {
             Self::Float(x) => write!(f, "{x}"),
             Self::Integer(n) => write!(f, "{n}"),
-            Self::String(c) => write!(f, "'{c}'"),
+            Self::Str(c) => write!(f, "'{c}'"),
             Self::Array(array) => {
                 {
                     write!(f, "Array<").unwrap();
@@ -44,7 +44,7 @@ impl Display for VMType {
         match self {
             Self::Float(x) => write!(f, "{x}"),
             Self::Integer(n) => write!(f, "{n}"),
-            Self::String(c) => write!(f, "'{c}'"),
+            Self::Str(c) => write!(f, "'{c}'"),
             Self::Array(array) => {
                 {
                     write!(f, "Array<").unwrap();
@@ -67,7 +67,7 @@ impl Clone for VMType {
         match self {
             Self::Float(x) => Self::Float(*x),
             Self::Integer(n) => Self::Integer(*n),
-            Self::String(c) => Self::String(c.clone()),
+            Self::Str(c) => Self::Str(c.clone()),
             Self::Array(array) => Self::Array(array.clone()),
         }
     }

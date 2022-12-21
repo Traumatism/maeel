@@ -1,5 +1,4 @@
 use crate::enums;
-use crate::parse;
 use crate::tokenize;
 use crate::vm;
 
@@ -9,17 +8,16 @@ pub struct Playground {
 }
 
 impl Playground {
-    #[allow(dead_code, unused)]
+    #[allow(unused)]
     pub fn evaluate_expression(&mut self, expression: impl Into<String>) {
-        let mut instructions =
+        todo!();
+
+        let instructions =
             tokenize::parse_into_instructions(&mut tokenize::lex_into_tokens(&expression.into()));
 
-        while let Some(mut instruction) = instructions.pop() {
-            parse::parse(&mut instruction, &mut self.vm)
-        }
+        // Parser::new(instructions, self.vm).parse();
     }
 
-    #[allow(dead_code, unused)]
     pub fn get_output(&mut self) -> Vec<enums::VMType> {
         let mut output = Vec::new();
 
@@ -29,9 +27,9 @@ impl Playground {
 
         output.reverse();
 
-        for value in &output {
-            self.vm.push(value.clone())
-        }
+        output
+            .iter()
+            .for_each(|value| self.vm.push(value.to_owned()));
 
         output
     }

@@ -12,6 +12,7 @@ impl<T> Default for Stack<T> {
 }
 
 impl<T: Clone> Stack<T> {
+    /// Duplicate the head value
     pub fn dup(&mut self) {
         let a = self.fast_pop_1();
 
@@ -35,6 +36,7 @@ impl<T> Stack<T> {
         }
     }
 
+    /// Swap the two head values
     pub fn swap(&mut self) {
         let a = self.fast_pop_1();
         let b = self.fast_pop_1();
@@ -43,6 +45,7 @@ impl<T> Stack<T> {
         self.push(b);
     }
 
+    /// Push a new value to the stack
     pub fn push(&mut self, value: T) {
         let mut node = Frame::new(value);
 
@@ -52,6 +55,8 @@ impl<T> Stack<T> {
 
         self.head = Some(node);
     }
+
+    /// Pop the head value without returning it
     pub fn fast_pop_2(&mut self) {
         self.head = std::mem::replace(&mut self.head, None)
             .unwrap()
@@ -59,12 +64,14 @@ impl<T> Stack<T> {
             .map(|n| *n)
     }
 
+    /// Pop the head value and return it (might result a runtime panic)
     pub fn fast_pop_1(&mut self) -> T {
         let stack = std::mem::replace(&mut self.head, None).unwrap();
         self.head = stack.next.map(|n| *n);
         stack.value
     }
 
+    /// Pop the head value and return it in an Option
     pub fn pop(&mut self) -> Option<T> {
         match std::mem::replace(&mut self.head, None) {
             Some(stack) => {

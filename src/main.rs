@@ -1,3 +1,4 @@
+use crate::parse::Parser;
 use std::io::{stdin, stdout, Write};
 
 mod enums;
@@ -27,12 +28,11 @@ fn main() {
 
     let content = std::fs::read_to_string(args.get(1).unwrap()).expect("Failed to open file");
 
-    let mut vm = vm::Stack::<enums::VMType>::default();
+    let mut tokens = tokenize::lex_into_tokens(&content);
 
-    let mut instructions =
-        tokenize::parse_into_instructions(&mut tokenize::lex_into_tokens(&content));
-
-    while let Some(mut instruction) = instructions.pop() {
-        parse::parse(&mut instruction, &mut vm)
-    }
+    Parser::new(
+        tokenize::parse_into_instructions(&mut tokens),
+        vm::Stack::<enums::VMType>::default(),
+    )
+    .parse();
 }
