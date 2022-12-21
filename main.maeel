@@ -1,5 +1,12 @@
-"sum of all n in {1; 2; 3; ...; 100}: " print
-pop
-1 100 erange
-sum println
-pop
+let a 1;
+let b 100;
+let c "hello";
+
+a b erange; 
+sum;
+"sum of all numbers from 1 to 100: " print;
+pop;
+println;
+pop;
+c println;
+pop;

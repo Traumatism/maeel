@@ -3,12 +3,21 @@
 
 example program:
 
-```
-"hello" "world" swap;
-2 take;
-" " join;
+
+````
+let a 1;
+let b 100;
+let c "hello";
+
+a b erange; 
+sum;
+"sum of all numbers from 1 to 100: " print;
+pop;
 println;
 pop;
+c println;
+pop;
+
 ```
 
 - https://en.wikipedia.org/wiki/Stack_(abstract_data_type)
