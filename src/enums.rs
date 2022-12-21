@@ -1,14 +1,14 @@
 use std::fmt::{Debug, Display};
 
-#[derive(Debug)]
 pub enum Token {
     Separator,
-    Str(String, u16),
-    Integer(i64, u16),
-    Float(f64, u16),
-    Identifier(String, u16),
+    Str(String, u16),        // "..."
+    Integer(i64, u16),       // 123, -123
+    Float(f64, u16),         // 123.4, -123.45
+    Identifier(String, u16), // abc
 }
 
+/// Data types/structures parser can work with
 pub enum VMType {
     Float(f64),
     Integer(i64),

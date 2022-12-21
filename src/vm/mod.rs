@@ -1,5 +1,23 @@
 mod frame;
+use crate::enums::VMType;
 use frame::Frame;
+
+use std::collections::BTreeMap;
+
+#[allow(dead_code)]
+pub struct VM {
+    pub vars: BTreeMap<String, VMType>,
+    pub stack: Stack<VMType>,
+}
+
+impl Default for VM {
+    fn default() -> Self {
+        Self {
+            vars: BTreeMap::default(),
+            stack: Stack::default(),
+        }
+    }
+}
 
 pub struct Stack<T> {
     pub head: Option<Frame<T>>,
@@ -19,17 +37,10 @@ impl<T: Clone> Stack<T> {
         self.push(a.clone());
         self.push(a)
     }
-
-    #[allow(dead_code)]
-    pub fn peek(&mut self) -> T {
-        let a = self.fast_pop_1();
-        self.push(a.clone());
-
-        a
-    }
 }
 
 impl<T> Stack<T> {
+    /// Clear all the stack values
     pub fn clear(&mut self) {
         while self.head.is_some() {
             self.fast_pop_2()
