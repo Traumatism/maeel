@@ -1,25 +1,32 @@
-# maeel project
-## just tests about stack oriented programming
+# The maeel programming language
 
-example program:
+Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), **maeel** is a [stack oriented programming language](https://en.wikipedia.org/wiki/Stack-oriented_programming) built in a single Rust file from scratch without any thirdparty library.
 
-
-```
-let a 1;
-let b 100;
-let c "hello";
-
-a b erange; 
-sum;
-"sum of all numbers from 1 to 100: " print;
-pop;
-println;
-pop;
-c println;
-pop;
+## hello, world !
 
 ```
+"hello, world !" println
+```
 
-- https://en.wikipedia.org/wiki/Stack_(abstract_data_type)
-- https://en.wikipedia.org/wiki/Stack_machine
-- https://en.wikipedia.org/wiki/Stack-oriented_programming
+## sum/product of all integers from 1 to 50
+
+```
+let start 1
+let end 50
+
+"1x2x3x...x50=" print pop
+start end range product println pop
+
+"1+2+3+...+50=" print pop
+start end range sum println pop
+```
+
+## manipulate strings
+
+```
+"hello" "world"
+swap
+2 take
+" " join
+println
+```
