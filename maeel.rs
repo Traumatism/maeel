@@ -355,11 +355,15 @@ impl Parser {
 
                     "dup" => self.vm.stack.dup(),
                     "swap" => self.vm.stack.swap(),
+                    "exch" => self.vm.stack.swap(),
                     "clear" => self.vm.stack.clear(),
                     "pop" => self.vm.stack.fast_pop_2(),
-
+                    "drop" => self.vm.stack.fast_pop_2(),
                     "eq" => self.parse_eq(line),
                     "or" => self.parse_or(line),
+                    "add" => self.parse_add(line),
+                    "sub" => self.parse_sub(line),
+                    "mul" => self.parse_mul(line),
                     "sum" => self.parse_sum(line),
                     "not" => self.parse_not(line),
                     "and" => self.parse_and(line),
@@ -379,7 +383,51 @@ impl Parser {
             }
         }
     }
+ 
+    fn parse_add(&mut self, line: u16) {
+        let s = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+            (Some(VMType::Integer(m)), Some(VMType::Integer(n))) => VMType::Integer(m + n),
+            (Some(VMType::Float(x)), Some(VMType::Float(y))) => VMType::Float(x + y),
+            (Some(VMType::Integer(n)), Some(VMType::Float(x))) => VMType::Float(n as f64 + x),
+            (Some(VMType::Float(x)), Some(VMType::Integer(n))) => VMType::Float(x + n as f64),
+            _ => panic!()
+        };
 
+        self.vm.stack.push(s)
+    }
+
+
+    fn parse_sub(&mut self, line: u16) {
+        let s = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+            (Some(VMType::Integer(m)), Some(VMType::Integer(n))) => VMType::Integer(m - n),
+            (Some(VMType::Float(x)), Some(VMType::Float(y))) => VMType::Float(x - y),
+            (Some(VMType::Integer(n)), Some(VMType::Float(x))) => VMType::Float(n as f64 - x),
+            (Some(VMType::Float(x)), Some(VMType::Integer(n))) => VMType::Float(x - n as f64),
+            _ => panic!()
+        };
+
+        self.vm.stack.push(s)
+    }
+
+
+    fn parse_mul(&mut self, line: u16) {
+        let s = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+            (Some(VMType::Integer(m)), Some(VMType::Integer(n))) => VMType::Integer(m * n),
+            (Some(VMType::Float(x)), Some(VMType::Float(y))) => VMType::Float(x * y),
+            (Some(VMType::Integer(n)), Some(VMType::Float(x))) => VMType::Float(n as f64 * x),
+            (Some(VMType::Float(x)), Some(VMType::Integer(n))) => VMType::Float(x * n as f64),
+            _ => panic!()
+        };
+
+        self.vm.stack.push(s)
+    }
+
+   /// Parse an or instruction
+    ///
+    /// 0 + 0 => 0
+    /// 0 + 1 => 1
+    /// 1 + 0 => 1
+    /// 1 + 1 => 1
     fn parse_or(&mut self, line: u16) {
         let (p, q) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
             (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
@@ -389,6 +437,12 @@ impl Parser {
         self.vm.stack.push(VMType::Bool(p | q))
     }
 
+    /// Parse an and instruction
+    ///
+    /// 0 + 0 => 0
+    /// 0 + 1 => 0
+    /// 1 + 0 => 0
+    /// 1 + 1 => 1
     fn parse_and(&mut self, line: u16) {
         let (p, q) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
             (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
@@ -398,15 +452,26 @@ impl Parser {
         self.vm.stack.push(VMType::Bool(p & q))
     }
 
+    /// Parse an equality instruction
+    ///
+    /// 0 + 0 => 1
+    /// 0 + 1 => 0
+    /// 1 + 0 => 0
+    /// 1 + 1 => 1
     fn parse_eq(&mut self, line: u16) {
-        let (p, q) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
-            (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
+        let b = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+            (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => p == q,
+            (Some(VMType::Integer(n)), Some(VMType::Integer(m))) => n == m,
             _ => panic!("line {line}: `eq` requires 2 booleans on the stack!"),
         };
 
-        self.vm.stack.push(VMType::Bool(p == q))
+        self.vm.stack.push(VMType::Bool(b))
     }
 
+    /// Parse a not instruction
+    ///
+    /// 0 => 1
+    /// 1 => 0
     fn parse_not(&mut self, line: u16) {
         let p = match self.vm.stack.pop() {
             Some(VMType::Bool(p)) => p,
@@ -505,6 +570,9 @@ impl Parser {
     }
 
     /// Parse a take instruction
+    ///
+    /// |a|b|c|3| => [a, b, c]
+    /// |a|b|c|2| => [b, c]
     fn parse_take(&mut self, line: u16) {
         match self.vm.stack.pop() {
             Some(VMType::Integer(n)) => {
@@ -516,6 +584,8 @@ impl Parser {
     }
 
     /// Parse a reverse instruction
+    ///
+    /// [a, b, c] => [c, b, a]
     fn parse_reverse(&mut self, line: u16) {
         match self.vm.stack.pop() {
             Some(VMType::Array(mut array)) => {
@@ -527,6 +597,8 @@ impl Parser {
     }
 
     /// Parse a sum instruction
+    ///
+    /// [a, b, c, ..., n] => a + b + c + ... + n
     fn parse_sum(&mut self, line: u16) {
         match self.vm.stack.pop() {
             Some(VMType::Array(array)) => {
@@ -546,6 +618,8 @@ impl Parser {
     }
 
     /// Parse a product instruction
+    ///
+    /// [a, b, c, ... , n] => a * b * c * ... * n
     fn parse_product(&mut self, line: u16) {
         match self.vm.stack.pop() {
             Some(VMType::Array(array)) => {
