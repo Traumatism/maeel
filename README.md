@@ -35,3 +35,25 @@ swap
 " " join
 println
 ```
+
+## boolean logic / if conditions
+
+```
+let a true;
+let b true; 
+
+a b or if
+    "a or b => true" println
+    clear
+;
+
+a b and if
+    "a and b => true" println
+    clear
+;
+
+a b eq if
+    "a eq b => true" println
+    clear
+;
+```

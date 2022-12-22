@@ -5,14 +5,16 @@ enum Token {
     Integer(i64, u16),
     Str(String, u16),
     Identifier(String, u16),
+    Bool(bool, u16),
     Separator,
 }
 
-// Every single type VM can work with
+/// Every single type VM can work with
 enum VMType {
     Float(f64),
     Integer(i64),
     Str(String),
+    Bool(bool),
     Array(Vec<VMType>),
 }
 
@@ -23,6 +25,7 @@ impl Clone for VMType {
             Self::Integer(n) => Self::Integer(*n),
             Self::Str(c) => Self::Str(c.clone()),
             Self::Array(array) => Self::Array(array.clone()),
+            Self::Bool(p) => Self::Bool(*p),
         }
     }
 }
@@ -221,7 +224,11 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                 }
 
-                tokens.push(Token::Identifier(content, line))
+                tokens.push(match &(*content) {
+                    "true" => Token::Bool(true, line),
+                    "false" => Token::Bool(false, line),
+                    _ => Token::Identifier(content, line),
+                });
             }
             // integers/floats
             '0'..='9' => {
@@ -235,6 +242,7 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
                             float = true;
                             content.push('.')
                         }
+                        '_' => (),
                         _ => {
                             chars.previous();
                             break;
@@ -278,10 +286,9 @@ impl Parser {
             match token {
                 Token::Separator => panic!("Separator error (shouldn't be happening)"),
 
+                Token::Bool(p, _) => self.vm.stack.push(VMType::Bool(p)),
                 Token::Str(content, _) => self.vm.stack.push(VMType::Str(content)),
-
                 Token::Integer(n, _) => self.vm.stack.push(VMType::Integer(n)),
-
                 Token::Float(x, _) => self.vm.stack.push(VMType::Float(x)),
 
                 Token::Identifier(identifier, line) => match &*identifier {
@@ -314,6 +321,14 @@ impl Parser {
                         self.vm.procs.insert(proc_name, proc_tokens);
                     }
 
+                    "if" => {
+                        match self.vm.stack.fast_pop_1() {
+                            VMType::Bool(true) => tokens.clear(),
+                            VMType::Bool(false) => (),
+                            _ => panic!(),
+                        };
+                    }
+
                     "let" => {
                         let name = match tokens.fast_pop_1() {
                             Token::Identifier(name, _) => name,
@@ -324,6 +339,7 @@ impl Parser {
                             Token::Str(content, _) => VMType::Str(content),
                             Token::Integer(n, _) => VMType::Integer(n),
                             Token::Float(x, _) => VMType::Float(x),
+                            Token::Bool(p, _) => VMType::Bool(p),
                             Token::Identifier(instruction, _) => {
                                 match &*instruction {
                                     "pop" => self.vm.stack.fast_pop_1(),
@@ -341,14 +357,19 @@ impl Parser {
                     "swap" => self.vm.stack.swap(),
                     "clear" => self.vm.stack.clear(),
                     "pop" => self.vm.stack.fast_pop_2(),
-                    "range" | "erange" => self.parse_range(identifier, line),
-                    "print" | "println" => self.parse_print(identifier, line),
-                    "parse_int" => self.parse_parse_int(line),
+
+                    "eq" => self.parse_eq(line),
+                    "or" => self.parse_or(line),
                     "sum" => self.parse_sum(line),
+                    "not" => self.parse_not(line),
+                    "and" => self.parse_and(line),
                     "join" => self.parse_join(line),
                     "take" => self.parse_take(line),
                     "reverse" => self.parse_reverse(line),
                     "product" => self.parse_product(line),
+                    "parse_int" => self.parse_parse_int(line),
+                    "range" | "erange" => self.parse_range(identifier, line),
+                    "print" | "println" => self.parse_print(identifier, line),
 
                     identifier => self
                         .vm
@@ -357,6 +378,42 @@ impl Parser {
                 },
             }
         }
+    }
+
+    fn parse_or(&mut self, line: u16) {
+        let (p, q) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+            (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
+            _ => panic!("line {line}: `or` requires 2 booleans on the stack!"),
+        };
+
+        self.vm.stack.push(VMType::Bool(p | q))
+    }
+
+    fn parse_and(&mut self, line: u16) {
+        let (p, q) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+            (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
+            _ => panic!("line {line}: `and` requires 2 booleans on the stack!"),
+        };
+
+        self.vm.stack.push(VMType::Bool(p & q))
+    }
+
+    fn parse_eq(&mut self, line: u16) {
+        let (p, q) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+            (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
+            _ => panic!("line {line}: `eq` requires 2 booleans on the stack!"),
+        };
+
+        self.vm.stack.push(VMType::Bool(p == q))
+    }
+
+    fn parse_not(&mut self, line: u16) {
+        let p = match self.vm.stack.pop() {
+            Some(VMType::Bool(p)) => p,
+            _ => panic!("line {line}: `not` requires 1 boolean on the stack!"),
+        };
+
+        self.vm.stack.push(VMType::Bool(!p))
     }
 
     /// Parse a parse_int instruction
@@ -390,6 +447,7 @@ impl Parser {
             VMType::Float(x) => print(x.to_string()),
             VMType::Integer(n) => print(n.to_string()),
             VMType::Str(c) => print(c.to_string()),
+            VMType::Bool(p) => print(p.to_string()),
             _ => panic!("line {line}: `{identifier}` requires string|integer|float on the stack!"),
         }
 
