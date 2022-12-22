@@ -1,4 +1,5 @@
 /// Tokens (type, line number)
+#[derive(Debug)]
 enum Token {
     Float(f64, u16),
     Integer(i64, u16),
@@ -28,7 +29,9 @@ impl Clone for VMType {
 
 /// VM (manage instructions stack and variables)
 #[derive(Default)]
+#[allow(dead_code)]
 struct VM {
+    pub procs: std::collections::BTreeMap<String, Stack<Token>>,
     pub vars: std::collections::BTreeMap<String, VMType>,
     pub stack: Stack<VMType>,
 }
@@ -206,12 +209,12 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
                 tokens.push(Token::Str(content, line))
             }
             // identifiers
-            'a'..='z' => {
+            'a'..='z' | '_' => {
                 let mut content = String::from(char);
 
                 while let Some(next) = chars.next() {
                     match next {
-                        'a'..='z' => content.push(next),
+                        'a'..='z' | '_' => content.push(next),
                         _ => {
                             chars.previous();
                             break;
@@ -284,54 +287,67 @@ impl Parser {
 
                 Token::Identifier(identifier, line) => match &*identifier {
                     "proc" => {
-                        let _name = match tokens.fast_pop_1() {
+                        let proc_name = match tokens.fast_pop_1() {
                             Token::Identifier(name, _) => name,
                             _ => panic!("line {line}: syntax: `proc name`"),
                         };
 
-                        todo!()
+                        match tokens.fast_pop_1() {
+                            Token::Identifier(supposed_do, _) => match &*supposed_do {
+                                "do" => (),
+                                _ => panic!(),
+                            },
+                            _ => panic!(),
+                        }
+
+                        let mut proc_tokens = Stack::<Token>::default();
+                        while let Some(token) = tokens.pop() {
+                            match &token {
+                                Token::Identifier(identifier, _) => match &**identifier {
+                                    "end" => break,
+                                    _ => proc_tokens.push(token),
+                                },
+                                _ => proc_tokens.push(token),
+                            }
+                        }
+
+                        self.vm.procs.insert(proc_name, proc_tokens);
                     }
 
                     "let" => {
                         let name = match tokens.fast_pop_1() {
                             Token::Identifier(name, _) => name,
-                            _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string"),
+                            _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"),
                         };
 
                         let value = match tokens.fast_pop_1() {
                             Token::Str(content, _) => VMType::Str(content),
                             Token::Integer(n, _) => VMType::Integer(n),
                             Token::Float(x, _) => VMType::Float(x),
-                            _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string"),
+                            Token::Identifier(instruction, _) => {
+                                match &*instruction {
+                                    "pop" => self.vm.stack.fast_pop_1(),
+                                    "dup" => { self.vm.stack.dup(); self.vm.stack.fast_pop_1() }
+                                    _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"), 
+                                }
+                            },
+                            _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"),
                         };
 
                         self.vm.vars.insert(name, value);
                     }
 
                     "dup" => self.vm.stack.dup(),
-
                     "swap" => self.vm.stack.swap(),
-
                     "clear" => self.vm.stack.clear(),
-
-                    "pop" => {
-                        self.vm.stack.pop().unwrap_or_else(|| {
-                            panic!("line {line}: `pop` requires at least one value on the stack!");
-                        });
-                    }
-
+                    "pop" => self.vm.stack.fast_pop_2(),
                     "range" | "erange" => self.parse_range(identifier, line),
-
                     "print" | "println" => self.parse_print(identifier, line),
-
+                    "parse_int" => self.parse_parse_int(line),
                     "sum" => self.parse_sum(line),
-
                     "join" => self.parse_join(line),
-
                     "take" => self.parse_take(line),
-
                     "reverse" => self.parse_reverse(line),
-
                     "product" => self.parse_product(line),
 
                     identifier => self
@@ -340,6 +356,16 @@ impl Parser {
                         .push(self.vm.vars.get(identifier).unwrap().clone()),
                 },
             }
+        }
+    }
+
+    fn parse_parse_int(&mut self, line: u16) {
+        match self.vm.stack.pop() {
+            Some(VMType::Str(string)) => self
+                .vm
+                .stack
+                .push(VMType::Integer(string.parse::<i64>().unwrap())),
+            _ => panic!("line {line}: `parse_int` requires string on the stack!"),
         }
     }
 
