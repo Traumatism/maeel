@@ -29,7 +29,6 @@ impl Clone for VMType {
 
 /// VM (manage instructions stack and variables)
 #[derive(Default)]
-#[allow(dead_code)]
 struct VM {
     pub procs: std::collections::BTreeMap<String, Stack<Token>>,
     pub vars: std::collections::BTreeMap<String, VMType>,
@@ -301,6 +300,7 @@ impl Parser {
                         }
 
                         let mut proc_tokens = Stack::<Token>::default();
+
                         while let Some(token) = tokens.pop() {
                             match &token {
                                 Token::Identifier(identifier, _) => match &**identifier {
@@ -359,6 +359,9 @@ impl Parser {
         }
     }
 
+    /// Parse a parse_int instruction
+    ///
+    /// Convert string to integers (TODO: implement floats)
     fn parse_parse_int(&mut self, line: u16) {
         match self.vm.stack.pop() {
             Some(VMType::Str(string)) => self
@@ -370,6 +373,8 @@ impl Parser {
     }
 
     /// Parse a print/println instruction
+    ///
+    /// Print stack head to stdout
     fn parse_print(&mut self, identifier: String, line: u16) {
         let print = match &*identifier {
             "println" => |content| println!("{content}"),
@@ -392,6 +397,8 @@ impl Parser {
     }
 
     /// Parse a range instruction
+    ///
+    /// Generate sets of integers
     fn parse_range(&mut self, identifier: String, line: u16) {
         let (b, a) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
             (Some(VMType::Integer(b1)), Some(VMType::Integer(a1))) => (b1, a1),
@@ -415,6 +422,8 @@ impl Parser {
     }
 
     /// Parse a join instruction
+    ///
+    /// Join an array of string around a string
     fn parse_join(&mut self, line: u16) {
         let Some(VMType::Str(join_string)) = self.vm.stack.pop() else { panic!("line {line}: `join` requires a string and a [string] on the stack!") };
 
