@@ -1,0 +1,34 @@
+let a true;
+let b true;
+
+a b or if
+    "a or b => true" println
+    clear
+end a b or not if
+    "a or b => false" println
+    clear
+end
+
+a b and if
+    "a and b => true" println
+    clear
+end a b and not if
+    "a and b => false" println
+    clear
+end
+
+a b eq if
+    "a eq b => true" println
+    clear
+end a b eq not if
+    "a eq b => false" println
+    clear
+end
+
+a b xor if
+    "a xor b => true" println
+    clear
+end a b xor not if
+    "a xor b => false" println
+    clear
+end

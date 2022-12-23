@@ -1,0 +1,14 @@
+"hello" "world"
+    swap
+    2 take
+    " " join
+    println
+    clear
+end
+
+"hel" "lo"
+    swap
+    add
+    println
+    clear
+end
