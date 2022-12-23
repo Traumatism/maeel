@@ -1,6 +1,7 @@
 use std::cmp::PartialEq;
 use std::collections::BTreeMap;
 use std::env::args;
+use std::fmt::Debug;
 use std::fs::read_to_string;
 use std::mem::replace;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Mul, Not, Sub};
@@ -146,10 +147,16 @@ impl ToString for VMType {
         match self {
             VMType::Float(x) => x.to_string(),
             VMType::Integer(n) => n.to_string(),
-            VMType::Str(c) => c.clone(),
+            VMType::Str(c) => c.to_string(),
             VMType::Bool(p) => p.to_string(),
-            _ => panic!(),
+            VMType::Array(array) => format!("{array:?}"),
         }
+    }
+}
+
+impl Debug for VMType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
