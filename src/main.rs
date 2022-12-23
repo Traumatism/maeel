@@ -5,8 +5,18 @@ use std::fmt::Debug;
 use std::fs::read_to_string;
 use std::mem::replace;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Mul, Not, Sub};
+use std::slice::Iter;
 use std::string::ToString;
 
+const DEBUG: bool = false;
+
+macro_rules! debug {
+    ($content:expr) => {
+        if DEBUG {
+            println!("[DEBUG] {}", $content);
+        }
+    };
+}
 /// Tokens (type, line number)
 enum Token {
     Float(f64, u16),
@@ -15,6 +25,23 @@ enum Token {
     Identifier(String, u16),
     Bool(bool, u16),
     Separator,
+    ProcStart,
+    ProcEnd,
+}
+
+impl Clone for Token {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Float(x, l) => Self::Float(*x, *l),
+            Self::Integer(n, l) => Self::Integer(*n, *l),
+            Self::Str(c, l) => Self::Str(c.clone(), *l),
+            Self::Identifier(c, l) => Self::Identifier(c.clone(), *l),
+            Self::Bool(p, l) => Self::Bool(*p, *l),
+            Self::Separator => Self::Separator,
+            Self::ProcStart => Self::ProcStart,
+            Self::ProcEnd => Self::ProcEnd,
+        }
+    }
 }
 
 /// Every single type VM can work with
@@ -33,7 +60,7 @@ impl PartialOrd for VMType {
             (VMType::Float(x), VMType::Float(y)) => Some(x.total_cmp(y)),
             (VMType::Float(x), VMType::Integer(n)) => Some(x.total_cmp(&(*n as f64))),
             (VMType::Integer(n), VMType::Float(x)) => Some(x.total_cmp(&(*n as f64))),
-            _ => panic!(),
+            (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
 }
@@ -61,7 +88,7 @@ impl Not for VMType {
             VMType::Float(x) => VMType::Float(x * -1.),
             VMType::Integer(n) => VMType::Integer(-n),
             VMType::Bool(p) => VMType::Bool(!p),
-            _ => panic!(),
+            a => panic!("can't invert {a:?}"),
         }
     }
 }
@@ -72,7 +99,7 @@ impl BitAnd for VMType {
     fn bitand(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p & q),
-            _ => panic!(),
+            (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
 }
@@ -83,7 +110,7 @@ impl BitOr for VMType {
     fn bitor(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p | q),
-            _ => panic!(),
+            (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
 }
@@ -94,7 +121,7 @@ impl BitXor for VMType {
     fn bitxor(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p ^ q),
-            _ => panic!(),
+            (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
 }
@@ -108,7 +135,7 @@ impl Sub for VMType {
             (VMType::Float(x), VMType::Float(y)) => VMType::Float(x - y),
             (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 - x),
             (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x - n as f64),
-            _ => panic!(),
+            (a, b) => panic!("can't sub {a:?} and {b:?}"),
         }
     }
 }
@@ -122,7 +149,7 @@ impl Mul for VMType {
             (VMType::Float(x), VMType::Float(y)) => VMType::Float(x * y),
             (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 * x),
             (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x * n as f64),
-            _ => panic!(),
+            (a, b) => panic!("can't mul {a:?} and {b:?}"),
         }
     }
 }
@@ -137,7 +164,7 @@ impl Add for VMType {
             (VMType::Float(x), VMType::Float(y)) => VMType::Float(x + y),
             (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 + x),
             (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x + n as f64),
-            _ => panic!(),
+            (a, b) => panic!("can't add {a:?} and {b:?}"),
         }
     }
 }
@@ -201,6 +228,21 @@ impl<T: Clone> Stack<T> {
         let a = self.fast_pop_1();
         self.push(a.clone());
         self.push(a)
+    }
+}
+
+impl<T: Clone + Debug> From<Vec<T>> for Stack<T> {
+    fn from(value: Vec<T>) -> Self {
+        let mut cloned_value = value;
+        let mut new_stack = Stack::default();
+
+        cloned_value.reverse();
+
+        cloned_value
+            .iter()
+            .for_each(|ele| new_stack.push(ele.clone()));
+
+        new_stack
     }
 }
 
@@ -340,6 +382,8 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
                     "true" => Token::Bool(true, line),
                     "false" => Token::Bool(false, line),
                     "end" => Token::Separator,
+                    "proc" => Token::ProcStart,
+                    "end_proc" => Token::ProcEnd,
                     _ => Token::Identifier(content, line),
                 });
             }
@@ -377,7 +421,7 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
 
 /// Evaluate the instructions (runtime)
 struct Parser {
-    procs: BTreeMap<String, Stack<Token>>,
+    procs: BTreeMap<String, Vec<Token>>,
     vars: BTreeMap<String, VMType>,
     stack: Stack<VMType>,
 }
@@ -392,392 +436,439 @@ impl Parser {
     }
 
     /// Parse a single instruction
-    pub fn parse_instruction(&mut self, tokens: &mut Stack<Token>) {
-        while let Some(token) = tokens.pop() {
-            match token {
-                Token::Separator => panic!("Separator error (shouldn't be happening)"),
+    pub fn parse_instruction(&mut self, tokens: &mut Iter<Token>) {
+        while let Some(token) = tokens.next() {
+            match token.clone() {
+                Token::Separator | Token::ProcEnd => (),
 
                 Token::Bool(p, _) => self.stack.push(VMType::Bool(p)),
+
                 Token::Str(content, _) => self.stack.push(VMType::Str(content)),
+
                 Token::Integer(n, _) => self.stack.push(VMType::Integer(n)),
+
                 Token::Float(x, _) => self.stack.push(VMType::Float(x)),
 
-                Token::Identifier(identifier, line) => match &*identifier {
-                    "proc" => {
-                        let proc_name = match tokens.fast_pop_1() {
-                            Token::Identifier(name, _) => name,
-                            _ => panic!("line {line}: syntax: `proc name`"),
-                        };
+                Token::ProcStart => {
+                    debug!("parsing proc...");
 
-                        match tokens.fast_pop_1() {
-                            Token::Identifier(supposed_do, _) => match &*supposed_do {
-                                "do" => (),
-                                _ => panic!(),
-                            },
-                            _ => panic!(),
+                    let proc_name = match tokens.next().unwrap() {
+                        Token::Identifier(name, _) => name,
+                        _ => panic!(),
+                    };
+
+                    debug!(format!(" -> {proc_name}"));
+
+                    let mut proc_tokens = Vec::new();
+
+                    for token in tokens.by_ref() {
+                        match token {
+                            Token::ProcEnd => break,
+                            _ => proc_tokens.push(token.clone()),
                         }
-
-                        let mut proc_tokens = Stack::<Token>::default();
-
-                        while let Some(token) = tokens.pop() {
-                            match &token {
-                                Token::Identifier(identifier, _) => match &**identifier {
-                                    "end" => break,
-                                    _ => proc_tokens.push(token),
-                                },
-                                _ => proc_tokens.push(token),
-                            }
-                        }
-
-                        self.procs.insert(proc_name, proc_tokens);
                     }
 
-                    "if" => {
-                        match self.stack.fast_pop_1() {
-                            VMType::Bool(true) => (),
-                            VMType::Bool(false) => tokens.clear(),
-                            _ => panic!(),
-                        };
-                    }
+                    debug!(format!("pushing new proc: {proc_name}"));
 
-                    "let" => {
-                        let name = match tokens.fast_pop_1() {
-                            Token::Identifier(name, _) => name,
+                    self.procs.insert(proc_name.clone(), proc_tokens);
+                }
+
+                Token::Identifier(identifier, line) => {
+                    match &*identifier {
+                        "if" => {
+                            match self.stack.pop() {
+                            Some(VMType::Bool(true)) => (),
+                            Some(VMType::Bool(false)) => return,
+                            _ => panic!("line {line}: `if` requires a boolean value on the top of the stack!"),
+                        };
+                        }
+
+                        "let" => {
+                            let name = match tokens.next() {
+                            Some(Token::Identifier(name, _)) => name,
                             _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"),
                         };
 
-                        let value = match tokens.fast_pop_1() {
-                            Token::Str(content, _) => VMType::Str(content),
-                            Token::Integer(n, _) => VMType::Integer(n),
-                            Token::Float(x, _) => VMType::Float(x),
-                            Token::Bool(p, _) => VMType::Bool(p),
-                            Token::Identifier(instruction, _) => {
-                                match &*instruction {
+                            let value = match tokens.next() {
+                            Some(Token::Str(content, _)) => VMType::Str(content.clone()),
+                            Some(Token::Integer(n, _)) => VMType::Integer(*n),
+                            Some(Token::Float(x, _)) => VMType::Float(*x),
+                            Some(Token::Bool(p, _)) => VMType::Bool(*p),
+                            Some(Token::Identifier(instruction, _)) => {
+                                match &**instruction {
                                     "pop" => self.stack.fast_pop_1(),
                                     "dup" => { self.stack.dup(); self.stack.fast_pop_1() }
-                                    _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"), 
+                                    _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (1)"), 
                                 }
                             },
-                            _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"),
+                            _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (2)"),
                         };
 
-                        self.vars.insert(name, value);
-                    }
+                            match tokens.next() {
+                            Some(Token::Separator) => (),
+                            None => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (3)"),
+                            _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (4)"),
+                        }
 
-                    "dup" => self.stack.dup(),
-                    "swap" => self.stack.swap(),
-                    "exch" => self.stack.swap(),
-                    "clear" => self.stack.clear(),
-                    "pop" => self.stack.fast_pop_2(),
-                    "drop" => self.stack.fast_pop_2(),
-                    "eq" => self.parse_eq(line),
-                    "or" => self.parse_or(line),
-                    "xor" => self.parse_xor(line),
-                    "add" => self.parse_add(line),
-                    "sub" => self.parse_sub(line),
-                    "mul" => self.parse_mul(line),
-                    "sum" => self.parse_sum(line),
-                    "not" => self.parse_not(line),
-                    "and" => self.parse_and(line),
-                    "join" => self.parse_join(line),
-                    "take" => self.parse_take(line),
-                    "reverse" => self.parse_reverse(line),
-                    "product" => self.parse_product(line),
-                    "parse_int" => self.parse_parse_int(line),
-                    "range" | "erange" => self.parse_range(identifier, line),
-                    "print" | "println" => self.parse_print(identifier, line),
+                            self.vars.insert(name.clone(), value);
+                        }
 
-                    identifier => self.stack.push(self.vars.get(identifier).unwrap().clone()),
-                },
-            }
-        }
-    }
+                        "dup" => self.stack.dup(),
 
-    /// Parse an add instruction
-    ///
-    /// 1 + 1 => 2
-    /// 1.0 + 1.0 => 2.0
-    /// 1.0 + 1 => 2.0
-    fn parse_add(&mut self, line: u16) {
-        let a = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `add` requires two values on the top of the stack!")
-        });
+                        "swap" => self.stack.swap(),
 
-        let b = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `add` requires two values on the top of the stack!")
-        });
+                        "exch" => self.stack.swap(),
 
-        self.stack.push(a.add(b))
-    }
+                        "clear" => self.stack.clear(),
 
-    /// Parse a sub instruction
-    ///
-    /// 3 - 1 => 2
-    /// 3.0 - 1.0 => 2.0
-    /// 3.0 - 1 => 2.0
-    fn parse_sub(&mut self, line: u16) {
-        let a = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `sub` requires two values on the top of the stack!")
-        });
+                        "pop" => self.stack.fast_pop_2(),
 
-        let b = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `sub` requires two values on the top of the stack!")
-        });
+                        "drop" => self.stack.fast_pop_2(),
 
-        self.stack.push(b.sub(a))
-    }
+                        // Parse an equality instruction
+                        //
+                        // 0 + 0 => 1
+                        // 0 + 1 => 0
+                        // 1 + 0 => 0
+                        // 1 + 1 => 1
+                        "eq" => {
+                            let a = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `eq` requires two values on the top of the stack!")
+                            });
 
-    /// Parse a mul instruction
-    ///
-    /// 2 * 1 => 2
-    /// 2.0 * 1.0 => 2.0
-    /// 2.0 * 1 => 2.0
-    fn parse_mul(&mut self, line: u16) {
-        let a = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `mul` requires two values on the top of the stack!")
-        });
+                            let b = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `eq` requires two values on the top of the stack!")
+                            });
 
-        let b = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `mul` requires two values on the top of the stack!")
-        });
+                            self.stack.push(VMType::Bool(a == b))
+                        }
 
-        self.stack.push(a.mul(b))
-    }
+                        // Parse an or instruction
+                        //
+                        // 0 + 0 => 0
+                        // 0 + 1 => 1
+                        // 1 + 0 => 1
+                        // 1 + 1 => 1
+                        "or" => {
+                            let p = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `or` requires two values on the top of the stack!")
+                            });
 
-    /// Parse an or instruction
-    ///
-    /// 0 + 0 => 0
-    /// 0 + 1 => 1
-    /// 1 + 0 => 1
-    /// 1 + 1 => 1
-    fn parse_or(&mut self, line: u16) {
-        let p = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `or` requires two values on the top of the stack!")
-        });
+                            let q = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `or` requires two values on the top of the stack!")
+                            });
 
-        let q = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `or` requires two values on the top of the stack!")
-        });
+                            self.stack.push(p | q)
+                        }
 
-        self.stack.push(p | q)
-    }
+                        // Parse a xor instruction
+                        //
+                        // 0 + 0 => 0
+                        // 0 + 1 => 1
+                        // 1 + 0 => 1
+                        // 1 + 1 => 1
+                        "xor" => {
+                            let p = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `xor` requires two values on the top of the stack!")
+                            });
 
-    /// Parse an and instruction
-    ///
-    /// 0 + 0 => 0
-    /// 0 + 1 => 0
-    /// 1 + 0 => 0
-    /// 1 + 1 => 1
-    fn parse_and(&mut self, line: u16) {
-        let p = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `and` requires two values on the top of the stack!")
-        });
+                            let q = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `xor` requires two values on the top of the stack!")
+                            });
 
-        let q = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `and` requires two values on the top of the stack!")
-        });
+                            self.stack.push(p ^ q)
+                        }
 
-        self.stack.push(p & q)
-    }
+                        // Parse an add instruction
+                        //
+                        // 1 + 1 => 2
+                        // 1.0 + 1.0 => 2.0
+                        // 1.0 + 1 => 2.0
+                        "add" => {
+                            let a = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `add` requires two values on the top of the stack!")
+                            });
 
-    /// Parse a xor instruction
-    ///
-    /// 0 + 0 => 0
-    /// 0 + 1 => 1
-    /// 1 + 0 => 1
-    /// 1 + 1 => 1
-    fn parse_xor(&mut self, line: u16) {
-        let p = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `xor` requires two values on the top of the stack!")
-        });
+                            let b = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `add` requires two values on the top of the stack!")
+                            });
 
-        let q = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `xor` requires two values on the top of the stack!")
-        });
+                            self.stack.push(a.add(b))
+                        }
 
-        self.stack.push(p ^ q)
-    }
+                        // Parse a sub instruction
+                        //
+                        // 3 - 1 => 2
+                        // 3.0 - 1.0 => 2.0
+                        // 3.0 - 1 => 2.0
+                        "sub" => {
+                            let a = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `sub` requires two values on the top of the stack!")
+                            });
 
-    /// Parse an equality instruction
-    ///
-    /// 0 + 0 => 1
-    /// 0 + 1 => 0
-    /// 1 + 0 => 0
-    /// 1 + 1 => 1
-    fn parse_eq(&mut self, line: u16) {
-        let a = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `eq` requires two values on the top of the stack!")
-        });
+                            let b = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `sub` requires two values on the top of the stack!")
+                            });
 
-        let b = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `eq` requires two values on the top of the stack!")
-        });
+                            self.stack.push(b.sub(a))
+                        }
 
-        self.stack.push(VMType::Bool(a == b))
-    }
+                        // Parse a mul instruction
+                        //
+                        // 2 * 1 => 2
+                        // 2.0 * 1.0 => 2.0
+                        // 2.0 * 1 => 2.0
+                        "mul" => {
+                            let a = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `mul` requires two values on the top of the stack!")
+                            });
 
-    /// Parse a not instruction
-    ///
-    /// 0 => 1
-    /// 1 => 0
-    fn parse_not(&mut self, line: u16) {
-        let p = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `not` requires one value on the top of the stack!")
-        });
+                            let b = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `mul` requires two values on the top of the stack!")
+                            });
 
-        self.stack.push(!p)
-    }
+                            self.stack.push(a.mul(b))
+                        }
 
-    /// Parse a parse_int instruction
-    ///
-    /// Convert string to integers (TODO: implement floats)
-    fn parse_parse_int(&mut self, line: u16) {
-        match self.stack.pop() {
-            Some(VMType::Str(string)) => self
-                .stack
-                .push(VMType::Integer(string.parse::<i64>().unwrap())),
-            _ => panic!("line {line}: `parse_int` requires string on the stack!"),
-        }
-    }
-
-    /// Parse a print/println instruction
-    ///
-    /// Print stack head to stdout
-    fn parse_print(&mut self, identifier: String, line: u16) {
-        let print = match &*identifier {
-            "println" => |content| println!("{content}"),
-            "print" => |content| print!("{content}"),
-            _ => panic!(),
-        };
-
-        let e = self.stack.pop().unwrap_or_else(|| {
-            panic!("line {line}: `{identifier}` requires string|integer|float on the stack!")
-        });
-
-        print(e.to_string());
-
-        self.stack.push(e);
-    }
-
-    /// Parse a range instruction
-    ///
-    /// Generate sets of integers
-    fn parse_range(&mut self, identifier: String, line: u16) {
-        let (b, a) = match (self.stack.pop(), self.stack.pop()) {
-            (Some(VMType::Integer(b1)), Some(VMType::Integer(a1))) => (b1, a1),
-            _ => {
-                panic!("line {line}: `range` requires two integers on the stack!")
-            }
-        };
-
-        let range: Vec<i64> = match &*identifier {
-            "erange" => (a..=b).collect(),
-            "range" => (a..b).collect(),
-            _ => panic!(),
-        };
-
-        self.stack.push(VMType::Array(
-            range
-                .iter()
-                .map(|n| VMType::Integer(*n))
-                .collect::<Vec<VMType>>(),
-        ))
-    }
-
-    /// Parse a join instruction
-    ///
-    /// Join an array of string around a string
-    fn parse_join(&mut self, line: u16) {
-        let Some(VMType::Str(join_string)) = self.stack.pop() else { panic!("line {line}: `join` requires a string and a [string] on the stack!") };
-
-        let joined = match self.stack.pop() {
-            Some(VMType::Array(array)) => array
-                .iter()
-                .map(|element: &VMType| -> String {
-                    match element {
-                        VMType::Str(content) => content.clone(),
-                        _ => panic!(
-                            "line {line}: `join` requires a string and a [string] on the stack!"
-                        ),
-                    }
-                })
-                .collect::<Vec<String>>()
-                .join(&join_string),
-            _ => panic!("line {line}: `join` requires a string and a [string] on the stack!"),
-        };
-
-        self.stack.push(VMType::Str(joined));
-    }
-
-    /// Parse a take instruction
-    ///
-    /// |a|b|c|3| => [a, b, c]
-    /// |a|b|c|2| => [b, c]
-    fn parse_take(&mut self, line: u16) {
-        match self.stack.pop() {
-            Some(VMType::Integer(n)) => {
-                let array = (0..n).map(|_| self.stack.fast_pop_1()).collect();
-                self.stack.push(VMType::Array(array))
-            }
-            _ => panic!("line {line}: `take` requires an integer on the stack!"),
-        }
-    }
-
-    /// Parse a reverse instruction
-    ///
-    /// [a, b, c] => [c, b, a]
-    fn parse_reverse(&mut self, line: u16) {
-        match self.stack.pop() {
-            Some(VMType::Array(mut array)) => {
-                array.reverse();
-                self.stack.push(VMType::Array(array))
-            }
-            _ => panic!("line {line}: `reverse` expect an array on top of the stack"),
-        }
-    }
-
-    /// Parse a sum instruction
-    ///
-    /// [a, b, c, ..., n] => a + b + c + ... + n
-    fn parse_sum(&mut self, line: u16) {
-        match self.stack.pop() {
-            Some(VMType::Array(array)) => {
-                let sum = array
-                    .iter()
-                    .map(|element| match element {
+                        // Parse a sum instruction
+                        //
+                        // [a, b, c, ..., n] => a + b + c + ... + n
+                        "sum" => match self.stack.pop() {
+                            Some(VMType::Array(array)) => {
+                                let sum = array
+                                    .iter()
+                                    .map(|element| {
+                                        match element {
                         VMType::Integer(n) => *n as f64,
                         VMType::Float(x) => *x,
                         _ => panic!("line {line}: `sum` requires [integer|float] on the stack!"),
-                    })
-                    .sum::<f64>();
+                    }
+                                    })
+                                    .sum::<f64>();
 
-                self.stack.push(VMType::Float(sum))
-            }
-            _ => panic!("line {line}: `sum` requires [integer|float] on the stack!"),
-        }
-    }
+                                self.stack.push(VMType::Float(sum))
+                            }
+                            _ => {
+                                panic!("line {line}: `sum` requires [integer|float] on the stack!")
+                            }
+                        },
 
-    /// Parse a product instruction
-    ///
-    /// [a, b, c, ... , n] => a * b * c * ... * n
-    fn parse_product(&mut self, line: u16) {
-        match self.stack.pop() {
-            Some(VMType::Array(array)) => {
-                let product = array
-                    .iter()
-                    .map(|element| match element {
-                        VMType::Integer(n) => *n as f64,
-                        VMType::Float(x) => *x,
-                        _ => {
-                            panic!("line {line}: `product` requires [integer|float] on the stack!")
+                        // Parse a not instruction
+                        //
+                        // 0 => 1
+                        // 1 => 0
+                        "not" => {
+                            let p = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `not` requires one value on the top of the stack!")
+                            });
+
+                            self.stack.push(!p)
                         }
-                    })
-                    .product::<f64>();
 
-                self.stack.push(VMType::Float(product));
-            }
-            _ => {
-                panic!("line {line}: `product` requires [integer|float] on the stack!")
+                        // Parse an and instruction
+                        //
+                        // 0 + 0 => 0
+                        // 0 + 1 => 0
+                        // 1 + 0 => 0
+                        // 1 + 1 => 1
+                        "and" => {
+                            let p = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `and` requires two values on the top of the stack!")
+                            });
+
+                            let q = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `and` requires two values on the top of the stack!")
+                            });
+
+                            self.stack.push(p & q)
+                        }
+
+                        // Parse a join instruction
+                        //
+                        // Join an array of string around a string
+                        "join" => {
+                            let Some(VMType::Str(join_string)) = self.stack.pop() else { panic!("line {line}: `join` requires a string and a [string] on the stack!") };
+
+                            let joined = match self.stack.pop() {
+                                Some(VMType::Array(array)) => array
+                                    .iter()
+                                    .map(|element: &VMType| -> String {
+                                        match element {
+                                            VMType::Str(content) => content.clone(),
+                                            _ => panic!(
+                                                "line {line}: `join` requires a string and a [string] on the stack!"
+                                            ),
+                                        }
+                                    })
+                                    .collect::<Vec<String>>()
+                                    .join(&join_string),
+                                _ => panic!("line {line}: `join` requires a string and a [string] on the stack!"),
+                            };
+
+                            self.stack.push(VMType::Str(joined));
+                        }
+
+                        // Parse a take instruction
+                        //
+                        // |a|b|c|3| => [a, b, c]
+                        // |a|b|c|2| => [b, c]
+                        "take" => match self.stack.pop() {
+                            Some(VMType::Integer(n)) => {
+                                let array = (0..n).map(|_| self.stack.fast_pop_1()).collect();
+                                self.stack.push(VMType::Array(array))
+                            }
+                            _ => panic!("line {line}: `take` requires an integer on the stack!"),
+                        },
+
+                        // Parse a reverse instruction
+                        //
+                        // [a, b, c] => [c, b, a]
+                        "reverse" => match self.stack.pop() {
+                            Some(VMType::Array(mut array)) => {
+                                array.reverse();
+                                self.stack.push(VMType::Array(array))
+                            }
+                            _ => {
+                                panic!("line {line}: `reverse` expect an array on top of the stack")
+                            }
+                        },
+
+                        // Parse a product instruction
+                        //
+                        // [a, b, c, ... , n] => a * b * c * ... * n
+                        "product" => {
+                            match self.stack.pop() {
+                                Some(VMType::Array(array)) => {
+                                    let product = array
+                                        .iter()
+                                        .map(|element| match element {
+                                            VMType::Integer(n) => *n as f64,
+                                            VMType::Float(x) => *x,
+                                            _ => {
+                                                panic!("line {line}: `product` requires [integer|float] on the stack!")
+                                            }
+                                        })
+                                        .product::<f64>();
+
+                                    self.stack.push(VMType::Float(product));
+                                }
+                                _ => {
+                                    panic!("line {line}: `product` requires [integer|float] on the stack!")
+                                }
+                            }
+                        }
+
+                        // Parse a parse_int instruction
+                        //
+                        // Convert string to integers (TODO: implement floats)
+                        "parse_int" => match self.stack.pop() {
+                            Some(VMType::Str(string)) => self
+                                .stack
+                                .push(VMType::Integer(string.parse::<i64>().unwrap())),
+                            _ => panic!("line {line}: `parse_int` requires string on the stack!"),
+                        },
+
+                        // Parse a range instruction
+                        //
+                        // Generate sets of integers
+                        "range" | "erange" => {
+                            let (b, a) = match (self.stack.pop(), self.stack.pop()) {
+                                (Some(VMType::Integer(b1)), Some(VMType::Integer(a1))) => (b1, a1),
+                                _ => {
+                                    panic!(
+                                        "line {line}: `range` requires two integers on the stack!"
+                                    )
+                                }
+                            };
+
+                            let range: Vec<i64> = match &*identifier {
+                                "erange" => (a..=b).collect(),
+                                "range" => (a..b).collect(),
+                                _ => panic!(),
+                            };
+
+                            self.stack.push(VMType::Array(
+                                range
+                                    .iter()
+                                    .map(|n| VMType::Integer(*n))
+                                    .collect::<Vec<VMType>>(),
+                            ))
+                        }
+
+                        // Parse a print/println instruction
+                        //
+                        // Print stack head to stdout
+                        "print" | "println" => {
+                            let print = match &*identifier {
+                                "println" => |content| println!("{content}"),
+                                "print" => |content| print!("{content}"),
+                                _ => panic!(),
+                            };
+
+                            let e = self.stack.pop().unwrap_or_else(|| {
+                                panic!("line {line}: `{identifier}` requires string|integer|float on the stack!")
+                            });
+
+                            print(e.to_string());
+
+                            self.stack.push(e);
+                        }
+
+                        identifier => {
+                            debug!(format!("looking for cached var: {identifier}"));
+
+                            let v = self.vars.get(identifier);
+
+                            if let Some(value) = v {
+                                debug!(format!("pushing variable: {identifier}"));
+                                self.stack.push(value.clone());
+                                continue;
+                            }
+
+                            debug!(format!("looking for cached proc: {identifier}"));
+
+                            let proc_tokens = self.procs.get(identifier).expect("").iter();
+
+                            debug!(format!("handling new proc: {identifier}"));
+
+                            let mut instructions = Vec::<Vec<Token>>::default();
+                            let mut current_instruction = Vec::<Token>::default();
+
+                            for next in proc_tokens {
+                                match next.clone() {
+                                    Token::ProcStart => {
+                                        current_instruction.push(next.clone());
+
+                                        for next_p in tokens.by_ref() {
+                                            match next_p {
+                                                Token::ProcEnd => break,
+                                                _ => current_instruction.push(next_p.clone()),
+                                            }
+                                        }
+
+                                        current_instruction.push(Token::ProcEnd);
+                                    }
+                                    Token::Separator => {
+                                        current_instruction.push(Token::Separator);
+                                        instructions.push(current_instruction);
+                                        current_instruction = Vec::default()
+                                    }
+                                    _ => current_instruction.push(next.clone()),
+                                }
+                            }
+
+                            instructions.push(current_instruction);
+
+                            let mut parser = Parser::new();
+
+                            let instructions_iter = instructions.iter();
+
+                            for instruction in instructions_iter {
+                                parser.parse_instruction(&mut instruction.iter())
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -786,17 +877,33 @@ impl Parser {
 fn main() {
     let args = args().collect::<Vec<String>>();
     let content = read_to_string(args.get(1).unwrap()).expect("Failed to open file");
-    let mut tokens = lex_into_tokens(&content);
-    let mut instructions = Stack::default();
-    let mut current_instruction = Stack::default();
 
-    while let Some(next) = tokens.pop() {
-        match next {
-            Token::Separator => {
-                instructions.push(current_instruction);
-                current_instruction = Stack::default()
+    let binding = lex_into_tokens(&content);
+    let mut tokens = binding.iter();
+
+    let mut instructions = Vec::<Vec<Token>>::default();
+    let mut current_instruction = Vec::<Token>::default();
+
+    while let Some(next) = tokens.next() {
+        match next.clone() {
+            Token::ProcStart => {
+                current_instruction.push(next.clone());
+
+                for next_p in tokens.by_ref() {
+                    match next_p {
+                        Token::ProcEnd => break,
+                        _ => current_instruction.push(next_p.clone()),
+                    }
+                }
+
+                current_instruction.push(Token::ProcEnd);
             }
-            _ => current_instruction.push(next),
+            Token::Separator => {
+                current_instruction.push(Token::Separator);
+                instructions.push(current_instruction);
+                current_instruction = Vec::default()
+            }
+            _ => current_instruction.push(next.clone()),
         }
     }
 
@@ -804,7 +911,9 @@ fn main() {
 
     let mut parser = Parser::new();
 
-    while let Some(mut instruction) = instructions.pop() {
-        parser.parse_instruction(&mut instruction)
+    let instructions_iter = instructions.iter();
+
+    for instruction in instructions_iter {
+        parser.parse_instruction(&mut instruction.iter())
     }
 }
