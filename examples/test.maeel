@@ -1,1 +1,5 @@
-"hello" "world" 2 take reverse println
+proc hello_proc
+    "hello" println
+end
+
+hello_proc

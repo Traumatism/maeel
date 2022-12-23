@@ -1,5 +1,5 @@
-let a true;
-let b true;
+let a true end
+let b true end
 
 a b or if
     "a or b => true" println
