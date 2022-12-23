@@ -1,0 +1,20 @@
+123 println;
+123 not println;
+
+123.4 println;
+123.4 not println;
+
+"hello" println;
+
+"hello" "world"
+    swap
+    2 take
+    println
+end
+
+"hello" "world"
+    swap
+    2 take
+    2 take
+    println
+end
