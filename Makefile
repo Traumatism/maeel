@@ -1,6 +1,2 @@
 build:
-	rustc -C opt-level=3 maeel.rs
-
-fmt:
-	rustfmt -v maeel.rs
-
+	cargo build -v --release && mv target/release/maeel .
