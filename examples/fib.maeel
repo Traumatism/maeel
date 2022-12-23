@@ -1,0 +1,15 @@
+proc fib
+    n 1 eq if n println 0 exit end clear 
+    
+    n n n 1 eq swap 0 eq or not if
+        dup 1 sub let n pop end n fib
+        swap 2 sub let n pop end n fib
+    end
+end_proc
+
+proc main
+    let n 100;
+    n fib
+end_proc
+
+main

@@ -1,0 +1,15 @@
+proc std_range             (start of the procedure definition)
+    a dup b eq if          (if a is equal to b)
+        c println 0 exit   (print c and exit with status code 0)
+    end                    (end of the if condition)
+
+    1 add let a dup;       (increase a by 1 and overwrite a)
+    c add let c pop;       (push a to c and overwrite c)
+    std_range;             (recursive call std_range)
+end_proc                   (end of the procedure definition)
+
+let a 0;                   (a <- 0)
+let b 100;                 (b <- 100)
+
+0 take let c pop;          (c <- [])
+std_range;                 (call std_range)

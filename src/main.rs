@@ -1,3 +1,5 @@
+#![allow(clippy::derivable_impls)]
+
 use std::cmp::PartialEq;
 use std::collections::BTreeMap;
 use std::env::args;
@@ -5,6 +7,7 @@ use std::fmt::Debug;
 use std::fs::read_to_string;
 use std::mem::replace;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Mul, Not, Sub};
+use std::process::exit;
 use std::slice::Iter;
 use std::string::ToString;
 
@@ -17,7 +20,9 @@ macro_rules! debug {
         }
     };
 }
+
 /// Tokens (type, line number)
+#[derive(Debug)]
 enum Token {
     Float(f64, u16),
     Integer(i64, u16),
@@ -29,6 +34,7 @@ enum Token {
     ProcEnd,
 }
 
+/// Clone trait implementation for each token
 impl Clone for Token {
     fn clone(&self) -> Self {
         match self {
@@ -53,6 +59,7 @@ enum VMType {
     Array(Vec<VMType>),
 }
 
+/// PartialOrd trait implementation for all types (perform comparaisons)
 impl PartialOrd for VMType {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
@@ -65,6 +72,7 @@ impl PartialOrd for VMType {
     }
 }
 
+/// PartialEq trait implementation for all types
 impl PartialEq for VMType {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -80,6 +88,7 @@ impl PartialEq for VMType {
     }
 }
 
+/// Not operation trait implementation for all types
 impl Not for VMType {
     type Output = VMType;
 
@@ -93,6 +102,7 @@ impl Not for VMType {
     }
 }
 
+/// Bitwise and operation trait implementation for all types
 impl BitAnd for VMType {
     type Output = VMType;
 
@@ -104,6 +114,7 @@ impl BitAnd for VMType {
     }
 }
 
+/// Bitwise or operation trait implementation for all types
 impl BitOr for VMType {
     type Output = VMType;
 
@@ -115,6 +126,7 @@ impl BitOr for VMType {
     }
 }
 
+/// Bitwise xor operation trait implementation for all types
 impl BitXor for VMType {
     type Output = VMType;
 
@@ -126,6 +138,7 @@ impl BitXor for VMType {
     }
 }
 
+/// Sub operation trait implementation for all types
 impl Sub for VMType {
     type Output = VMType;
 
@@ -140,6 +153,7 @@ impl Sub for VMType {
     }
 }
 
+/// Mul operation trait implementation for all types
 impl Mul for VMType {
     type Output = VMType;
 
@@ -154,6 +168,7 @@ impl Mul for VMType {
     }
 }
 
+/// Add operation trait implementation for all types
 impl Add for VMType {
     type Output = VMType;
 
@@ -164,11 +179,20 @@ impl Add for VMType {
             (VMType::Float(x), VMType::Float(y)) => VMType::Float(x + y),
             (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 + x),
             (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x + n as f64),
+            (other, VMType::Array(mut array)) => {
+                array.push(other);
+                VMType::Array(array)
+            }
+            (VMType::Array(mut array), other) => {
+                array.push(other);
+                VMType::Array(array)
+            }
             (a, b) => panic!("can't add {a:?} and {b:?}"),
         }
     }
 }
 
+/// ToString trait implementation for all types (convert types => string)
 impl ToString for VMType {
     fn to_string(&self) -> String {
         match self {
@@ -181,12 +205,14 @@ impl ToString for VMType {
     }
 }
 
+/// Debug trait implementation for all types (ability to display types)
 impl Debug for VMType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 
+/// Cloe trait implementation for all types
 impl Clone for VMType {
     fn clone(&self) -> Self {
         match self {
@@ -201,8 +227,8 @@ impl Clone for VMType {
 
 /// A frame in a stack
 struct Frame<T> {
-    pub value: T,
-    pub next: Option<Box<Frame<T>>>,
+    value: T,
+    next: Option<Box<Frame<T>>>,
 }
 
 impl<T> Frame<T> {
@@ -225,7 +251,7 @@ impl<T> Default for Stack<T> {
 impl<T: Clone> Stack<T> {
     /// Duplicate the head value
     pub fn dup(&mut self) {
-        let a = self.fast_pop_1();
+        let a = self.pop().unwrap();
         self.push(a.clone());
         self.push(a)
     }
@@ -233,8 +259,8 @@ impl<T: Clone> Stack<T> {
 
 impl<T: Clone + Debug> From<Vec<T>> for Stack<T> {
     fn from(value: Vec<T>) -> Self {
-        let mut cloned_value = value;
         let mut new_stack = Stack::default();
+        let mut cloned_value = value;
 
         cloned_value.reverse();
 
@@ -250,14 +276,14 @@ impl<T> Stack<T> {
     /// Clear all the stack values
     pub fn clear(&mut self) {
         while self.head.is_some() {
-            self.fast_pop_2()
+            self.pop();
         }
     }
 
     /// Swap the two head values
     pub fn swap(&mut self) {
-        let a = self.fast_pop_1();
-        let b = self.fast_pop_1();
+        let a = self.pop().unwrap();
+        let b = self.pop().unwrap();
 
         self.push(a);
         self.push(b);
@@ -272,18 +298,6 @@ impl<T> Stack<T> {
         }
 
         self.head = Some(node);
-    }
-
-    /// Pop the head value without returning it
-    pub fn fast_pop_2(&mut self) {
-        self.head = replace(&mut self.head, None).unwrap().next.map(|n| *n)
-    }
-
-    /// Pop the head value and return it (might result a runtime panic)
-    pub fn fast_pop_1(&mut self) -> T {
-        let stack = replace(&mut self.head, None).unwrap();
-        self.head = stack.next.map(|n| *n);
-        stack.value
     }
 
     /// Pop the head value and return it in an Option
@@ -426,13 +440,23 @@ struct Parser {
     stack: Stack<VMType>,
 }
 
-impl Parser {
-    pub fn new() -> Self {
+impl Default for Parser {
+    fn default() -> Self {
         Self {
             procs: BTreeMap::default(),
             vars: BTreeMap::default(),
             stack: Stack::default(),
         }
+    }
+}
+
+impl Parser {
+    pub fn new(
+        procs: BTreeMap<String, Vec<Token>>,
+        vars: BTreeMap<String, VMType>,
+        stack: Stack<VMType>,
+    ) -> Self {
+        Self { procs, vars, stack }
     }
 
     /// Parse a single instruction
@@ -449,6 +473,7 @@ impl Parser {
 
                 Token::Float(x, _) => self.stack.push(VMType::Float(x)),
 
+                // Parse new procedure definition
                 Token::ProcStart => {
                     debug!("parsing proc...");
 
@@ -475,6 +500,7 @@ impl Parser {
 
                 Token::Identifier(identifier, line) => {
                     match &*identifier {
+                        // Parse if statement
                         "if" => {
                             match self.stack.pop() {
                             Some(VMType::Bool(true)) => (),
@@ -483,6 +509,7 @@ impl Parser {
                         };
                         }
 
+                        // Parse let statement
                         "let" => {
                             let name = match tokens.next() {
                             Some(Token::Identifier(name, _)) => name,
@@ -490,40 +517,55 @@ impl Parser {
                         };
 
                             let value = match tokens.next() {
-                            Some(Token::Str(content, _)) => VMType::Str(content.clone()),
-                            Some(Token::Integer(n, _)) => VMType::Integer(*n),
-                            Some(Token::Float(x, _)) => VMType::Float(*x),
-                            Some(Token::Bool(p, _)) => VMType::Bool(*p),
-                            Some(Token::Identifier(instruction, _)) => {
-                                match &**instruction {
-                                    "pop" => self.stack.fast_pop_1(),
-                                    "dup" => { self.stack.dup(); self.stack.fast_pop_1() }
-                                    _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (1)"), 
-                                }
-                            },
-                            _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (2)"),
-                        };
+                                Some(Token::Str(content, _)) => VMType::Str(content.clone()),
+                                Some(Token::Integer(n, _)) => VMType::Integer(*n),
+                                Some(Token::Float(x, _)) => VMType::Float(*x),
+                                Some(Token::Bool(p, _)) => VMType::Bool(*p),
+                                Some(Token::Identifier(instruction, _)) => {
+                                    match &**instruction {
+                                        "pop" => self.stack.pop().unwrap_or_else(|| panic!("line {line}: let name pop requires a value on the top of the stack")),
+                                        "dup" => { self.stack.dup(); self.stack.pop().unwrap_or_else(|| panic!("line {line}: let name pop requires a value on the top of the stack")) }
+                                        _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (1)"), 
+                                    }
+                                },
+                                _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (2)"),
+                            };
 
                             match tokens.next() {
-                            Some(Token::Separator) => (),
-                            None => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (3)"),
-                            _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (4)"),
-                        }
+                                Some(Token::Separator) => (),
+                                None => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (3)"),
+                                _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (4)"),
+                            }
 
                             self.vars.insert(name.clone(), value);
                         }
 
+                        "exit" => match self.stack.pop().unwrap() {
+                            VMType::Integer(status) => exit(status as i32),
+                            _ => panic!(),
+                        },
+
+                        // Parse a dup operation
                         "dup" => self.stack.dup(),
 
+                        // Parse a swap operation
                         "swap" => self.stack.swap(),
 
+                        // Parse a swap (2) operation
                         "exch" => self.stack.swap(),
 
+                        // Parse a clear operation
                         "clear" => self.stack.clear(),
 
-                        "pop" => self.stack.fast_pop_2(),
+                        // Parse a pop operation
+                        "pop" => {
+                            self.stack.pop();
+                        }
 
-                        "drop" => self.stack.fast_pop_2(),
+                        // Parse a pop (2) operation
+                        "drop" => {
+                            self.stack.pop();
+                        }
 
                         // Parse an equality instruction
                         //
@@ -637,12 +679,10 @@ impl Parser {
                             Some(VMType::Array(array)) => {
                                 let sum = array
                                     .iter()
-                                    .map(|element| {
-                                        match element {
-                        VMType::Integer(n) => *n as f64,
-                        VMType::Float(x) => *x,
-                        _ => panic!("line {line}: `sum` requires [integer|float] on the stack!"),
-                    }
+                                    .map(|element| match element {
+                                            VMType::Integer(n) => *n as f64,
+                                            VMType::Float(x) => *x,
+                                            _ => panic!("line {line}: `sum` requires [integer|float] on the stack!"),
                                     })
                                     .sum::<f64>();
 
@@ -714,7 +754,13 @@ impl Parser {
                         // |a|b|c|2| => [b, c]
                         "take" => match self.stack.pop() {
                             Some(VMType::Integer(n)) => {
-                                let array = (0..n).map(|_| self.stack.fast_pop_1()).collect();
+                                let array = (0..n)
+                                    .map(|_| {
+                                        self.stack.pop().unwrap_or_else(|| {
+                                            panic!("line {line}: no more values on the stack!")
+                                        })
+                                    })
+                                    .collect();
                                 self.stack.push(VMType::Array(array))
                             }
                             _ => panic!("line {line}: `take` requires an integer on the stack!"),
@@ -799,17 +845,15 @@ impl Parser {
                         //
                         // Print stack head to stdout
                         "print" | "println" => {
-                            let print = match &*identifier {
-                                "println" => |content| println!("{content}"),
-                                "print" => |content| print!("{content}"),
-                                _ => panic!(),
-                            };
-
                             let e = self.stack.pop().unwrap_or_else(|| {
                                 panic!("line {line}: `{identifier}` requires string|integer|float on the stack!")
                             });
 
-                            print(e.to_string());
+                            (match &*identifier {
+                                "println" => |content| println!("{content}"),
+                                "print" => |content| print!("{content}"),
+                                _ => panic!(),
+                            })(e.to_string());
 
                             self.stack.push(e);
                         }
@@ -827,7 +871,7 @@ impl Parser {
 
                             debug!(format!("looking for cached proc: {identifier}"));
 
-                            let proc_tokens = self.procs.get(identifier).expect("").iter();
+                            let proc_tokens = self.procs.get(identifier).expect(identifier).iter();
 
                             debug!(format!("handling new proc: {identifier}"));
 
@@ -859,7 +903,11 @@ impl Parser {
 
                             instructions.push(current_instruction);
 
-                            let mut parser = Parser::new();
+                            let mut parser = Parser::new(
+                                self.procs.clone(),
+                                self.vars.clone(),
+                                Stack::default(),
+                            );
 
                             let instructions_iter = instructions.iter();
 
@@ -909,7 +957,7 @@ fn main() {
 
     instructions.push(current_instruction);
 
-    let mut parser = Parser::new();
+    let mut parser = Parser::default();
 
     let instructions_iter = instructions.iter();
 
