@@ -332,6 +332,7 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
                 tokens.push(match &(*content) {
                     "true" => Token::Bool(true, line),
                     "false" => Token::Bool(false, line),
+                    "end" => Token::Separator,
                     _ => Token::Identifier(content, line),
                 });
             }

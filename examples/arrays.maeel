@@ -1,0 +1,25 @@
+"hello" "world"
+    2 take
+    reverse
+    " " join
+    println
+    clear
+end
+
+1 2 3 4 5
+    5 take
+    sum println
+    clear
+end
+
+1 2 3 4 5
+    5 take
+    product println
+    clear
+end
+
+1 100
+    erange
+    sum println
+    clear
+end
