@@ -1,3 +1,11 @@
+use std::cmp::PartialEq;
+use std::collections::BTreeMap;
+use std::env::args;
+use std::fs::read_to_string;
+use std::mem::replace;
+use std::ops::{Add, BitAnd, BitOr, BitXor, Mul, Not, Sub};
+use std::string::ToString;
+
 /// Tokens (type, line number)
 enum Token {
     Float(f64, u16),
@@ -15,6 +23,134 @@ enum VMType {
     Str(String),
     Bool(bool),
     Array(Vec<VMType>),
+}
+
+impl PartialOrd for VMType {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (VMType::Integer(m), VMType::Integer(n)) => Some(m.cmp(n)),
+            (VMType::Float(x), VMType::Float(y)) => Some(x.total_cmp(y)),
+            (VMType::Float(x), VMType::Integer(n)) => Some(x.total_cmp(&(*n as f64))),
+            (VMType::Integer(n), VMType::Float(x)) => Some(x.total_cmp(&(*n as f64))),
+            _ => panic!(),
+        }
+    }
+}
+
+impl PartialEq for VMType {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (VMType::Str(a), VMType::Str(b)) => a == b,
+            (VMType::Array(a), VMType::Array(b)) => a == b,
+            (VMType::Float(x), VMType::Integer(n)) => *x == (*n as f64),
+            (VMType::Integer(n), VMType::Float(x)) => (*n as f64) == *x,
+            (VMType::Integer(m), VMType::Integer(n)) => m == n,
+            (VMType::Float(x), VMType::Float(y)) => x == y,
+            (VMType::Bool(p), VMType::Bool(q)) => p == q,
+            _ => false,
+        }
+    }
+}
+
+impl Not for VMType {
+    type Output = VMType;
+
+    fn not(self) -> Self::Output {
+        match self {
+            VMType::Float(x) => VMType::Float(x * -1.),
+            VMType::Integer(n) => VMType::Integer(-n),
+            VMType::Bool(p) => VMType::Bool(!p),
+            _ => panic!(),
+        }
+    }
+}
+
+impl BitAnd for VMType {
+    type Output = VMType;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p & q),
+            _ => panic!(),
+        }
+    }
+}
+
+impl BitOr for VMType {
+    type Output = VMType;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p | q),
+            _ => panic!(),
+        }
+    }
+}
+
+impl BitXor for VMType {
+    type Output = VMType;
+
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p ^ q),
+            _ => panic!(),
+        }
+    }
+}
+
+impl Sub for VMType {
+    type Output = VMType;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m - n),
+            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x - y),
+            (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 - x),
+            (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x - n as f64),
+            _ => panic!(),
+        }
+    }
+}
+
+impl Mul for VMType {
+    type Output = VMType;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m * n),
+            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x * y),
+            (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 * x),
+            (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x * n as f64),
+            _ => panic!(),
+        }
+    }
+}
+
+impl Add for VMType {
+    type Output = VMType;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (VMType::Str(s), VMType::Str(t)) => VMType::Str(s + &t),
+            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m + n),
+            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x + y),
+            (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 + x),
+            (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x + n as f64),
+            _ => panic!(),
+        }
+    }
+}
+
+impl ToString for VMType {
+    fn to_string(&self) -> String {
+        match self {
+            VMType::Float(x) => x.to_string(),
+            VMType::Integer(n) => n.to_string(),
+            VMType::Str(c) => c.clone(),
+            VMType::Bool(p) => p.to_string(),
+            _ => panic!(),
+        }
+    }
 }
 
 impl Clone for VMType {
@@ -82,7 +218,7 @@ impl<T> Stack<T> {
     pub fn push(&mut self, value: T) {
         let mut node = Frame::new(value);
 
-        if let Some(stack) = std::mem::replace(&mut self.head, None) {
+        if let Some(stack) = replace(&mut self.head, None) {
             node.next = Some(Box::new(stack))
         }
 
@@ -91,22 +227,19 @@ impl<T> Stack<T> {
 
     /// Pop the head value without returning it
     pub fn fast_pop_2(&mut self) {
-        self.head = std::mem::replace(&mut self.head, None)
-            .unwrap()
-            .next
-            .map(|n| *n)
+        self.head = replace(&mut self.head, None).unwrap().next.map(|n| *n)
     }
 
     /// Pop the head value and return it (might result a runtime panic)
     pub fn fast_pop_1(&mut self) -> T {
-        let stack = std::mem::replace(&mut self.head, None).unwrap();
+        let stack = replace(&mut self.head, None).unwrap();
         self.head = stack.next.map(|n| *n);
         stack.value
     }
 
     /// Pop the head value and return it in an Option
     pub fn pop(&mut self) -> Option<T> {
-        match std::mem::replace(&mut self.head, None) {
+        match replace(&mut self.head, None) {
             Some(stack) => {
                 self.head = stack.next.map(|n| *n);
                 Some(stack.value)
@@ -236,31 +369,22 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
 
 /// Evaluate the instructions (runtime)
 struct Parser {
-    instructions: Stack<Stack<Token>>,
-    procs: std::collections::BTreeMap<String, Stack<Token>>,
-    vars: std::collections::BTreeMap<String, VMType>,
+    procs: BTreeMap<String, Stack<Token>>,
+    vars: BTreeMap<String, VMType>,
     stack: Stack<VMType>,
 }
 
 impl Parser {
-    pub fn new(instructions: Stack<Stack<Token>>) -> Self {
+    pub fn new() -> Self {
         Self {
-            instructions,
-            procs: std::collections::BTreeMap::default(),
-            vars: std::collections::BTreeMap::default(),
+            procs: BTreeMap::default(),
+            vars: BTreeMap::default(),
             stack: Stack::default(),
         }
     }
 
-    /// Evaluate the instructions
-    pub fn parse(&mut self) {
-        while let Some(mut instruction) = self.instructions.pop() {
-            self.parse_instruction(&mut instruction)
-        }
-    }
-
     /// Parse a single instruction
-    fn parse_instruction(&mut self, tokens: &mut Stack<Token>) {
+    pub fn parse_instruction(&mut self, tokens: &mut Stack<Token>) {
         while let Some(token) = tokens.pop() {
             match token {
                 Token::Separator => panic!("Separator error (shouldn't be happening)"),
@@ -340,6 +464,7 @@ impl Parser {
                     "drop" => self.stack.fast_pop_2(),
                     "eq" => self.parse_eq(line),
                     "or" => self.parse_or(line),
+                    "xor" => self.parse_xor(line),
                     "add" => self.parse_add(line),
                     "sub" => self.parse_sub(line),
                     "mul" => self.parse_mul(line),
@@ -366,15 +491,15 @@ impl Parser {
     /// 1.0 + 1.0 => 2.0
     /// 1.0 + 1 => 2.0
     fn parse_add(&mut self, line: u16) {
-        let s = match (self.stack.pop(), self.stack.pop()) {
-            (Some(VMType::Integer(m)), Some(VMType::Integer(n))) => VMType::Integer(m + n),
-            (Some(VMType::Float(x)), Some(VMType::Float(y))) => VMType::Float(x + y),
-            (Some(VMType::Integer(n)), Some(VMType::Float(x))) => VMType::Float(n as f64 + x),
-            (Some(VMType::Float(x)), Some(VMType::Integer(n))) => VMType::Float(x + n as f64),
-            _ => panic!("line {line}: `add` requires 2 values of type int|float on the stack!"),
-        };
+        let a = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `add` requires two values on the top of the stack!")
+        });
 
-        self.stack.push(s)
+        let b = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `add` requires two values on the top of the stack!")
+        });
+
+        self.stack.push(a.add(b))
     }
 
     /// Parse a sub instruction
@@ -383,27 +508,32 @@ impl Parser {
     /// 3.0 - 1.0 => 2.0
     /// 3.0 - 1 => 2.0
     fn parse_sub(&mut self, line: u16) {
-        let s = match (self.stack.pop(), self.stack.pop()) {
-            (Some(VMType::Integer(m)), Some(VMType::Integer(n))) => VMType::Integer(m - n),
-            (Some(VMType::Float(x)), Some(VMType::Float(y))) => VMType::Float(x - y),
-            (Some(VMType::Integer(n)), Some(VMType::Float(x))) => VMType::Float(n as f64 - x),
-            (Some(VMType::Float(x)), Some(VMType::Integer(n))) => VMType::Float(x - n as f64),
-            _ => panic!("line {line}: `sub` requires 2 values of type int|float on the stack!"),
-        };
+        let a = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `sub` requires two values on the top of the stack!")
+        });
 
-        self.stack.push(s)
+        let b = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `sub` requires two values on the top of the stack!")
+        });
+
+        self.stack.push(b.sub(a))
     }
 
+    /// Parse a mul instruction
+    ///
+    /// 2 * 1 => 2
+    /// 2.0 * 1.0 => 2.0
+    /// 2.0 * 1 => 2.0
     fn parse_mul(&mut self, line: u16) {
-        let s = match (self.stack.pop(), self.stack.pop()) {
-            (Some(VMType::Integer(m)), Some(VMType::Integer(n))) => VMType::Integer(m * n),
-            (Some(VMType::Float(x)), Some(VMType::Float(y))) => VMType::Float(x * y),
-            (Some(VMType::Integer(n)), Some(VMType::Float(x))) => VMType::Float(n as f64 * x),
-            (Some(VMType::Float(x)), Some(VMType::Integer(n))) => VMType::Float(x * n as f64),
-            _ => panic!("line {line}: `mul` requires 2 values of type int|float on the stack!"),
-        };
+        let a = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `mul` requires two values on the top of the stack!")
+        });
 
-        self.stack.push(s)
+        let b = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `mul` requires two values on the top of the stack!")
+        });
+
+        self.stack.push(a.mul(b))
     }
 
     /// Parse an or instruction
@@ -413,12 +543,15 @@ impl Parser {
     /// 1 + 0 => 1
     /// 1 + 1 => 1
     fn parse_or(&mut self, line: u16) {
-        let (p, q) = match (self.stack.pop(), self.stack.pop()) {
-            (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
-            _ => panic!("line {line}: `or` requires 2 booleans on the stack!"),
-        };
+        let p = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `or` requires two values on the top of the stack!")
+        });
 
-        self.stack.push(VMType::Bool(p | q))
+        let q = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `or` requires two values on the top of the stack!")
+        });
+
+        self.stack.push(p | q)
     }
 
     /// Parse an and instruction
@@ -428,12 +561,33 @@ impl Parser {
     /// 1 + 0 => 0
     /// 1 + 1 => 1
     fn parse_and(&mut self, line: u16) {
-        let (p, q) = match (self.stack.pop(), self.stack.pop()) {
-            (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
-            _ => panic!("line {line}: `and` requires 2 booleans on the stack!"),
-        };
+        let p = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `and` requires two values on the top of the stack!")
+        });
 
-        self.stack.push(VMType::Bool(p & q))
+        let q = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `and` requires two values on the top of the stack!")
+        });
+
+        self.stack.push(p & q)
+    }
+
+    /// Parse a xor instruction
+    ///
+    /// 0 + 0 => 0
+    /// 0 + 1 => 1
+    /// 1 + 0 => 1
+    /// 1 + 1 => 1
+    fn parse_xor(&mut self, line: u16) {
+        let p = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `xor` requires two values on the top of the stack!")
+        });
+
+        let q = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `xor` requires two values on the top of the stack!")
+        });
+
+        self.stack.push(p ^ q)
     }
 
     /// Parse an equality instruction
@@ -443,13 +597,15 @@ impl Parser {
     /// 1 + 0 => 0
     /// 1 + 1 => 1
     fn parse_eq(&mut self, line: u16) {
-        let b = match (self.stack.pop(), self.stack.pop()) {
-            (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => p == q,
-            (Some(VMType::Integer(n)), Some(VMType::Integer(m))) => n == m,
-            _ => panic!("line {line}: `eq` requires 2 booleans on the stack!"),
-        };
+        let a = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `eq` requires two values on the top of the stack!")
+        });
 
-        self.stack.push(VMType::Bool(b))
+        let b = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `eq` requires two values on the top of the stack!")
+        });
+
+        self.stack.push(VMType::Bool(a == b))
     }
 
     /// Parse a not instruction
@@ -457,12 +613,11 @@ impl Parser {
     /// 0 => 1
     /// 1 => 0
     fn parse_not(&mut self, line: u16) {
-        let p = match self.stack.pop() {
-            Some(VMType::Bool(p)) => p,
-            _ => panic!("line {line}: `not` requires 1 boolean on the stack!"),
-        };
+        let p = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `not` requires one value on the top of the stack!")
+        });
 
-        self.stack.push(VMType::Bool(!p))
+        self.stack.push(!p)
     }
 
     /// Parse a parse_int instruction
@@ -491,13 +646,7 @@ impl Parser {
             panic!("line {line}: `{identifier}` requires string|integer|float on the stack!")
         });
 
-        match &e {
-            VMType::Float(x) => print(x.to_string()),
-            VMType::Integer(n) => print(n.to_string()),
-            VMType::Str(c) => print(c.to_string()),
-            VMType::Bool(p) => print(p.to_string()),
-            _ => panic!("line {line}: `{identifier}` requires string|integer|float on the stack!"),
-        }
+        print(e.to_string());
 
         self.stack.push(e);
     }
@@ -627,8 +776,8 @@ impl Parser {
 }
 
 fn main() {
-    let args = std::env::args().collect::<Vec<String>>();
-    let content = std::fs::read_to_string(args.get(1).unwrap()).expect("Failed to open file");
+    let args = args().collect::<Vec<String>>();
+    let content = read_to_string(args.get(1).unwrap()).expect("Failed to open file");
     let mut tokens = lex_into_tokens(&content);
     let mut instructions = Stack::default();
     let mut current_instruction = Stack::default();
@@ -645,5 +794,9 @@ fn main() {
 
     instructions.push(current_instruction);
 
-    Parser::new(instructions).parse();
+    let mut parser = Parser::new();
+
+    while let Some(mut instruction) = instructions.pop() {
+        parser.parse_instruction(&mut instruction)
+    }
 }
