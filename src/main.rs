@@ -29,24 +29,6 @@ impl Clone for VMType {
     }
 }
 
-/// VM (manage instructions stack and variables)
-struct VM {
-    pub procs: std::collections::BTreeMap<String, Stack<Token>>,
-    pub vars: std::collections::BTreeMap<String, VMType>,
-    pub stack: Stack<VMType>,
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for VM {
-    fn default() -> Self {
-        Self {
-            procs: std::collections::BTreeMap::default(),
-            vars: std::collections::BTreeMap::default(),
-            stack: Stack::default(),
-        }
-    }
-}
-
 /// A frame in a stack
 struct Frame<T> {
     pub value: T,
@@ -255,12 +237,19 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
 /// Evaluate the instructions (runtime)
 struct Parser {
     instructions: Stack<Stack<Token>>,
-    vm: VM,
+    procs: std::collections::BTreeMap<String, Stack<Token>>,
+    vars: std::collections::BTreeMap<String, VMType>,
+    stack: Stack<VMType>,
 }
 
 impl Parser {
-    pub fn new(instructions: Stack<Stack<Token>>, vm: VM) -> Self {
-        Self { instructions, vm }
+    pub fn new(instructions: Stack<Stack<Token>>) -> Self {
+        Self {
+            instructions,
+            procs: std::collections::BTreeMap::default(),
+            vars: std::collections::BTreeMap::default(),
+            stack: Stack::default(),
+        }
     }
 
     /// Evaluate the instructions
@@ -276,10 +265,10 @@ impl Parser {
             match token {
                 Token::Separator => panic!("Separator error (shouldn't be happening)"),
 
-                Token::Bool(p, _) => self.vm.stack.push(VMType::Bool(p)),
-                Token::Str(content, _) => self.vm.stack.push(VMType::Str(content)),
-                Token::Integer(n, _) => self.vm.stack.push(VMType::Integer(n)),
-                Token::Float(x, _) => self.vm.stack.push(VMType::Float(x)),
+                Token::Bool(p, _) => self.stack.push(VMType::Bool(p)),
+                Token::Str(content, _) => self.stack.push(VMType::Str(content)),
+                Token::Integer(n, _) => self.stack.push(VMType::Integer(n)),
+                Token::Float(x, _) => self.stack.push(VMType::Float(x)),
 
                 Token::Identifier(identifier, line) => match &*identifier {
                     "proc" => {
@@ -308,11 +297,11 @@ impl Parser {
                             }
                         }
 
-                        self.vm.procs.insert(proc_name, proc_tokens);
+                        self.procs.insert(proc_name, proc_tokens);
                     }
 
                     "if" => {
-                        match self.vm.stack.fast_pop_1() {
+                        match self.stack.fast_pop_1() {
                             VMType::Bool(true) => (),
                             VMType::Bool(false) => tokens.clear(),
                             _ => panic!(),
@@ -332,23 +321,23 @@ impl Parser {
                             Token::Bool(p, _) => VMType::Bool(p),
                             Token::Identifier(instruction, _) => {
                                 match &*instruction {
-                                    "pop" => self.vm.stack.fast_pop_1(),
-                                    "dup" => { self.vm.stack.dup(); self.vm.stack.fast_pop_1() }
+                                    "pop" => self.stack.fast_pop_1(),
+                                    "dup" => { self.stack.dup(); self.stack.fast_pop_1() }
                                     _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"), 
                                 }
                             },
                             _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"),
                         };
 
-                        self.vm.vars.insert(name, value);
+                        self.vars.insert(name, value);
                     }
 
-                    "dup" => self.vm.stack.dup(),
-                    "swap" => self.vm.stack.swap(),
-                    "exch" => self.vm.stack.swap(),
-                    "clear" => self.vm.stack.clear(),
-                    "pop" => self.vm.stack.fast_pop_2(),
-                    "drop" => self.vm.stack.fast_pop_2(),
+                    "dup" => self.stack.dup(),
+                    "swap" => self.stack.swap(),
+                    "exch" => self.stack.swap(),
+                    "clear" => self.stack.clear(),
+                    "pop" => self.stack.fast_pop_2(),
+                    "drop" => self.stack.fast_pop_2(),
                     "eq" => self.parse_eq(line),
                     "or" => self.parse_or(line),
                     "add" => self.parse_add(line),
@@ -365,10 +354,7 @@ impl Parser {
                     "range" | "erange" => self.parse_range(identifier, line),
                     "print" | "println" => self.parse_print(identifier, line),
 
-                    identifier => self
-                        .vm
-                        .stack
-                        .push(self.vm.vars.get(identifier).unwrap().clone()),
+                    identifier => self.stack.push(self.vars.get(identifier).unwrap().clone()),
                 },
             }
         }
@@ -380,7 +366,7 @@ impl Parser {
     /// 1.0 + 1.0 => 2.0
     /// 1.0 + 1 => 2.0
     fn parse_add(&mut self, line: u16) {
-        let s = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+        let s = match (self.stack.pop(), self.stack.pop()) {
             (Some(VMType::Integer(m)), Some(VMType::Integer(n))) => VMType::Integer(m + n),
             (Some(VMType::Float(x)), Some(VMType::Float(y))) => VMType::Float(x + y),
             (Some(VMType::Integer(n)), Some(VMType::Float(x))) => VMType::Float(n as f64 + x),
@@ -388,7 +374,7 @@ impl Parser {
             _ => panic!("line {line}: `add` requires 2 values of type int|float on the stack!"),
         };
 
-        self.vm.stack.push(s)
+        self.stack.push(s)
     }
 
     /// Parse a sub instruction
@@ -397,7 +383,7 @@ impl Parser {
     /// 3.0 - 1.0 => 2.0
     /// 3.0 - 1 => 2.0
     fn parse_sub(&mut self, line: u16) {
-        let s = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+        let s = match (self.stack.pop(), self.stack.pop()) {
             (Some(VMType::Integer(m)), Some(VMType::Integer(n))) => VMType::Integer(m - n),
             (Some(VMType::Float(x)), Some(VMType::Float(y))) => VMType::Float(x - y),
             (Some(VMType::Integer(n)), Some(VMType::Float(x))) => VMType::Float(n as f64 - x),
@@ -405,11 +391,11 @@ impl Parser {
             _ => panic!("line {line}: `sub` requires 2 values of type int|float on the stack!"),
         };
 
-        self.vm.stack.push(s)
+        self.stack.push(s)
     }
 
     fn parse_mul(&mut self, line: u16) {
-        let s = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+        let s = match (self.stack.pop(), self.stack.pop()) {
             (Some(VMType::Integer(m)), Some(VMType::Integer(n))) => VMType::Integer(m * n),
             (Some(VMType::Float(x)), Some(VMType::Float(y))) => VMType::Float(x * y),
             (Some(VMType::Integer(n)), Some(VMType::Float(x))) => VMType::Float(n as f64 * x),
@@ -417,7 +403,7 @@ impl Parser {
             _ => panic!("line {line}: `mul` requires 2 values of type int|float on the stack!"),
         };
 
-        self.vm.stack.push(s)
+        self.stack.push(s)
     }
 
     /// Parse an or instruction
@@ -427,12 +413,12 @@ impl Parser {
     /// 1 + 0 => 1
     /// 1 + 1 => 1
     fn parse_or(&mut self, line: u16) {
-        let (p, q) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+        let (p, q) = match (self.stack.pop(), self.stack.pop()) {
             (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
             _ => panic!("line {line}: `or` requires 2 booleans on the stack!"),
         };
 
-        self.vm.stack.push(VMType::Bool(p | q))
+        self.stack.push(VMType::Bool(p | q))
     }
 
     /// Parse an and instruction
@@ -442,12 +428,12 @@ impl Parser {
     /// 1 + 0 => 0
     /// 1 + 1 => 1
     fn parse_and(&mut self, line: u16) {
-        let (p, q) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+        let (p, q) = match (self.stack.pop(), self.stack.pop()) {
             (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => (p, q),
             _ => panic!("line {line}: `and` requires 2 booleans on the stack!"),
         };
 
-        self.vm.stack.push(VMType::Bool(p & q))
+        self.stack.push(VMType::Bool(p & q))
     }
 
     /// Parse an equality instruction
@@ -457,13 +443,13 @@ impl Parser {
     /// 1 + 0 => 0
     /// 1 + 1 => 1
     fn parse_eq(&mut self, line: u16) {
-        let b = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+        let b = match (self.stack.pop(), self.stack.pop()) {
             (Some(VMType::Bool(p)), Some(VMType::Bool(q))) => p == q,
             (Some(VMType::Integer(n)), Some(VMType::Integer(m))) => n == m,
             _ => panic!("line {line}: `eq` requires 2 booleans on the stack!"),
         };
 
-        self.vm.stack.push(VMType::Bool(b))
+        self.stack.push(VMType::Bool(b))
     }
 
     /// Parse a not instruction
@@ -471,21 +457,20 @@ impl Parser {
     /// 0 => 1
     /// 1 => 0
     fn parse_not(&mut self, line: u16) {
-        let p = match self.vm.stack.pop() {
+        let p = match self.stack.pop() {
             Some(VMType::Bool(p)) => p,
             _ => panic!("line {line}: `not` requires 1 boolean on the stack!"),
         };
 
-        self.vm.stack.push(VMType::Bool(!p))
+        self.stack.push(VMType::Bool(!p))
     }
 
     /// Parse a parse_int instruction
     ///
     /// Convert string to integers (TODO: implement floats)
     fn parse_parse_int(&mut self, line: u16) {
-        match self.vm.stack.pop() {
+        match self.stack.pop() {
             Some(VMType::Str(string)) => self
-                .vm
                 .stack
                 .push(VMType::Integer(string.parse::<i64>().unwrap())),
             _ => panic!("line {line}: `parse_int` requires string on the stack!"),
@@ -502,7 +487,7 @@ impl Parser {
             _ => panic!(),
         };
 
-        let e = self.vm.stack.pop().unwrap_or_else(|| {
+        let e = self.stack.pop().unwrap_or_else(|| {
             panic!("line {line}: `{identifier}` requires string|integer|float on the stack!")
         });
 
@@ -514,14 +499,14 @@ impl Parser {
             _ => panic!("line {line}: `{identifier}` requires string|integer|float on the stack!"),
         }
 
-        self.vm.stack.push(e);
+        self.stack.push(e);
     }
 
     /// Parse a range instruction
     ///
     /// Generate sets of integers
     fn parse_range(&mut self, identifier: String, line: u16) {
-        let (b, a) = match (self.vm.stack.pop(), self.vm.stack.pop()) {
+        let (b, a) = match (self.stack.pop(), self.stack.pop()) {
             (Some(VMType::Integer(b1)), Some(VMType::Integer(a1))) => (b1, a1),
             _ => {
                 panic!("line {line}: `range` requires two integers on the stack!")
@@ -534,7 +519,7 @@ impl Parser {
             _ => panic!(),
         };
 
-        self.vm.stack.push(VMType::Array(
+        self.stack.push(VMType::Array(
             range
                 .iter()
                 .map(|n| VMType::Integer(*n))
@@ -546,9 +531,9 @@ impl Parser {
     ///
     /// Join an array of string around a string
     fn parse_join(&mut self, line: u16) {
-        let Some(VMType::Str(join_string)) = self.vm.stack.pop() else { panic!("line {line}: `join` requires a string and a [string] on the stack!") };
+        let Some(VMType::Str(join_string)) = self.stack.pop() else { panic!("line {line}: `join` requires a string and a [string] on the stack!") };
 
-        let joined = match self.vm.stack.pop() {
+        let joined = match self.stack.pop() {
             Some(VMType::Array(array)) => array
                 .iter()
                 .map(|element: &VMType| -> String {
@@ -564,7 +549,7 @@ impl Parser {
             _ => panic!("line {line}: `join` requires a string and a [string] on the stack!"),
         };
 
-        self.vm.stack.push(VMType::Str(joined));
+        self.stack.push(VMType::Str(joined));
     }
 
     /// Parse a take instruction
@@ -572,10 +557,10 @@ impl Parser {
     /// |a|b|c|3| => [a, b, c]
     /// |a|b|c|2| => [b, c]
     fn parse_take(&mut self, line: u16) {
-        match self.vm.stack.pop() {
+        match self.stack.pop() {
             Some(VMType::Integer(n)) => {
-                let array = (0..n).map(|_| self.vm.stack.fast_pop_1()).collect();
-                self.vm.stack.push(VMType::Array(array))
+                let array = (0..n).map(|_| self.stack.fast_pop_1()).collect();
+                self.stack.push(VMType::Array(array))
             }
             _ => panic!("line {line}: `take` requires an integer on the stack!"),
         }
@@ -585,10 +570,10 @@ impl Parser {
     ///
     /// [a, b, c] => [c, b, a]
     fn parse_reverse(&mut self, line: u16) {
-        match self.vm.stack.pop() {
+        match self.stack.pop() {
             Some(VMType::Array(mut array)) => {
                 array.reverse();
-                self.vm.stack.push(VMType::Array(array))
+                self.stack.push(VMType::Array(array))
             }
             _ => panic!("line {line}: `reverse` expect an array on top of the stack"),
         }
@@ -598,7 +583,7 @@ impl Parser {
     ///
     /// [a, b, c, ..., n] => a + b + c + ... + n
     fn parse_sum(&mut self, line: u16) {
-        match self.vm.stack.pop() {
+        match self.stack.pop() {
             Some(VMType::Array(array)) => {
                 let sum = array
                     .iter()
@@ -609,7 +594,7 @@ impl Parser {
                     })
                     .sum::<f64>();
 
-                self.vm.stack.push(VMType::Float(sum))
+                self.stack.push(VMType::Float(sum))
             }
             _ => panic!("line {line}: `sum` requires [integer|float] on the stack!"),
         }
@@ -619,7 +604,7 @@ impl Parser {
     ///
     /// [a, b, c, ... , n] => a * b * c * ... * n
     fn parse_product(&mut self, line: u16) {
-        match self.vm.stack.pop() {
+        match self.stack.pop() {
             Some(VMType::Array(array)) => {
                 let product = array
                     .iter()
@@ -632,7 +617,7 @@ impl Parser {
                     })
                     .product::<f64>();
 
-                self.vm.stack.push(VMType::Float(product));
+                self.stack.push(VMType::Float(product));
             }
             _ => {
                 panic!("line {line}: `product` requires [integer|float] on the stack!")
@@ -660,5 +645,5 @@ fn main() {
 
     instructions.push(current_instruction);
 
-    Parser::new(instructions, VM::default()).parse();
+    Parser::new(instructions).parse();
 }
