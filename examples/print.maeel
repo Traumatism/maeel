@@ -1,8 +1,8 @@
 123 println;
-123 not println;
+123! println;
 
 123.4 println;
-123.4 not println;
+123.4! println;
 
 "hello" println;
 

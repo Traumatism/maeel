@@ -29,6 +29,16 @@ enum Token {
     Str(String, u16),
     Identifier(String, u16),
     Bool(bool, u16),
+    Let(u16),
+    If(u16),
+    Add(u16),
+    Sub(u16),
+    Mul(u16),
+    And(u16),
+    Or(u16),
+    Xor(u16),
+    Not(u16),
+    Eq(u16),
     Separator,
     ProcStart,
     ProcEnd,
@@ -43,6 +53,16 @@ impl Clone for Token {
             Self::Str(c, l) => Self::Str(c.clone(), *l),
             Self::Identifier(c, l) => Self::Identifier(c.clone(), *l),
             Self::Bool(p, l) => Self::Bool(*p, *l),
+            Self::Let(l) => Self::Let(*l),
+            Self::If(l) => Self::If(*l),
+            Self::Add(l) => Self::Add(*l),
+            Self::Sub(l) => Self::Sub(*l),
+            Self::Mul(l) => Self::Mul(*l),
+            Self::And(l) => Self::And(*l),
+            Self::Or(l) => Self::Or(*l),
+            Self::Xor(l) => Self::Xor(*l),
+            Self::Not(l) => Self::Not(*l),
+            Self::Eq(l) => Self::Eq(*l),
             Self::Separator => Self::Separator,
             Self::ProcStart => Self::ProcStart,
             Self::ProcEnd => Self::ProcEnd,
@@ -226,6 +246,7 @@ impl Clone for VMType {
 }
 
 /// A frame in a stack
+#[derive(Clone)]
 struct Frame<T> {
     value: T,
     next: Option<Box<Frame<T>>>,
@@ -238,6 +259,7 @@ impl<T> Frame<T> {
 }
 
 /// Stack data structure implementation
+#[derive(Clone)]
 struct Stack<T> {
     pub head: Option<Frame<T>>,
 }
@@ -352,15 +374,24 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
 
     while let Some(char) = chars.next() {
         match char {
+            '&' => tokens.push(Token::And(line)),
+            '|' => tokens.push(Token::Or(line)),
+            '^' => tokens.push(Token::Xor(line)),
+            '+' => tokens.push(Token::Add(line)),
+            '*' => tokens.push(Token::Mul(line)),
+            '-' => tokens.push(Token::Sub(line)),
+            '=' => tokens.push(Token::Eq(line)),
+            '!' => tokens.push(Token::Not(line)),
+
             ' ' => (),
             // will be used to split the code into instructions
             ';' => tokens.push(Token::Separator),
             // will be used in error messages
             '\n' => line += 1,
             // comments
-            '(' => {
+            '@' => {
                 for next in chars.by_ref() {
-                    if next == ')' {
+                    if next == '\n' {
                         break;
                     }
                 }
@@ -398,6 +429,8 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
                     "end" => Token::Separator,
                     "proc" => Token::ProcStart,
                     "end_proc" => Token::ProcEnd,
+                    "if" => Token::If(line),
+                    "let" => Token::Let(line),
                     _ => Token::Identifier(content, line),
                 });
             }
@@ -435,6 +468,8 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
 
 /// Evaluate the instructions (runtime)
 struct Parser {
+    stop_proc_execution: bool,
+    in_proc: bool,
     procs: BTreeMap<String, Vec<Token>>,
     vars: BTreeMap<String, VMType>,
     stack: Stack<VMType>,
@@ -443,6 +478,8 @@ struct Parser {
 impl Default for Parser {
     fn default() -> Self {
         Self {
+            stop_proc_execution: false,
+            in_proc: false,
             procs: BTreeMap::default(),
             vars: BTreeMap::default(),
             stack: Stack::default(),
@@ -452,11 +489,18 @@ impl Default for Parser {
 
 impl Parser {
     pub fn new(
+        in_proc: bool,
         procs: BTreeMap<String, Vec<Token>>,
         vars: BTreeMap<String, VMType>,
         stack: Stack<VMType>,
     ) -> Self {
-        Self { procs, vars, stack }
+        Self {
+            stop_proc_execution: false,
+            in_proc,
+            procs,
+            vars,
+            stack,
+        }
     }
 
     /// Parse a single instruction
@@ -498,46 +542,193 @@ impl Parser {
                     self.procs.insert(proc_name.clone(), proc_tokens);
                 }
 
+                // Parse if statement
+                Token::If(line) => {
+                    match self.stack.pop() {
+                        Some(VMType::Bool(true)) => (),
+                        Some(VMType::Bool(false)) => return,
+                        _ => panic!(
+                            "line {line}: `if` requires a boolean value on the top of the stack!"
+                        ),
+                    };
+                }
+
+                // Parse an add instruction
+                //
+                // 1 + 1 => 2
+                // 1.0 + 1.0 => 2.0
+                // 1.0 + 1 => 2.0
+                Token::Add(line) => {
+                    let a = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `add` requires two values on the top of the stack!")
+                    });
+
+                    let b = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `add` requires two values on the top of the stack!")
+                    });
+
+                    self.stack.push(a.add(b))
+                }
+
+                // Parse a mul instruction
+                //
+                // 2 * 1 => 2
+                // 2.0 * 1.0 => 2.0
+                // 2.0 * 1 => 2.0
+                Token::Mul(line) => {
+                    let a = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `mul` requires two values on the top of the stack!")
+                    });
+
+                    let b = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `mul` requires two values on the top of the stack!")
+                    });
+
+                    self.stack.push(a.mul(b))
+                }
+
+                Token::Let(line) => {
+                    let name = match tokens.next() {
+                        Some(Token::Identifier(name, _)) => name,
+                        _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"),
+                    };
+
+                    let value = match tokens.next() {
+                        Some(Token::Str(content, _)) => VMType::Str(content.clone()),
+                        Some(Token::Integer(n, _)) => VMType::Integer(*n),
+                        Some(Token::Float(x, _)) => VMType::Float(*x),
+                        Some(Token::Bool(p, _)) => VMType::Bool(*p),
+                        Some(Token::Identifier(instruction, _)) => {
+                            match &**instruction {
+                                "pop" => self.stack.pop().unwrap_or_else(|| panic!("line {line}: let name pop requires a value on the top of the stack")),
+                                "dup" => { self.stack.dup(); self.stack.pop().unwrap_or_else(|| panic!("line {line}: let name pop requires a value on the top of the stack")) }
+                                _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (1)"), 
+                            }
+                        },
+                        _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (2)"),
+                    };
+
+                    self.vars.insert(name.clone(), value);
+                }
+
+                // Parse a not instruction
+                //
+                // 0 => 1
+                // 1 => 0
+                Token::Not(line) => {
+                    let p = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `not` requires one value on the top of the stack!")
+                    });
+
+                    self.stack.push(!p)
+                }
+
+                // Parse an and instruction
+                //
+                // 0 + 0 => 0
+                // 0 + 1 => 0
+                // 1 + 0 => 0
+                // 1 + 1 => 1
+                Token::And(line) => {
+                    let p = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `and` requires two values on the top of the stack!")
+                    });
+
+                    let q = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `and` requires two values on the top of the stack!")
+                    });
+
+                    self.stack.push(p & q)
+                }
+
+                // Parse an or instruction
+                //
+                // 0 + 0 => 0
+                // 0 + 1 => 1
+                // 1 + 0 => 1
+                // 1 + 1 => 1
+                Token::Or(line) => {
+                    let p = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `or` requires two values on the top of the stack!")
+                    });
+
+                    let q = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `or` requires two values on the top of the stack!")
+                    });
+
+                    self.stack.push(p | q)
+                }
+
+                // Parse a xor instruction
+                //
+                // 0 + 0 => 0
+                // 0 + 1 => 1
+                // 1 + 0 => 1
+                // 1 + 1 => 1
+                Token::Xor(line) => {
+                    let p = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `xor` requires two values on the top of the stack!")
+                    });
+
+                    let q = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `xor` requires two values on the top of the stack!")
+                    });
+
+                    self.stack.push(p ^ q)
+                }
+
+                // Parse an equality instruction
+                //
+                // 0 + 0 => 1
+                // 0 + 1 => 0
+                // 1 + 0 => 0
+                // 1 + 1 => 1
+                Token::Eq(line) => {
+                    let a = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `eq` requires two values on the top of the stack!")
+                    });
+
+                    let b = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `eq` requires two values on the top of the stack!")
+                    });
+
+                    self.stack.push(VMType::Bool(a == b))
+                }
+
+                // Parse a sub instruction
+                //
+                // 3 - 1 => 2
+                // 3.0 - 1.0 => 2.0
+                // 3.0 - 1 => 2.0
+                Token::Sub(line) => {
+                    let a = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `sub` requires two values on the top of the stack!")
+                    });
+
+                    let b = self.stack.pop().unwrap_or_else(|| {
+                        panic!("line {line}: `sub` requires two values on the top of the stack!")
+                    });
+
+                    self.stack.push(b.sub(a))
+                }
+
                 Token::Identifier(identifier, line) => {
                     match &*identifier {
-                        // Parse if statement
-                        "if" => {
-                            match self.stack.pop() {
-                            Some(VMType::Bool(true)) => (),
-                            Some(VMType::Bool(false)) => return,
-                            _ => panic!("line {line}: `if` requires a boolean value on the top of the stack!"),
-                        };
-                        }
-
-                        // Parse let statement
-                        "let" => {
-                            let name = match tokens.next() {
-                            Some(Token::Identifier(name, _)) => name,
-                            _ => panic!("line {line}: syntax: `let name value` with value of type int|float|string or a pop|dup instruction!"),
-                        };
-
-                            let value = match tokens.next() {
-                                Some(Token::Str(content, _)) => VMType::Str(content.clone()),
-                                Some(Token::Integer(n, _)) => VMType::Integer(*n),
-                                Some(Token::Float(x, _)) => VMType::Float(*x),
-                                Some(Token::Bool(p, _)) => VMType::Bool(*p),
-                                Some(Token::Identifier(instruction, _)) => {
-                                    match &**instruction {
-                                        "pop" => self.stack.pop().unwrap_or_else(|| panic!("line {line}: let name pop requires a value on the top of the stack")),
-                                        "dup" => { self.stack.dup(); self.stack.pop().unwrap_or_else(|| panic!("line {line}: let name pop requires a value on the top of the stack")) }
-                                        _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (1)"), 
-                                    }
-                                },
-                                _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (2)"),
-                            };
-
-                            match tokens.next() {
-                                Some(Token::Separator) => (),
-                                None => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (3)"),
-                                _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (4)"),
+                        "return" => {
+                            if !self.in_proc {
+                                panic!()
                             }
 
-                            self.vars.insert(name.clone(), value);
+                            self.stop_proc_execution = true
+                        }
+
+                        "del" => {
+                            let name = match tokens.next() {
+                                Some(Token::Identifier(name, _)) => name,
+                                _ => panic!("line {line}: syntax: `del name`"),
+                            };
+
+                            self.vars.remove(name);
                         }
 
                         "exit" => match self.stack.pop().unwrap() {
@@ -551,125 +742,12 @@ impl Parser {
                         // Parse a swap operation
                         "swap" => self.stack.swap(),
 
-                        // Parse a swap (2) operation
-                        "exch" => self.stack.swap(),
-
                         // Parse a clear operation
                         "clear" => self.stack.clear(),
 
                         // Parse a pop operation
                         "pop" => {
                             self.stack.pop();
-                        }
-
-                        // Parse a pop (2) operation
-                        "drop" => {
-                            self.stack.pop();
-                        }
-
-                        // Parse an equality instruction
-                        //
-                        // 0 + 0 => 1
-                        // 0 + 1 => 0
-                        // 1 + 0 => 0
-                        // 1 + 1 => 1
-                        "eq" => {
-                            let a = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `eq` requires two values on the top of the stack!")
-                            });
-
-                            let b = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `eq` requires two values on the top of the stack!")
-                            });
-
-                            self.stack.push(VMType::Bool(a == b))
-                        }
-
-                        // Parse an or instruction
-                        //
-                        // 0 + 0 => 0
-                        // 0 + 1 => 1
-                        // 1 + 0 => 1
-                        // 1 + 1 => 1
-                        "or" => {
-                            let p = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `or` requires two values on the top of the stack!")
-                            });
-
-                            let q = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `or` requires two values on the top of the stack!")
-                            });
-
-                            self.stack.push(p | q)
-                        }
-
-                        // Parse a xor instruction
-                        //
-                        // 0 + 0 => 0
-                        // 0 + 1 => 1
-                        // 1 + 0 => 1
-                        // 1 + 1 => 1
-                        "xor" => {
-                            let p = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `xor` requires two values on the top of the stack!")
-                            });
-
-                            let q = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `xor` requires two values on the top of the stack!")
-                            });
-
-                            self.stack.push(p ^ q)
-                        }
-
-                        // Parse an add instruction
-                        //
-                        // 1 + 1 => 2
-                        // 1.0 + 1.0 => 2.0
-                        // 1.0 + 1 => 2.0
-                        "add" => {
-                            let a = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `add` requires two values on the top of the stack!")
-                            });
-
-                            let b = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `add` requires two values on the top of the stack!")
-                            });
-
-                            self.stack.push(a.add(b))
-                        }
-
-                        // Parse a sub instruction
-                        //
-                        // 3 - 1 => 2
-                        // 3.0 - 1.0 => 2.0
-                        // 3.0 - 1 => 2.0
-                        "sub" => {
-                            let a = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `sub` requires two values on the top of the stack!")
-                            });
-
-                            let b = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `sub` requires two values on the top of the stack!")
-                            });
-
-                            self.stack.push(b.sub(a))
-                        }
-
-                        // Parse a mul instruction
-                        //
-                        // 2 * 1 => 2
-                        // 2.0 * 1.0 => 2.0
-                        // 2.0 * 1 => 2.0
-                        "mul" => {
-                            let a = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `mul` requires two values on the top of the stack!")
-                            });
-
-                            let b = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `mul` requires two values on the top of the stack!")
-                            });
-
-                            self.stack.push(a.mul(b))
                         }
 
                         // Parse a sum instruction
@@ -692,36 +770,6 @@ impl Parser {
                                 panic!("line {line}: `sum` requires [integer|float] on the stack!")
                             }
                         },
-
-                        // Parse a not instruction
-                        //
-                        // 0 => 1
-                        // 1 => 0
-                        "not" => {
-                            let p = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `not` requires one value on the top of the stack!")
-                            });
-
-                            self.stack.push(!p)
-                        }
-
-                        // Parse an and instruction
-                        //
-                        // 0 + 0 => 0
-                        // 0 + 1 => 0
-                        // 1 + 0 => 0
-                        // 1 + 1 => 1
-                        "and" => {
-                            let p = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `and` requires two values on the top of the stack!")
-                            });
-
-                            let q = self.stack.pop().unwrap_or_else(|| {
-                                panic!("line {line}: `and` requires two values on the top of the stack!")
-                            });
-
-                            self.stack.push(p & q)
-                        }
 
                         // Parse a join instruction
                         //
@@ -903,17 +951,28 @@ impl Parser {
 
                             instructions.push(current_instruction);
 
-                            let mut parser = Parser::new(
+                            let mut proc_parser = Parser::new(
+                                true,
                                 self.procs.clone(),
                                 self.vars.clone(),
-                                Stack::default(),
+                                self.stack.clone(),
                             );
 
                             let instructions_iter = instructions.iter();
 
                             for instruction in instructions_iter {
-                                parser.parse_instruction(&mut instruction.iter())
+                                if proc_parser.stop_proc_execution {
+                                    debug!("stopping procedure execution...");
+                                    break;
+                                }
+
+                                proc_parser.parse_instruction(&mut instruction.iter())
                             }
+
+                            debug!("updating vars...");
+
+                            self.stack = proc_parser.stack;
+                            self.vars = proc_parser.vars;
                         }
                     }
                 }
@@ -959,9 +1018,7 @@ fn main() {
 
     let mut parser = Parser::default();
 
-    let instructions_iter = instructions.iter();
-
-    for instruction in instructions_iter {
+    for instruction in instructions {
         parser.parse_instruction(&mut instruction.iter())
     }
 }
