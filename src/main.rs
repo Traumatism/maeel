@@ -246,31 +246,33 @@ impl Clone for VMType {
 }
 
 /// A frame in a stack
-#[derive(Clone)]
-struct Frame<T> {
-    value: T,
-    next: Option<Box<Frame<T>>>,
+struct Frame(VMType, Option<Box<Frame>>);
+
+impl Frame {
+    pub fn new(value: VMType) -> Frame {
+        Self(value, None)
+    }
 }
 
-impl<T> Frame<T> {
-    pub fn new(value: T) -> Frame<T> {
-        Self { value, next: None }
+impl Clone for Frame {
+    fn clone(&self) -> Self {
+        Self(self.0.clone(), self.1.clone())
     }
 }
 
 /// Stack data structure implementation
 #[derive(Clone)]
-struct Stack<T> {
-    pub head: Option<Frame<T>>,
+struct Stack {
+    pub head: Option<Frame>,
 }
 
-impl<T> Default for Stack<T> {
-    fn default() -> Stack<T> {
+impl Default for Stack {
+    fn default() -> Stack {
         Stack { head: None }
     }
 }
 
-impl<T: Clone> Stack<T> {
+impl Stack {
     /// Duplicate the head value
     pub fn dup(&mut self) {
         let a = self.pop().unwrap();
@@ -279,8 +281,8 @@ impl<T: Clone> Stack<T> {
     }
 }
 
-impl<T: Clone + Debug> From<Vec<T>> for Stack<T> {
-    fn from(value: Vec<T>) -> Self {
+impl From<Vec<VMType>> for Stack {
+    fn from(value: Vec<VMType>) -> Self {
         let mut new_stack = Stack::default();
         let mut cloned_value = value;
 
@@ -294,7 +296,7 @@ impl<T: Clone + Debug> From<Vec<T>> for Stack<T> {
     }
 }
 
-impl<T> Stack<T> {
+impl Stack {
     /// Clear all the stack values
     pub fn clear(&mut self) {
         while self.head.is_some() {
@@ -312,22 +314,22 @@ impl<T> Stack<T> {
     }
 
     /// Push a new value to the stack
-    pub fn push(&mut self, value: T) {
+    pub fn push(&mut self, value: VMType) {
         let mut node = Frame::new(value);
 
         if let Some(stack) = replace(&mut self.head, None) {
-            node.next = Some(Box::new(stack))
+            node.1 = Some(Box::new(stack))
         }
 
         self.head = Some(node);
     }
 
     /// Pop the head value and return it in an Option
-    pub fn pop(&mut self) -> Option<T> {
+    pub fn pop(&mut self) -> Option<VMType> {
         match replace(&mut self.head, None) {
             Some(stack) => {
-                self.head = stack.next.map(|n| *n);
-                Some(stack.value)
+                self.head = stack.1.map(|n| *n);
+                Some(stack.0)
             }
             _ => None,
         }
@@ -382,7 +384,6 @@ fn lex_into_tokens(code: &str) -> Vec<Token> {
             '-' => tokens.push(Token::Sub(line)),
             '=' => tokens.push(Token::Eq(line)),
             '!' => tokens.push(Token::Not(line)),
-
             ' ' => (),
             // will be used to split the code into instructions
             ';' => tokens.push(Token::Separator),
@@ -472,7 +473,7 @@ struct Parser {
     in_proc: bool,
     procs: BTreeMap<String, Vec<Token>>,
     vars: BTreeMap<String, VMType>,
-    stack: Stack<VMType>,
+    stack: Stack,
 }
 
 impl Default for Parser {
@@ -492,7 +493,7 @@ impl Parser {
         in_proc: bool,
         procs: BTreeMap<String, Vec<Token>>,
         vars: BTreeMap<String, VMType>,
-        stack: Stack<VMType>,
+        stack: Stack,
     ) -> Self {
         Self {
             stop_proc_execution: false,
