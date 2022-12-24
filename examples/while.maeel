@@ -1,0 +1,17 @@
+proc while_inner
+    a b = if
+        return
+    end a b = ! if
+        "still in loop, a != b" println pop
+        a 1 + let a pop
+        while_inner
+    end
+end_proc
+
+proc while
+    let a pop
+    let b pop
+    while_inner
+end_proc
+
+10000 0 while

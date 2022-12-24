@@ -1,10 +1,12 @@
-proc std_range_inner
-    std_range_start dup std_range_end = if
+wproc std_range_inner
+    std_range_start
+    
+    dup std_range_end= if
         return
     end
 
-    1 + let std_range_start dup
-    std_range_output + let std_range_output pop
+    1+ let std_range_start dup
+    std_range_output+ let std_range_output pop
     std_range_inner
 end_proc
 
@@ -16,9 +18,7 @@ proc std_range
     0 take let std_range_output pop
     std_range_inner
 
-    std_range_end
-    std_range_start_backup
-    std_range_output
+    std_range_end std_range_start_backup std_range_output
 
     del std_range_start
     del std_range_start_backup

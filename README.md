@@ -5,11 +5,17 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 
 ## Examples
 
-- [Hello, world!](./exemples/hello_world.maeel)
-- [output](./exemples/print.maeel)
-- [arrays](./exemples/arrays.maeel)
-- [login](./exemples/logic.maeel)
-- [conditions](./exemples/conditions.maeel)
+- [Hello, world!](./examples/hello_world.maeel)
+- [output](./examples/print.maeel)
+- [arrays](./examples/arrays.maeel)
+- [login](./examples/logic.maeel)
+- [conditions](./examples/conditions.maeel)
+
+### Implemented in itself
+
+- [while-loops](./examples/while.maeel)
+- [range](./examples/range.maeel)
+- [fibonacci](./examples/fibonacci.maeel)
 
 ## Example of implementing range() standard function in maeel
 
