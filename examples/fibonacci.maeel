@@ -1,0 +1,23 @@
+proc fib
+    let n pop
+    n dup dup 1= swap 0= |! if
+        dup 1- fib swap 2- fib +
+        return
+    end
+end_proc
+
+proc fib_list_inner
+    a b= if
+        return
+    end
+
+    a fib print pop " " print pop
+    a 1+ let a pop fib_list_inner
+end_proc
+
+proc fib_list
+    let a pop let b pop
+    fib_list_inner
+end_proc
+
+20 0 fib_list
