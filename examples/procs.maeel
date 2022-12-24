@@ -1,11 +1,11 @@
 proc hello_bis
-    "Hello from hello_bis!" println end
+    "Hello from hello_bis!" println
 end_proc
 
 proc hello
-    let end_in_proc 0 end
-    "Hello from hello!" println end
-    hello end
+    let end_in_proc 0
+    "Hello from hello!" println
+    hello_bis
 end_proc
 
-hello end
+hello

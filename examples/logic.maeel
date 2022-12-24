@@ -3,8 +3,8 @@ let q true;
 
 "p: " p swap print pop println;
 "q: " q swap print pop println;
-"not p: " p not swap print pop println;
-"not q: " q not swap print pop println;
-"p and q: " p q and swap print pop println;
-"p or q: " p q or swap print pop println;
-"p xor q: " p q xor swap print pop println;
+"not p: " p! swap print pop println;
+"not q: " q! swap print pop println;
+"p and q: " p q & swap print pop println;
+"p or q: " p q | swap print pop println;
+"p xor q: " p q ^ swap print pop println;

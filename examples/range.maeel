@@ -1,15 +1,31 @@
-proc std_range             (start of the procedure definition)
-    a dup b eq if          (if a is equal to b)
-        c println 0 exit   (print c and exit with status code 0)
-    end                    (end of the if condition)
+proc std_range_inner
 
-    1 add let a dup;       (increase a by 1 and overwrite a)
-    c add let c pop;       (push a to c and overwrite c)
-    std_range;             (recursive call std_range)
-end_proc                   (end of the procedure definition)
+    std_range_start dup std_range_end = if      @ std_range_start == std_range_end
+        return
+    end
 
-let a 0;                   (a <- 0)
-let b 100;                 (b <- 100)
+    1 + let std_range_start dup                 @ inc std_range_start by one
+    std_range_output + let std_range_output pop @ push std_range_start to std_range_output
+    std_range_inner                             @ recursive call here
+end_proc
 
-0 take let c pop;          (c <- [])
-std_range;                 (call std_range)
+@ create ranges of integers
+proc std_range
+    let std_range_start_backup dup
+    let std_range_start pop
+    let std_range_end pop
+
+    0 take let std_range_output pop
+    std_range_inner
+
+    std_range_end
+    std_range_start_backup
+    std_range_output
+
+    del std_range_start
+    del std_range_start_backup
+    del std_range_end
+    del std_range_output
+end_proc
+
+100 0 std_range sum println
