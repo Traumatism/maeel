@@ -1,5 +1,4 @@
 proc std_range_inner
-
     std_range_start dup std_range_end = if      @ std_range_start == std_range_end
         return
     end
