@@ -1,14 +1,13 @@
 proc std_range_inner
-    std_range_start dup std_range_end = if      @ std_range_start == std_range_end
+    std_range_start dup std_range_end = if
         return
     end
 
-    1 + let std_range_start dup                 @ inc std_range_start by one
-    std_range_output + let std_range_output pop @ push std_range_start to std_range_output
-    std_range_inner                             @ recursive call here
+    1 + let std_range_start dup
+    std_range_output + let std_range_output pop
+    std_range_inner
 end_proc
 
-@ create ranges of integers
 proc std_range
     let std_range_start_backup dup
     let std_range_start pop

@@ -3,7 +3,7 @@ proc hello_bis
 end_proc
 
 proc hello
-    let end_in_proc 0
+    let end_in_proc 0 end
     "Hello from hello!" println
     hello_bis
 end_proc
