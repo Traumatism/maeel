@@ -1,4 +1,4 @@
-wproc std_range_inner
+proc std_range_inner
     std_range_start
     
     dup std_range_end= if
@@ -26,4 +26,4 @@ proc std_range
     del std_range_output
 end_proc
 
-100 0 std_range sum println
+100 0 std_range println

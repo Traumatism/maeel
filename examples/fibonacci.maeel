@@ -1,4 +1,5 @@
-proc fib let n pop
+proc fib
+    let n pop
     n dup dup 1= swap 0= |! if
         dup 1- fib swap 2- fib +
         return
@@ -6,13 +7,11 @@ proc fib let n pop
 end_proc
 
 proc fib_list_inner
-    a 20= if
-        return
-    end
+    a 20= if return;
 
     a fib print pop " " print pop
     a 1+ let a pop fib_list_inner
 end_proc
 
-let a 0
+let a 0;
 fib_list_inner

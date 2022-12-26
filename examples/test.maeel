@@ -1,5 +1,0 @@
-proc hello_proc
-    "hello" println
-end
-
-hello_proc
