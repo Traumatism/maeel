@@ -1,5 +1,6 @@
 use crate::enums::token::Token;
 
+/// Lex an identifier
 pub fn lex_identifier(identifier: &str, line: u16) -> Token {
     match identifier {
         "true" => Token::Bool(true, line),
@@ -26,6 +27,7 @@ pub fn lex_identifier(identifier: &str, line: u16) -> Token {
     }
 }
 
+/// Lex a single character
 pub fn lex_single_char(chr: char, line: u16) -> Token {
     match chr {
         '&' => Token::And(line),
@@ -41,6 +43,7 @@ pub fn lex_single_char(chr: char, line: u16) -> Token {
     }
 }
 
+/// Lex code
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut chars = code.chars().collect::<Vec<char>>();
     chars.reverse();
@@ -52,7 +55,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
         match chr {
             '\n' => line += 1,
             ' ' => (),
-            // comments
             '@' => {
                 while let Some(next) = chars.pop() {
                     if next == '\n' {
@@ -60,8 +62,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                 }
             }
-
-            // strings
             '"' => {
                 let mut content = String::new();
 
@@ -74,8 +74,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 tokens.push(Token::Str(content, line))
             }
-
-            // identifiers
             'a'..='z' | '_' => {
                 let mut content = String::from(chr);
 
@@ -91,8 +89,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 tokens.push(lex_identifier(&content, line));
             }
-
-            // integers/floats
             '0'..='9' => {
                 let mut content = String::from(chr);
                 let mut float = false;
