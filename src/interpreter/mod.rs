@@ -279,15 +279,15 @@ impl Compiler for Interpreter {
         }
     }
 
-    fn handle_var_add(&mut self, name: impl Into<String>, value: VMType) {
-        self.vars.insert(name.into(), value);
+    fn handle_var_add(&mut self, name: String, value: VMType) {
+        self.vars.insert(name, value);
     }
 
-    fn handle_var_del(&mut self, name: impl Into<String>) {
-        self.vars.remove(&name.into()).unwrap();
+    fn handle_var_del(&mut self, name: String) {
+        self.vars.remove(&name).unwrap();
     }
 
-    fn handle_proc_add(&mut self, name: impl Into<String>, tokens: Vec<Token>) {
-        self.procs.insert(name.into(), tokens);
+    fn handle_proc_add(&mut self, name: String, tokens: Vec<Token>) {
+        self.procs.insert(name, tokens);
     }
 }
