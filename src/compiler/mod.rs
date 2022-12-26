@@ -1,7 +1,10 @@
 use crate::enums::{token::Token, vmtype::VMType};
 use std::slice::Iter;
 
+/// Base functions that must be shared
+/// by all compilers
 pub trait Compiler {
+    /// Handle a single instruction
     fn handle_instruction(&mut self, tokens: &mut Iter<Token>) {
         while let Some(token) = tokens.next() {
             match token.clone() {
@@ -55,6 +58,7 @@ pub trait Compiler {
                         ),
                     };
                 }
+
                 Token::Del(line) => {
                     let name = match tokens.next() {
                         Some(Token::Identifier(name, _)) => name,

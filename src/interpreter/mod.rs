@@ -232,10 +232,7 @@ impl Compiler for Interpreter {
             identifier => {
                 let v = self.vars.get(identifier);
 
-                if let Some(value) = v {
-                    self.stack.push(value.clone());
-                    return;
-                }
+                if let Some(value) = v {}
 
                 let proc_tokens = self.procs.get(identifier).expect(identifier).iter();
 
