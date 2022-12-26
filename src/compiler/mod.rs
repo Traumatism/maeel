@@ -43,7 +43,7 @@ pub trait Compiler {
                         _ => panic!("line {line}: syntax: `let name value;` with value of type int|float|string or a pop|dup instruction! (2)"),
                     };
 
-                    self.handle_var_add(name, value)
+                    self.handle_var_add(name.to_string(), value)
                 }
 
                 Token::If(line) => {
@@ -61,7 +61,7 @@ pub trait Compiler {
                         _ => panic!("line {line}: syntax: `del name`"),
                     };
 
-                    self.handle_var_del(name)
+                    self.handle_var_del(name.to_string())
                 }
 
                 Token::Separator => (),
@@ -91,33 +91,78 @@ pub trait Compiler {
                         panic!()
                     }
 
-                    self.handle_proc_add(proc_name, proc_tokens)
+                    self.handle_proc_add(proc_name.to_string(), proc_tokens)
                 }
             }
         }
     }
 
-    fn handle_var_add(&mut self, name: impl Into<String>, value: VMType);
-    fn handle_var_del(&mut self, name: impl Into<String>);
-    fn handle_proc_add(&mut self, name: impl Into<String>, tokens: Vec<Token>);
+    /// Global variable insertion
+    fn handle_var_add(&mut self, name: String, value: VMType);
+
+    /// Global variable removal
+    fn handle_var_del(&mut self, name: String);
+
+    /// Global procedure insertion
+    fn handle_proc_add(&mut self, name: String, tokens: Vec<Token>);
+
+    /// Pushing strings
     fn handle_push_str(&mut self, content: String);
+
+    /// Pushing integers
     fn handle_push_int(&mut self, content: i64);
+
+    /// Pushing floats
     fn handle_push_float(&mut self, content: f64);
+
+    /// Pushing booleans
     fn handle_push_bool(&mut self, content: bool);
+
+    /// Poping from the stack
     fn handle_pop(&mut self) -> Option<VMType>;
+
+    /// Duping the head value
     fn handle_dup(&mut self);
+
+    /// Swaping the two topmost values
     fn handle_swap(&mut self);
+
+    /// Clearing the stack
     fn handle_clear(&mut self);
+
+    /// Pushing the sum of the two topmost values
     fn handle_add(&mut self, line: u16);
+
+    /// Pushing the product of the two topmost values
     fn handle_mul(&mut self, line: u16);
+
+    /// Pushing the difference of the two topmost values
     fn handle_sub(&mut self, line: u16);
+
+    /// Pushing the OR result of the two topmost values
     fn handle_or(&mut self, line: u16);
+
+    /// Pushing the XOR result of the two topmost values
     fn handle_xor(&mut self, line: u16);
+
+    /// Pushing the AND result of the two topmost values
     fn handle_and(&mut self, line: u16);
+
+    /// Pushing the NOT result of the head value
     fn handle_not(&mut self, line: u16);
+
+    /// Pushing the EQ result of the two topmost values
     fn handle_eq(&mut self, line: u16);
+
+    /// Stoping the execution of the current procedure
     fn handle_return(&mut self, line: u16);
+
+    /// Taking n elements and pushing them as an array
     fn handle_take(&mut self, line: u16);
+
+    /// Reversing the head array
     fn handle_reverse(&mut self, line: u16);
+
+    /// Handling identifiers
     fn handle_identifier(&mut self, identifier: &str, line: u16);
 }
