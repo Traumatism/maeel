@@ -1,8 +1,10 @@
 use std::collections::BTreeMap;
+use std::io::Write;
 
+use crate::compiler::Compiler;
 use crate::enums::token::Token;
 use crate::enums::vmtype::VMType;
-use crate::{compiler::Compiler, structures::stack::Stack};
+use crate::structures::stack::Stack;
 
 pub struct Interpreter {
     stop_proc_execution: bool,
@@ -221,8 +223,14 @@ impl Compiler for Interpreter {
                 });
 
                 (match identifier {
-                    "println" => |content| println!("{content}"),
-                    "print" => |content| print!("{content}"),
+                    "println" => |content: String| {
+                        std::io::stdout()
+                            .write_all((content + "\n").as_bytes())
+                            .unwrap()
+                    },
+                    "print" => {
+                        |content: String| std::io::stdout().write_all(content.as_bytes()).unwrap()
+                    }
                     _ => panic!(),
                 })(e.to_string());
 
@@ -232,7 +240,9 @@ impl Compiler for Interpreter {
             identifier => {
                 let v = self.vars.get(identifier);
 
-                if let Some(value) = v {}
+                if let Some(value) = v {
+                    return self.stack.push(value.clone());
+                }
 
                 let proc_tokens = self.procs.get(identifier).expect(identifier).iter();
 
@@ -286,5 +296,29 @@ impl Compiler for Interpreter {
 
     fn handle_proc_add(&mut self, name: String, tokens: Vec<Token>) {
         self.procs.insert(name, tokens);
+    }
+
+    fn handle_modulo(&mut self, line: u16) {
+        let a = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `mod` requires two values on the top of the stack!")
+        });
+
+        let b = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `mod` requires two values on the top of the stack!")
+        });
+
+        self.stack.push(b % a)
+    }
+
+    fn handle_div(&mut self, line: u16) {
+        let a = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `div` requires two values on the top of the stack!")
+        });
+
+        let b = self.stack.pop().unwrap_or_else(|| {
+            panic!("line {line}: `div` requires two values on the top of the stack!")
+        });
+
+        self.stack.push(b / a)
     }
 }

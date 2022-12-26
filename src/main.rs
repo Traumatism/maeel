@@ -2,12 +2,11 @@ use std::env::args;
 use std::fs::read_to_string;
 
 mod lexer;
+use compiler::interpreter::Interpreter;
 use compiler::Compiler;
-use interpreter::Interpreter;
 use lexer::lex_into_tokens;
 
 mod compiler;
-mod interpreter;
 mod structures;
 
 mod enums;

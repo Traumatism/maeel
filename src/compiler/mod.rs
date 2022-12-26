@@ -1,6 +1,9 @@
 use crate::enums::{token::Token, vmtype::VMType};
 use std::slice::Iter;
 
+pub mod arm64;
+pub mod interpreter;
+
 /// Base functions that must be shared
 /// by all compilers
 pub trait Compiler {
@@ -19,6 +22,8 @@ pub trait Compiler {
                 Token::Swap => self.handle_swap(),
                 Token::Clear => self.handle_clear(),
                 Token::Add(line) => self.handle_add(line),
+                Token::Modulo(line) => self.handle_modulo(line),
+                Token::Div(line) => self.handle_div(line),
                 Token::Mul(line) => self.handle_mul(line),
                 Token::Sub(line) => self.handle_sub(line),
                 Token::Or(line) => self.handle_or(line),
@@ -134,11 +139,17 @@ pub trait Compiler {
     /// Clearing the stack
     fn handle_clear(&mut self);
 
+    // Pushing the remainer of the div of the two topmost values
+    fn handle_modulo(&mut self, line: u16);
+
     /// Pushing the sum of the two topmost values
     fn handle_add(&mut self, line: u16);
 
     /// Pushing the product of the two topmost values
     fn handle_mul(&mut self, line: u16);
+
+    /// Pushing the division of the two topmost values
+    fn handle_div(&mut self, line: u16);
 
     /// Pushing the difference of the two topmost values
     fn handle_sub(&mut self, line: u16);

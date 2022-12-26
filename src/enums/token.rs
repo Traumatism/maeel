@@ -8,9 +8,11 @@ pub enum Token {
     Bool(bool, u16),         // true|false
     Let(u16),                // let
     If(u16),                 // if
+    Modulo(u16),             // %
     Add(u16),                // +
     Sub(u16),                // -
     Mul(u16),                // *
+    Div(u16),                // /
     And(u16),                // &
     Or(u16),                 // |
     Xor(u16),                // ^
