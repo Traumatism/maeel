@@ -2,3 +2,4 @@
 .DS_Store
 maeel
 Cargo.lock
+compiler-tests
