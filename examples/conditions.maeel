@@ -1,26 +1,26 @@
 let a true end
 let b true end
 
-a b | if
+a b or if
     "a or b => true" println
     clear
-end a b |! if
+end a b or! if
     "a or b => false" println
     clear
 end
 
-a b & if
+a b and if
     "a and b => true" println
     clear
-end a b &! if
+end a b and! if
     "a and b => false" println
     clear
 end
 
-a b = if
+a b= if
     "a eq b => true" println
     clear
-end a b =! if
+end a b=! if
     "a eq b => false" println
     clear
 end

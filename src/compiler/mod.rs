@@ -1,8 +1,9 @@
-use crate::enums::{token::Token, vmtype::VMType};
 use std::slice::Iter;
 
-pub mod arm64;
 pub mod interpreter;
+
+use crate::enums::token::Token;
+use crate::enums::vmtype::VMType;
 
 /// Base functions that must be shared
 /// by all compilers
@@ -15,12 +16,6 @@ pub trait Compiler {
                 Token::Integer(content, _) => self.handle_push_int(content),
                 Token::Float(content, _) => self.handle_push_float(content),
                 Token::Bool(content, _) => self.handle_push_bool(content),
-                Token::Pop => {
-                    self.handle_pop();
-                }
-                Token::Dup => self.handle_dup(),
-                Token::Swap => self.handle_swap(),
-                Token::Clear => self.handle_clear(),
                 Token::Add(line) => self.handle_add(line),
                 Token::Modulo(line) => self.handle_modulo(line),
                 Token::Div(line) => self.handle_div(line),
@@ -35,6 +30,12 @@ pub trait Compiler {
                 Token::Take(line) => self.handle_take(line),
                 Token::Reverse(line) => self.handle_reverse(line),
                 Token::Identifier(identifier, line) => self.handle_identifier(&identifier, line),
+                Token::Pop => {
+                    let _ = self.handle_pop();
+                }
+                Token::Dup => self.handle_dup(),
+                Token::Swap => self.handle_swap(),
+                Token::Clear => self.handle_clear(),
                 Token::Let(line) => {
                     let name = match tokens.next() {
                         Some(Token::Identifier(name, _)) => name,
@@ -52,6 +53,15 @@ pub trait Compiler {
                     };
 
                     self.handle_var_add(name.to_string(), value)
+                }
+
+                Token::For(line) => {
+                    let array = match self.handle_pop() {
+                        Some(VMType::Array(array)) => array,
+                        _ => {
+                            panic!("line {line}: `for` requires an array on the top of the stack!")
+                        }
+                    };
                 }
 
                 Token::If(line) => {

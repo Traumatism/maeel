@@ -1,5 +1,6 @@
 proc hieron_step
     " -> " print pop
+
     dup 3% 0= if
         3/ print return
     end
@@ -20,3 +21,5 @@ proc hieron
 
     hieron
 end_proc
+
+1 hieron
