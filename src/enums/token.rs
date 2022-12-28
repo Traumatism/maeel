@@ -8,6 +8,7 @@ pub enum Token {
     Bool(bool, u16),         // true|false
     Let(u16),                // let
     If(u16),                 // if
+    For(u16),                // for
     Modulo(u16),             // %
     Add(u16),                // +
     Sub(u16),                // -
@@ -24,8 +25,8 @@ pub enum Token {
     Reverse(u16),            // reverse
     Clear,                   // clear
     Dup,                     // dup
-    Swap,                    // dup
-    Pop,                     // dup
+    Swap,                    // swap
+    Pop,                     // pop
     Separator,               // end
     ProcStart,               // proc
     ProcEnd,                 // proc_end

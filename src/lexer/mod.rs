@@ -12,6 +12,7 @@ pub fn lex_identifier(identifier: &str, line: u16) -> Token {
         "pop" => Token::Pop,
         "clear" => Token::Clear,
         "swap" => Token::Swap,
+        "for" => Token::For(line),
         "take" => Token::Take(line),
         "reverse" => Token::Reverse(line),
         "del" => Token::Del(line),
