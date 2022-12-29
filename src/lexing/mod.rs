@@ -3,22 +3,21 @@ use std::collections::HashMap;
 
 /// Extract instructions from tokens
 pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
-    let mut instructions = Vec::<Vec<Token>>::default();
-    let mut current_instruction = Vec::<Token>::default();
+    let mut instructions = Vec::default();
+    let mut current_instruction = Vec::default();
 
-    for next in tokens {
-        match next.clone() {
+    for token in tokens {
+        match token.clone() {
             Token::BlockEnd(line) => {
                 current_instruction.push(Token::BlockEnd(line));
                 instructions.push(current_instruction);
                 current_instruction = Vec::default()
             }
-            _ => current_instruction.push(next.clone()),
+            _ => current_instruction.push(token.clone()),
         }
     }
 
     instructions.push(current_instruction);
-
     instructions
 }
 
@@ -31,7 +30,7 @@ pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
         match token {
             Token::BlockStart(line) => {
                 let mut block_tokens = Vec::new();
-                let mut need_recursion = false;
+                let mut recurse = false;
                 let mut n = 0;
 
                 for token_0 in tokens_iter.by_ref() {
@@ -45,14 +44,14 @@ pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
                         },
                         Token::BlockStart(_) => {
                             n += 1;
-                            need_recursion = true;
+                            recurse = true;
                             block_tokens.push(token_0.clone())
                         }
                         _ => block_tokens.push(token_0.clone()),
                     }
                 }
 
-                match need_recursion {
+                match recurse {
                     true => output.push(Token::Block(extract_blocks(block_tokens), *line)),
                     false => output.push(Token::Block(block_tokens, *line)),
                 }
@@ -111,19 +110,24 @@ pub fn lex_identifier(identifier: &str, line: u16) -> Token {
 
 /// Lex a single character
 pub fn lex_single_char(chr: char, line: u16) -> Token {
-    match chr {
-        '&' => Token::And(line),
-        '|' => Token::Or(line),
-        '^' => Token::Xor(line),
-        '+' => Token::Add(line),
-        '*' => Token::Mul(line),
-        '/' => Token::Div(line),
-        '-' => Token::Sub(line),
-        '=' => Token::Eq(line),
-        '%' => Token::Modulo(line),
-        '!' => Token::Not(line),
-        _ => panic!("line {line}: Unkown symbol `{chr}`"),
-    }
+    let mut symbols = HashMap::new();
+
+    symbols.insert('&', Token::And(line));
+    symbols.insert('|', Token::Or(line));
+    symbols.insert('^', Token::Xor(line));
+    symbols.insert('+', Token::Add(line));
+    symbols.insert('*', Token::Mul(line));
+    symbols.insert('/', Token::Div(line));
+    symbols.insert('-', Token::Sub(line));
+    symbols.insert('=', Token::Eq(line));
+    symbols.insert('%', Token::Modulo(line));
+    symbols.insert('!', Token::Not(line));
+
+    let token = symbols.get(&chr);
+
+    token
+        .unwrap_or_else(|| panic!("line {line}: Unkown symbol {chr}"))
+        .clone()
 }
 
 /// Lex code
@@ -138,6 +142,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
         match chr {
             ' ' | '(' | ')' => (),
             '\n' => line += 1,
+
             '@' => {
                 while let Some(next) = chars.pop() {
                     if next == '\n' {
@@ -145,6 +150,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                 }
             }
+
             '"' => {
                 let mut content = String::new();
 
@@ -172,6 +178,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 tokens.push(lex_identifier(&content, line).clone());
             }
+
             '0'..='9' => {
                 let mut content = String::from(chr);
                 let mut float = false;
