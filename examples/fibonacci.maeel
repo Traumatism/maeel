@@ -1,26 +1,11 @@
-@ Calculate the n'th term of the
-@ fibonacci sequence.
-@
-@ i.e. 10 fib_n println pop
-proc fib_n
-    dup dup 1= swap 0= or! if
-        dup 1- fib_n swap 2- fib_n+
+proc fib do
+    dup dup 1= swap 0= or! if do
+        dup 1- fib swap 2- fib +
     end
-end_proc
+end
 
-@ This shouldn't be called
-@ outside of the fib_sequence
-@ procedure.
-proc fib_sequence_inner
-    dup fib_n println pop
-    1+ fib_sequence_inner
-end_proc
+(12 11 10 9 8 7 6 5 4 3 2 1)
 
-@ Calculate all the terms of the
-@ fibonacci sequence until stack
-@ overflow error happen.
-proc fib_sequence
-    1 fib_sequence_inner
-end_proc
-
-fib_sequence
+(12 take) for do
+    (fib print pop)
+end

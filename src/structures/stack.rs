@@ -98,4 +98,14 @@ impl Stack {
             _ => None,
         }
     }
+
+    /// Pop the head value and return it in an Option
+    pub fn pop_nr(&mut self) {
+        match replace(&mut self.head, None) {
+            Some(stack) => {
+                self.head = stack.1.map(|n| *n);
+            }
+            None => todo!(),
+        }
+    }
 }

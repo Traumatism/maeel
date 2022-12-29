@@ -1,48 +1,107 @@
 use crate::enums::token::Token;
 
+pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
+    let mut instructions = Vec::<Vec<Token>>::default();
+    let mut current_instruction = Vec::<Token>::default();
+
+    for next in tokens {
+        match next.clone() {
+            Token::BlockEnd => {
+                current_instruction.push(Token::BlockEnd);
+                instructions.push(current_instruction);
+                current_instruction = Vec::default()
+            }
+            _ => current_instruction.push(next.clone()),
+        }
+    }
+
+    instructions.push(current_instruction);
+    instructions
+}
+
+pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
+    let mut output = Vec::new();
+    let mut tokens_iter = tokens.iter();
+
+    while let Some(token) = tokens_iter.next() {
+        match token {
+            Token::BlockStart => {
+                let mut block_tokens = Vec::new();
+                let mut need_recursion = false;
+                let mut n = 0;
+
+                for token_0 in tokens_iter.by_ref() {
+                    match token_0 {
+                        Token::BlockEnd => match n {
+                            0 => break,
+                            _ => {
+                                n -= 1;
+                                block_tokens.push(token_0.clone())
+                            }
+                        },
+                        Token::BlockStart => {
+                            n += 1;
+                            need_recursion = true;
+                            block_tokens.push(token_0.clone())
+                        }
+                        _ => block_tokens.push(token_0.clone()),
+                    }
+                }
+
+                match need_recursion {
+                    true => output.push(Token::Block(extract_blocks(block_tokens))),
+                    false => output.push(Token::Block(block_tokens)),
+                }
+            }
+            _ => output.push(token.clone()),
+        }
+    }
+
+    output
+}
+
 /// Lex an identifier
-pub fn lex_identifier(identifier: &str, line: u16) -> Token {
+pub fn lex_identifier(identifier: &str) -> Token {
     match identifier {
-        "true" => Token::Bool(true, line),
-        "false" => Token::Bool(false, line),
-        "end" => Token::Separator,
+        "true" => Token::Bool(true),
+        "false" => Token::Bool(false),
+        "do" => Token::BlockStart,
+        "end" => Token::BlockEnd,
         "proc" => Token::ProcStart,
-        "end_proc" => Token::ProcEnd,
         "dup" => Token::Dup,
         "pop" => Token::Pop,
         "clear" => Token::Clear,
         "swap" => Token::Swap,
-        "for" => Token::For(line),
-        "take" => Token::Take(line),
-        "reverse" => Token::Reverse(line),
-        "del" => Token::Del(line),
-        "return" => Token::Return(line),
-        "if" => Token::If(line),
-        "let" => Token::Let(line),
-        "or" => Token::Or(line),
-        "and" => Token::And(line),
-        "not" => Token::Not(line),
-        "xor" => Token::Xor(line),
-        "eq" => Token::Eq(line),
-        _ => Token::Identifier(String::from(identifier), line),
+        "for" => Token::For,
+        "take" => Token::Take,
+        "reverse" => Token::Reverse,
+        "del" => Token::Del,
+        "if" => Token::If,
+        "let" => Token::Let,
+        "or" => Token::Or,
+        "and" => Token::And,
+        "not" => Token::Not,
+        "xor" => Token::Xor,
+        "eq" => Token::Eq,
+        "return" => Token::Return,
+        _ => Token::Identifier(String::from(identifier)),
     }
 }
 
 /// Lex a single character
-pub fn lex_single_char(chr: char, line: u16) -> Token {
+pub fn lex_single_char(chr: char) -> Token {
     match chr {
-        '&' => Token::And(line),
-        '|' => Token::Or(line),
-        '^' => Token::Xor(line),
-        '+' => Token::Add(line),
-        '*' => Token::Mul(line),
-        '/' => Token::Div(line),
-        '-' => Token::Sub(line),
-        '=' => Token::Eq(line),
-        '%' => Token::Modulo(line),
-        '!' => Token::Not(line),
-        ';' => Token::Separator,
-        _ => panic!("line {line}: unknown symbol {chr}"),
+        '&' => Token::And,
+        '|' => Token::Or,
+        '^' => Token::Xor,
+        '+' => Token::Add,
+        '*' => Token::Mul,
+        '/' => Token::Div,
+        '-' => Token::Sub,
+        '=' => Token::Eq,
+        '%' => Token::Modulo,
+        '!' => Token::Not,
+        _ => panic!(),
     }
 }
 
@@ -52,12 +111,11 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     chars.reverse();
 
     let mut tokens = Vec::new();
-    let mut line = 1;
 
     while let Some(chr) = chars.pop() {
         match chr {
-            '\n' => line += 1,
-            ' ' => (),
+            ' ' | '\n' => (),
+            '(' | ')' => (),
             '@' => {
                 while let Some(next) = chars.pop() {
                     if next == '\n' {
@@ -75,7 +133,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                 }
 
-                tokens.push(Token::Str(content, line))
+                tokens.push(Token::Str(content))
             }
             'a'..='z' | '_' => {
                 let mut content = String::from(chr);
@@ -90,7 +148,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                 }
 
-                tokens.push(lex_identifier(&content, line));
+                tokens.push(lex_identifier(&content));
             }
             '0'..='9' => {
                 let mut content = String::from(chr);
@@ -112,11 +170,11 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 }
 
                 tokens.push(match float {
-                    true => Token::Float(content.parse::<f64>().unwrap(), line),
-                    false => Token::Integer(content.parse::<i64>().unwrap(), line),
+                    true => Token::Float(content.parse::<f64>().unwrap()),
+                    false => Token::Integer(content.parse::<i64>().unwrap()),
                 });
             }
-            _ => tokens.push(lex_single_char(chr, line)),
+            _ => tokens.push(lex_single_char(chr)),
         }
     }
 
