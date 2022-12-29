@@ -74,24 +74,23 @@ impl Interpreter {
                 Token::Pop(_) => self.stack.pop_nr(),
 
                 Token::Return(_) => self.stop_execution = true,
-                Token::Let(_) => {
+                Token::Let(line) => {
                     self.vars.insert(
                         match tokens.next() {
                             Some(Token::Identifier(name, _)) => name.clone(),
-                            _ => panic!(),
+                            _ => panic!("line {line}: `let` must be followed by a variable name."),
                         },
                         match tokens.next() {
                             Some(Token::Str(content, _)) => VMType::Str(content.clone()),
                             Some(Token::Integer(n, _)) => VMType::Integer(*n),
                             Some(Token::Float(x, _)) => VMType::Float(*x),
                             Some(Token::Bool(p, _)) => VMType::Bool(*p),
-
                             Some(Token::Pop(_)) => self.stack.pop().unwrap(),
                             Some(Token::Dup(_)) => {
                                 self.stack.dup();
                                 self.stack.pop().unwrap()
                             }
-                            _ => panic!(),
+                            _ => panic!("line {line}: `let name` must be followed by a variable value (str, integer, float, bool, `dup`, `pop`)"),
                         },
                     );
                 }
@@ -182,25 +181,23 @@ impl Interpreter {
         self.stack.push(VMType::Bool(content));
     }
 
-    pub fn handle_take(&mut self, _line: u16) {
+    pub fn handle_take(&mut self, line: u16) {
         match self.stack.pop() {
             Some(VMType::Integer(n)) => {
                 let array = (0..n).map(|_| self.stack.pop().unwrap()).collect();
                 self.stack.push(VMType::Array(array))
             }
-            _ => panic!(),
+            _ => panic!("line {line}: `take` requires an array on the take."),
         }
     }
 
-    pub fn handle_reverse(&mut self, _line: u16) {
+    pub fn handle_reverse(&mut self, line: u16) {
         match self.stack.pop() {
             Some(VMType::Array(mut array)) => {
                 array.reverse();
                 self.stack.push(VMType::Array(array))
             }
-            _ => {
-                panic!()
-            }
+            _ => panic!("line {line}: `reverse` requires an array on the take."),
         }
     }
 
