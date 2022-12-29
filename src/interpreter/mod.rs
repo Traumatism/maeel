@@ -97,16 +97,16 @@ impl Interpreter {
                 }
 
                 Token::For(line) => {
+                    let for_block = match tokens.next() {
+                        Some(Token::Block(if_tokens, _)) => if_tokens.clone(),
+                        _ => panic!("line {line}: `for` must be followed by a code block."),
+                    };
+
                     let array = match self.stack.pop() {
                         Some(VMType::Array(array)) => array,
                         _ => {
-                            panic!()
+                            panic!("line {line}: `for` requires an array on the stack.")
                         }
-                    };
-
-                    let for_block = match tokens.next() {
-                        Some(Token::Block(if_tokens, _)) => if_tokens.clone(),
-                        _ => panic!(),
                     };
 
                     for element in array {
@@ -115,7 +115,9 @@ impl Interpreter {
                             VMType::Integer(n) => self.handle_push_int(n, line),
                             VMType::Float(x) => self.handle_push_float(x, line),
                             VMType::Bool(p) => self.handle_push_bool(p, line),
-                            _ => panic!(),
+                            _ => panic!(
+                                "line {line}: `for` array content can be: (str, int, float, bool)."
+                            ),
                         }
 
                         self.handle_block_execution(for_block.clone(), line)
@@ -125,34 +127,38 @@ impl Interpreter {
                 Token::If(line) => {
                     let block = match tokens.next() {
                         Some(Token::Block(if_tokens, _)) => if_tokens.clone(),
-                        _ => panic!(),
+                        _ => panic!("line {line}: `if` must be followed by a code block."),
                     };
 
                     if match self.stack.pop() {
                         Some(VMType::Bool(e)) => e,
-                        _ => panic!(),
+                        _ => panic!("line {line}: `if` requires a boolean value on the stack."),
                     } {
                         self.handle_block_execution(block, line)
                     }
                 }
 
-                Token::Del(_) => {
+                Token::Del(line) => {
                     self.vars.remove(match tokens.next() {
                         Some(Token::Identifier(name, _)) => name,
-                        _ => panic!(),
+                        _ => panic!("line {line}: `del` requires a value on the stack."),
                     });
                 }
 
-                Token::ProcStart(_) => {
+                Token::ProcStart(line) => {
                     self.procs.insert(
                         match tokens.next().unwrap() {
                             Token::Identifier(name, _) => name,
-                            _ => panic!(),
+                            _ => panic!(
+                                "line {line}: `proc` must be followed by the procedure name."
+                            ),
                         }
                         .to_string(),
                         match tokens.next().unwrap() {
                             Token::Block(proc_tokens, _) => proc_tokens.clone(),
-                            _ => panic!(),
+                            _ => {
+                                panic!("line {line}: `proc name` must be followed by a code block.")
+                            }
                         },
                     );
                 }
