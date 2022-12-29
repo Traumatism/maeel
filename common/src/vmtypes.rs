@@ -4,6 +4,7 @@ use std::{
         Add,
         Div,
         Mul,
+        Not,
         Rem,
         Sub,
     },
@@ -121,6 +122,21 @@ impl Sub for VMType
     }
 }
 
+impl Not for VMType
+{
+    type Output = VMType;
+
+    fn not(self) -> Self::Output
+    {
+        match self {
+            VMType::Float(a) => VMType::Float(a * -1.),
+            VMType::Integer(a) => VMType::Integer(-a),
+            VMType::Bool(a) => VMType::Bool(a.not()),
+            a => panic!("can't invert {a:?}"),
+        }
+    }
+}
+
 impl Mul for VMType
 {
     type Output = VMType;
@@ -139,6 +155,15 @@ impl Mul for VMType
             }
             (VMType::Float(a), VMType::Integer(b)) => {
                 VMType::Float(a * b as f64)
+            }
+            (VMType::Bool(false), VMType::Bool(_)) => {
+                VMType::Bool(false)
+            }
+            (VMType::Bool(_), VMType::Bool(false)) => {
+                VMType::Bool(false)
+            }
+            (VMType::Bool(true), VMType::Bool(true)) => {
+                VMType::Bool(true)
             }
             (VMType::Array(a), VMType::Array(b)) => {
                 let mut new_array = Vec::default();
@@ -178,6 +203,15 @@ impl Add for VMType
             }
             (VMType::Float(a), VMType::Integer(b)) => {
                 VMType::Float(a + b as f64)
+            }
+            (VMType::Bool(true), VMType::Bool(_)) => {
+                VMType::Bool(true)
+            }
+            (VMType::Bool(_), VMType::Bool(true)) => {
+                VMType::Bool(true)
+            }
+            (VMType::Bool(false), VMType::Bool(false)) => {
+                VMType::Bool(false)
             }
 
             (other, VMType::Array(mut array))
