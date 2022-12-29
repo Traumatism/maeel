@@ -66,32 +66,38 @@ pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
 pub fn lex_identifier(identifier: &str) -> Token {
     let mut keywords = HashMap::new();
 
+    // Booleans values
     keywords.insert("true", Token::Bool(true));
     keywords.insert("false", Token::Bool(false));
 
+    // Boolean operations
+    keywords.insert("or", Token::Or);
+    keywords.insert("and", Token::And);
+    keywords.insert("not", Token::Not);
+    keywords.insert("xor", Token::Xor);
+    keywords.insert("eq", Token::Eq);
+
+    // Block borders
     keywords.insert("do", Token::BlockStart);
     keywords.insert("end", Token::BlockEnd);
 
     keywords.insert("proc", Token::ProcStart);
 
+    // Stack manipulation
     keywords.insert("dup", Token::Dup);
     keywords.insert("pop", Token::Pop);
     keywords.insert("clear", Token::Clear);
     keywords.insert("swap", Token::Swap);
 
-    keywords.insert("for", Token::For);
-    keywords.insert("take", Token::Take);
+    // Array manipulation
     keywords.insert("reverse", Token::Reverse);
+    keywords.insert("take", Token::Take);
+
+    // Statements
+    keywords.insert("for", Token::For);
     keywords.insert("del", Token::Del);
     keywords.insert("if", Token::If);
     keywords.insert("let", Token::Let);
-
-    keywords.insert("or", Token::Or);
-    keywords.insert("and", Token::And);
-    keywords.insert("not", Token::Not);
-    keywords.insert("xor", Token::Xor);
-
-    keywords.insert("eq", Token::Eq);
     keywords.insert("return", Token::Return);
 
     let token = keywords.get(identifier);
