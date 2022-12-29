@@ -1,6 +1,7 @@
 use crate::enums::token::Token;
 use std::collections::HashMap;
 
+/// Extract instructions from tokens
 pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     let mut instructions = Vec::<Vec<Token>>::default();
     let mut current_instruction = Vec::<Token>::default();
@@ -21,6 +22,7 @@ pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     instructions
 }
 
+/// Extract code blocks from tokens
 pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
@@ -135,9 +137,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     while let Some(chr) = chars.pop() {
         match chr {
             ' ' | '(' | ')' => (),
-
             '\n' => line += 1,
-
             '@' => {
                 while let Some(next) = chars.pop() {
                     if next == '\n' {
