@@ -4,7 +4,7 @@ use std::slice::Iter;
 
 use crate::enums::token::Token;
 use crate::enums::vmtype::VMType;
-use crate::lexer::extract_instructions;
+use crate::lexing::extract_instructions;
 use crate::structures::stack::Stack;
 
 pub struct Interpreter {

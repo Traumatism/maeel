@@ -1,8 +1,8 @@
 use std::env::args;
 use std::fs::read_to_string;
 
-mod lexer;
-use lexer::{extract_blocks, extract_instructions, lex_into_tokens};
+mod lexing;
+use lexing::{extract_blocks, extract_instructions, lex_into_tokens};
 
 mod interpreter;
 use interpreter::Interpreter;
