@@ -48,46 +48,46 @@ impl Interpreter {
             }
 
             match token.clone() {
-                Token::BlockStart | Token::BlockEnd => panic!(),
-                Token::Block(tokens) => self.handle_block_execution(tokens),
+                Token::BlockStart(_) | Token::BlockEnd(_) => panic!(),
+                Token::Block(tokens, line) => self.handle_block_execution(tokens, line),
 
-                Token::Str(content) => self.handle_push_str(content),
-                Token::Integer(content) => self.handle_push_int(content),
-                Token::Float(content) => self.handle_push_float(content),
-                Token::Bool(content) => self.handle_push_bool(content),
-                Token::Add => self.handle_add(),
-                Token::Sub => self.handle_sub(),
-                Token::Mul => self.handle_mul(),
-                Token::Div => self.handle_div(),
-                Token::Modulo => self.handle_modulo(),
-                Token::Or => self.handle_or(),
-                Token::Xor => self.handle_xor(),
-                Token::And => self.handle_and(),
-                Token::Not => self.handle_not(),
-                Token::Eq => self.handle_eq(),
-                Token::Take => self.handle_take(),
-                Token::Reverse => self.handle_reverse(),
-                Token::Identifier(identifier) => self.handle_identifier(&identifier),
-                Token::Dup => self.stack.dup(),
-                Token::Swap => self.stack.swap(),
-                Token::Clear => self.stack.clear(),
-                Token::Pop => self.stack.pop_nr(),
+                Token::Str(content, line) => self.handle_push_str(content, line),
+                Token::Integer(content, line) => self.handle_push_int(content, line),
+                Token::Float(content, line) => self.handle_push_float(content, line),
+                Token::Bool(content, line) => self.handle_push_bool(content, line),
+                Token::Add(line) => self.handle_add(line),
+                Token::Sub(line) => self.handle_sub(line),
+                Token::Mul(line) => self.handle_mul(line),
+                Token::Div(line) => self.handle_div(line),
+                Token::Modulo(line) => self.handle_modulo(line),
+                Token::Or(line) => self.handle_or(line),
+                Token::Xor(line) => self.handle_xor(line),
+                Token::And(line) => self.handle_and(line),
+                Token::Not(line) => self.handle_not(line),
+                Token::Eq(line) => self.handle_eq(line),
+                Token::Take(line) => self.handle_take(line),
+                Token::Reverse(line) => self.handle_reverse(line),
+                Token::Identifier(identifier, line) => self.handle_identifier(&identifier, line),
+                Token::Dup(_) => self.stack.dup(),
+                Token::Swap(_) => self.stack.swap(),
+                Token::Clear(_) => self.stack.clear(),
+                Token::Pop(_) => self.stack.pop_nr(),
 
-                Token::Return => self.stop_execution = true,
-                Token::Let => {
+                Token::Return(_) => self.stop_execution = true,
+                Token::Let(_) => {
                     self.vars.insert(
                         match tokens.next() {
-                            Some(Token::Identifier(name)) => name.clone(),
+                            Some(Token::Identifier(name, _)) => name.clone(),
                             _ => panic!(),
                         },
                         match tokens.next() {
-                            Some(Token::Str(content)) => VMType::Str(content.clone()),
-                            Some(Token::Integer(n)) => VMType::Integer(*n),
-                            Some(Token::Float(x)) => VMType::Float(*x),
-                            Some(Token::Bool(p)) => VMType::Bool(*p),
+                            Some(Token::Str(content, _)) => VMType::Str(content.clone()),
+                            Some(Token::Integer(n, _)) => VMType::Integer(*n),
+                            Some(Token::Float(x, _)) => VMType::Float(*x),
+                            Some(Token::Bool(p, _)) => VMType::Bool(*p),
 
-                            Some(Token::Pop) => self.stack.pop().unwrap(),
-                            Some(Token::Dup) => {
+                            Some(Token::Pop(_)) => self.stack.pop().unwrap(),
+                            Some(Token::Dup(_)) => {
                                 self.stack.dup();
                                 self.stack.pop().unwrap()
                             }
@@ -96,7 +96,7 @@ impl Interpreter {
                     );
                 }
 
-                Token::For => {
+                Token::For(line) => {
                     let array = match self.stack.pop() {
                         Some(VMType::Array(array)) => array,
                         _ => {
@@ -105,26 +105,26 @@ impl Interpreter {
                     };
 
                     let for_block = match tokens.next() {
-                        Some(Token::Block(if_tokens)) => if_tokens.clone(),
+                        Some(Token::Block(if_tokens, _)) => if_tokens.clone(),
                         _ => panic!(),
                     };
 
                     for element in array {
                         match element {
-                            VMType::Str(c) => self.handle_push_str(c),
-                            VMType::Integer(n) => self.handle_push_int(n),
-                            VMType::Float(x) => self.handle_push_float(x),
-                            VMType::Bool(p) => self.handle_push_bool(p),
+                            VMType::Str(c) => self.handle_push_str(c, line),
+                            VMType::Integer(n) => self.handle_push_int(n, line),
+                            VMType::Float(x) => self.handle_push_float(x, line),
+                            VMType::Bool(p) => self.handle_push_bool(p, line),
                             _ => panic!(),
                         }
 
-                        self.handle_block_execution(for_block.clone())
+                        self.handle_block_execution(for_block.clone(), line)
                     }
                 }
 
-                Token::If => {
+                Token::If(line) => {
                     let block = match tokens.next() {
-                        Some(Token::Block(if_tokens)) => if_tokens.clone(),
+                        Some(Token::Block(if_tokens, _)) => if_tokens.clone(),
                         _ => panic!(),
                     };
 
@@ -132,26 +132,26 @@ impl Interpreter {
                         Some(VMType::Bool(e)) => e,
                         _ => panic!(),
                     } {
-                        self.handle_block_execution(block)
+                        self.handle_block_execution(block, line)
                     }
                 }
 
-                Token::Del => {
+                Token::Del(_) => {
                     self.vars.remove(match tokens.next() {
-                        Some(Token::Identifier(name)) => name,
+                        Some(Token::Identifier(name, _)) => name,
                         _ => panic!(),
                     });
                 }
 
-                Token::ProcStart => {
+                Token::ProcStart(_) => {
                     self.procs.insert(
                         match tokens.next().unwrap() {
-                            Token::Identifier(name) => name,
+                            Token::Identifier(name, _) => name,
                             _ => panic!(),
                         }
                         .to_string(),
                         match tokens.next().unwrap() {
-                            Token::Block(proc_tokens) => proc_tokens.clone(),
+                            Token::Block(proc_tokens, _) => proc_tokens.clone(),
                             _ => panic!(),
                         },
                     );
@@ -160,23 +160,23 @@ impl Interpreter {
         }
     }
 
-    pub fn handle_push_str(&mut self, content: String) {
+    pub fn handle_push_str(&mut self, content: String, _line: u16) {
         self.stack.push(VMType::Str(content));
     }
 
-    pub fn handle_push_int(&mut self, content: i64) {
+    pub fn handle_push_int(&mut self, content: i64, _line: u16) {
         self.stack.push(VMType::Integer(content));
     }
 
-    pub fn handle_push_float(&mut self, content: f64) {
+    pub fn handle_push_float(&mut self, content: f64, _line: u16) {
         self.stack.push(VMType::Float(content));
     }
 
-    pub fn handle_push_bool(&mut self, content: bool) {
+    pub fn handle_push_bool(&mut self, content: bool, _line: u16) {
         self.stack.push(VMType::Bool(content));
     }
 
-    pub fn handle_take(&mut self) {
+    pub fn handle_take(&mut self, _line: u16) {
         match self.stack.pop() {
             Some(VMType::Integer(n)) => {
                 let array = (0..n).map(|_| self.stack.pop().unwrap()).collect();
@@ -186,7 +186,7 @@ impl Interpreter {
         }
     }
 
-    pub fn handle_reverse(&mut self) {
+    pub fn handle_reverse(&mut self, _line: u16) {
         match self.stack.pop() {
             Some(VMType::Array(mut array)) => {
                 array.reverse();
@@ -198,7 +198,7 @@ impl Interpreter {
         }
     }
 
-    pub fn handle_block_execution(&mut self, block: Vec<Token>) {
+    pub fn handle_block_execution(&mut self, block: Vec<Token>, _line: u16) {
         let mut proc_parser = Self::new(self.procs.clone(), self.vars.clone(), self.stack.clone());
 
         for instruction in extract_instructions(block) {
@@ -211,7 +211,7 @@ impl Interpreter {
         self.vars = proc_parser.vars;
     }
 
-    pub fn handle_identifier(&mut self, identifier: &str) {
+    pub fn handle_identifier(&mut self, identifier: &str, line: u16) {
         match identifier {
             "exit" => match self.stack.pop().unwrap() {
                 VMType::Integer(status) => std::process::exit(status as i32),
@@ -247,74 +247,74 @@ impl Interpreter {
                 }
 
                 let proc_tokens = self.procs.get(identifier).expect(identifier).clone();
-                self.handle_block_execution(proc_tokens);
+                self.handle_block_execution(proc_tokens, line);
             }
         }
     }
 
-    pub fn handle_modulo(&mut self) {
+    pub fn handle_modulo(&mut self, _line: u16) {
         let a = self.stack.pop().unwrap();
         let b = self.stack.pop().unwrap();
 
         self.stack.push(b % a)
     }
 
-    pub fn handle_add(&mut self) {
+    pub fn handle_add(&mut self, _line: u16) {
         let a = self.stack.pop().unwrap();
         let b = self.stack.pop().unwrap();
 
         self.stack.push(a + b)
     }
 
-    pub fn handle_mul(&mut self) {
+    pub fn handle_mul(&mut self, _line: u16) {
         let a = self.stack.pop().unwrap();
         let b = self.stack.pop().unwrap();
 
         self.stack.push(a * b)
     }
 
-    pub fn handle_sub(&mut self) {
+    pub fn handle_sub(&mut self, _line: u16) {
         let a = self.stack.pop().unwrap();
         let b = self.stack.pop().unwrap();
 
         self.stack.push(b - a)
     }
 
-    pub fn handle_or(&mut self) {
+    pub fn handle_or(&mut self, _line: u16) {
         let p = self.stack.pop().unwrap();
         let q = self.stack.pop().unwrap();
 
         self.stack.push(p | q)
     }
 
-    pub fn handle_xor(&mut self) {
+    pub fn handle_xor(&mut self, _line: u16) {
         let p = self.stack.pop().unwrap();
         let q = self.stack.pop().unwrap();
 
         self.stack.push(p ^ q)
     }
 
-    pub fn handle_and(&mut self) {
+    pub fn handle_and(&mut self, _line: u16) {
         let p = self.stack.pop().unwrap();
         let q = self.stack.pop().unwrap();
 
         self.stack.push(p & q)
     }
 
-    pub fn handle_not(&mut self) {
+    pub fn handle_not(&mut self, _line: u16) {
         let p = self.stack.pop().unwrap();
 
         self.stack.push(!p)
     }
 
-    pub fn handle_eq(&mut self) {
+    pub fn handle_eq(&mut self, _line: u16) {
         let a = self.stack.pop().unwrap();
         let b = self.stack.pop().unwrap();
 
         self.stack.push(VMType::Bool(a == b))
     }
 
-    pub fn handle_div(&mut self) {
+    pub fn handle_div(&mut self, _line: u16) {
         let a = self.stack.pop().unwrap();
         let b = self.stack.pop().unwrap();
 
