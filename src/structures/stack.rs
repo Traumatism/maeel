@@ -114,4 +114,18 @@ impl Stack {
     pub fn is_empty(&self) -> bool {
         matches!(self.head, None)
     }
+
+    pub fn reverse_stack(&mut self) {
+        let mut temp_stack = Vec::default();
+
+        while let Some(val) = self.pop() {
+            temp_stack.push(val);
+        }
+
+        temp_stack.reverse();
+
+        while let Some(val) = temp_stack.pop() {
+            self.push(val);
+        }
+    }
 }
