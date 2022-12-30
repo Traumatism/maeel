@@ -109,22 +109,9 @@ impl Stack {
         }
     }
 
-    /// checks whether the stack is empty or not
+    /// Checks whether the stack is empty or not
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         matches!(self.head, None)
     }
-
-    // /// Gets the length of the stack
-    // pub fn len(&self) -> usize {
-    //     let mut count = 0;
-    //     let mut head = self.head.clone();
-    //     loop {
-    //         if head.is_none() {
-    //             break;
-    //         }
-    //         count += 1;
-    //         head = head.unwrap().1.unwrap();
-    //     }
-    //     return count;
-    // }
 }
