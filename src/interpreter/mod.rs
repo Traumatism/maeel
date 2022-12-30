@@ -11,6 +11,7 @@ pub struct Interpreter {
     stop_execution: bool,
     procs: BTreeMap<String, Vec<Token>>,
     vars: BTreeMap<String, VMType>,
+    private_vars: BTreeMap<String, VMType>,
     stack: Stack,
 }
 
@@ -20,6 +21,7 @@ impl Default for Interpreter {
         Self {
             stop_execution: false,
             procs: BTreeMap::default(),
+            private_vars: BTreeMap::default(),
             vars: BTreeMap::default(),
             stack: Stack::default(),
         }
@@ -34,6 +36,7 @@ impl Interpreter {
     ) -> Self {
         Self {
             stop_execution: false,
+            private_vars: BTreeMap::default(),
             procs,
             vars,
             stack,
@@ -77,13 +80,12 @@ impl Interpreter {
                 Token::Return(_) => self.stop_execution = true,
 
                 Token::Let(line) => {
-                    self.vars.insert(
-                        match tokens.next() {
-                            Some(Token::Identifier(name, _)) => name.clone(),
-                            _ => panic!("line {line}: `let` must be followed by a variable name."),
-                        },
+                    let name = match tokens.next() {
+                        Some(Token::Identifier(name, _)) => name.clone(),
+                        _ => panic!("line {line}: `let` must be followed by a variable name."),
+                    };
 
-                        match tokens.next() {
+                    let value = match tokens.next() {
                             Some(Token::Str(content, _)) => VMType::Str(content.clone()),
                             Some(Token::Integer(n, _)) => VMType::Integer(*n),
                             Some(Token::Float(x, _)) => VMType::Float(*x),
@@ -94,8 +96,13 @@ impl Interpreter {
                                 self.stack.pop().unwrap()
                             }
                             _ => panic!("line {line}: `let name` must be followed by a variable value (str, integer, float, bool, `dup`, `pop`)"),
-                        },
-                    );
+                        };
+
+                    if name.starts_with('_') {
+                        self.private_vars.insert(name, value);
+                    } else {
+                        self.vars.insert(name, value);
+                    }
                 }
 
                 Token::While(line) => {
@@ -263,9 +270,11 @@ impl Interpreter {
             }
 
             identifier => {
-                let v = self.vars.get(identifier);
+                if let Some(value) = self.vars.get(identifier) {
+                    return self.stack.push(value.clone());
+                }
 
-                if let Some(value) = v {
+                if let Some(value) = self.private_vars.get(identifier) {
                     return self.stack.push(value.clone());
                 }
 

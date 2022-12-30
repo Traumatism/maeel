@@ -1,0 +1,19 @@
+proc main do
+    let n pop
+
+    n 1 =! while do
+        n 2% 1 = if do
+            n println pop
+            n 3 * 1 + let n pop
+        end
+
+        n 2% 0 = if do
+            n println pop
+            n 2/ let n pop
+        end
+
+        n 1 =!
+    end
+end
+
+15 main
