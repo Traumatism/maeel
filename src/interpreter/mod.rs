@@ -218,7 +218,9 @@ impl Interpreter {
         match identifier {
             "exit" => match self.stack.pop().unwrap() {
                 VMType::Integer(status) => std::process::exit(status as i32),
-                _ => panic!(),
+                _ => {
+                    panic!("line {line}: exit requires an integer (the exit status) on the stack.")
+                }
             },
 
             // Parse a print/println instruction
