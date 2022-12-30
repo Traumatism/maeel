@@ -9,6 +9,7 @@ pub enum Token {
     Let(u16),                // let
     If(u16),                 // if
     For(u16),                // for
+    While(u16),              // while
     Modulo(u16),             // %
     Add(u16),                // +
     Sub(u16),                // -

@@ -68,18 +68,21 @@ impl Interpreter {
                 Token::Take(line) => self.handle_take(line),
                 Token::Reverse(line) => self.handle_reverse(line),
                 Token::Identifier(identifier, line) => self.handle_identifier(&identifier, line),
+
                 Token::Dup(_) => self.stack.dup(),
                 Token::Swap(_) => self.stack.swap(),
                 Token::Clear(_) => self.stack.clear(),
                 Token::Pop(_) => self.stack.pop_nr(),
 
                 Token::Return(_) => self.stop_execution = true,
+
                 Token::Let(line) => {
                     self.vars.insert(
                         match tokens.next() {
                             Some(Token::Identifier(name, _)) => name.clone(),
                             _ => panic!("line {line}: `let` must be followed by a variable name."),
                         },
+
                         match tokens.next() {
                             Some(Token::Str(content, _)) => VMType::Str(content.clone()),
                             Some(Token::Integer(n, _)) => VMType::Integer(*n),
@@ -93,6 +96,17 @@ impl Interpreter {
                             _ => panic!("line {line}: `let name` must be followed by a variable value (str, integer, float, bool, `dup`, `pop`)"),
                         },
                     );
+                }
+
+                Token::While(line) => {
+                    let while_block = match tokens.next() {
+                        Some(Token::Block(if_tokens, _)) => if_tokens.clone(),
+                        _ => panic!("line {line}: `while` must be followed by a code block."),
+                    };
+
+                    while let Some(VMType::Bool(true)) = self.stack.pop() {
+                        self.handle_block_execution(while_block.clone(), line)
+                    }
                 }
 
                 Token::For(line) => {
@@ -119,7 +133,11 @@ impl Interpreter {
                             ),
                         }
 
-                        self.handle_block_execution(for_block.clone(), line)
+                        self.handle_block_execution(for_block.clone(), line);
+
+                        if self.stop_execution {
+                            break;
+                        }
                     }
                 }
 
