@@ -1,6 +1,6 @@
 proc fib do
-    dup dup 1= swap 0= or! if do
-        dup 1- fib swap 2- fib+
+    dup dup 1 = swap 0 = | ! if do
+        dup 1 - fib swap 2 - fib+
     end
 end
 
@@ -8,10 +8,10 @@ proc main do
     let n 0
     let m pop
 
-    n m =! while do
+    n m = ! while do
         n 1 + let n pop
         n fib println pop
-        n m =!
+        n m = !
     end
 
     del n
