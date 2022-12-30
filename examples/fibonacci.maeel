@@ -4,8 +4,12 @@ proc fib do
     end
 end
 
-(12 11 10 9 8 7 6 5 4 3 2 1)
-(12 take) for do
-    (fib print pop)
-    (" " print pop)
+let n 0
+
+true while do
+
+    n 1+ let n pop
+    n fib println pop
+
+    true
 end

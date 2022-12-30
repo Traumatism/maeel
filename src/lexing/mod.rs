@@ -100,6 +100,7 @@ pub fn lex_identifier(identifier: &str, line: u16) -> Token {
     keywords.insert("if", Token::If(line));
     keywords.insert("let", Token::Let(line));
     keywords.insert("return", Token::Return(line));
+    keywords.insert("while", Token::While(line));
 
     let token = keywords.get(identifier);
 
