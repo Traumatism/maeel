@@ -111,23 +111,20 @@ impl Stack {
 
     /// checks whether the stack is empty or not
     pub fn is_empty(&self) -> bool {
-        return match self.head {
-            None => true,
-            _ => false,
-        };
+        matches!(self.head, None)
     }
 
-    /// Gets the length of the stack
-    pub fn len(&self) -> usize {
-        let mut count = 0;
-        let mut head = self.head.clone();
-        loop {
-            if head.is_none() {
-                break;
-            }
-            count += 1;
-            head = head.unwrap().1;
-        }
-        return count;
-    }
+    // /// Gets the length of the stack
+    // pub fn len(&self) -> usize {
+    //     let mut count = 0;
+    //     let mut head = self.head.clone();
+    //     loop {
+    //         if head.is_none() {
+    //             break;
+    //         }
+    //         count += 1;
+    //         head = head.unwrap().1.unwrap();
+    //     }
+    //     return count;
+    // }
 }
