@@ -63,6 +63,8 @@ impl Interpreter {
                 Token::Mul(line) => self.handle_mul(line),
                 Token::Div(line) => self.handle_div(line),
                 Token::Modulo(line) => self.handle_modulo(line),
+                Token::Lt(line) => self.handle_lt(line),
+                Token::Gt(line) => self.handle_gt(line),
                 Token::Or(line) => self.handle_or(line),
                 Token::Xor(line) => self.handle_xor(line),
                 Token::And(line) => self.handle_and(line),
@@ -290,6 +292,20 @@ impl Interpreter {
         let b = self.stack.pop().unwrap();
 
         self.stack.push(a + b)
+    }
+
+    pub fn handle_gt(&mut self, _line: u16) {
+        let a = self.stack.pop().unwrap();
+        let b = self.stack.pop().unwrap();
+
+        self.stack.push(VMType::Bool(b > a))
+    }
+
+    pub fn handle_lt(&mut self, _line: u16) {
+        let a = self.stack.pop().unwrap();
+        let b = self.stack.pop().unwrap();
+
+        self.stack.push(VMType::Bool(b < a))
     }
 
     pub fn handle_mul(&mut self, _line: u16) {

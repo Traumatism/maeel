@@ -20,6 +20,8 @@ pub enum Token {
     Xor(u16),                // ^
     Not(u16),                // !
     Eq(u16),                 // =
+    Gt(u16),                 // >
+    Lt(u16),                 // <
     Del(u16),                // del
     Take(u16),               // take
     Reverse(u16),            // reverse

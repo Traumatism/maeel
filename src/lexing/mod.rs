@@ -123,6 +123,8 @@ pub fn lex_single_char(chr: char, line: u16) -> Token {
     symbols.insert('=', Token::Eq(line));
     symbols.insert('%', Token::Modulo(line));
     symbols.insert('!', Token::Not(line));
+    symbols.insert('<', Token::Lt(line));
+    symbols.insert('>', Token::Gt(line));
 
     let token = symbols.get(&chr);
 
