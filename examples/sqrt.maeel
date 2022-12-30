@@ -1,15 +1,20 @@
 proc sqrt do
-    let a pop
-    let x 1
-    let iterations 0
-
-    iterations 10 =! while do
-        a x / x + 2 / let x pop
-        iterations 1 + let iterations pop
-        iterations 10 =!
-    end
-
-    x
+    let sqrt_value 1       @ |...|a|
+    0                      @ |...|a|n|
+    true while do          @ |...|a|n|
+        swap               @ |...|n|a|
+        dup                @ |...|n|a|a|
+        sqrt_value /       @ |...|n|a|a/x|
+        sqrt_value +       @ |...|n|a|(a/x)+x|
+        2 /                @ |...|n|a|((a/x)+x)/2|
+        let sqrt_value pop @ |...|n|a|
+        swap               @ |...|a|n|
+        1 +                @ |...|a|n+1|
+        dup                @ |...|a|n+1|n+1|
+        30 =!              @ |...|a|n+1|false|
+    end                    @ |...|a|n+1|
+    pop pop                @ |...|(empty)|
+    sqrt_value             @ |...|sqrt_value|
 end
 
-2 sqrt println
+5 sqrt println

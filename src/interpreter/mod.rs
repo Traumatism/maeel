@@ -216,14 +216,8 @@ impl Interpreter {
         }
     }
 
-    pub fn handle_reverse(&mut self, line: u16) {
-        match self.stack.pop() {
-            Some(VMType::Array(mut array)) => {
-                array.reverse();
-                self.stack.push(VMType::Array(array))
-            }
-            _ => panic!("line {line}: `reverse` requires an array on the take."),
-        }
+    pub fn handle_reverse(&mut self, _line: u16) {
+        self.stack.reverse_stack()
     }
 
     pub fn handle_block_execution(&mut self, block: Vec<Token>, _line: u16) {
