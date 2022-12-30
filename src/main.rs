@@ -8,7 +8,7 @@ mod interpreter;
 use interpreter::Interpreter;
 
 mod enums;
-mod structures;
+mod stack;
 
 fn main() {
     let args = args().collect::<Vec<String>>();

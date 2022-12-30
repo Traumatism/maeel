@@ -114,7 +114,6 @@ pub fn lex_single_char(chr: char, line: u16) -> Token {
     let mut symbols = HashMap::new();
 
     symbols.insert('&', Token::And(line));
-    symbols.insert('|', Token::Or(line));
     symbols.insert('^', Token::Xor(line));
     symbols.insert('+', Token::Add(line));
     symbols.insert('*', Token::Mul(line));
@@ -144,6 +143,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     while let Some(chr) = chars.pop() {
         match chr {
             ' ' | '(' | ')' => (),
+
             '\n' => line += 1,
 
             '@' => {
@@ -189,11 +189,14 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 while let Some(next) = chars.pop() {
                     match next {
                         '0'..='9' => content.push(next),
+
                         '.' => {
                             float = true;
                             content.push('.')
                         }
+
                         '_' => (),
+
                         _ => {
                             chars.push(next);
                             break;
