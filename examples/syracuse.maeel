@@ -1,18 +1,15 @@
 proc main do
-    let n pop
+    dup 1 = ! while do
 
-    n 1 =! while do
-        n 2% 1 = if do
-            n println pop
-            n 3 * 1 + let n pop
+        dup 2 % 1 = if do
+            3 * 1 + println
         end
 
-        n 2% 0 = if do
-            n println pop
-            n 2/ let n pop
+        dup 2 % 0 = if do
+            2 / println
         end
 
-        n 1 =!
+        dup 1 = !
     end
 end
 
