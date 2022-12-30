@@ -13,9 +13,6 @@ proc main do
         n fib println pop
         n m = !
     end
-
-    del n
-    del m
 end
 
 15 main

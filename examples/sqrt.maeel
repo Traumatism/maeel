@@ -12,5 +12,4 @@ proc sqrt do
     x
 end
 
-
 2 sqrt println
