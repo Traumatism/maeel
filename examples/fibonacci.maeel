@@ -1,15 +1,21 @@
 proc fib do
     dup dup 1= swap 0= or! if do
-        dup 1- fib swap 2- fib +
+        dup 1- fib swap 2- fib+
     end
 end
 
-let n 0
+proc main do
+    let n 0
+    let m pop
 
-true while do
+    n m =! while do
+        n 1 + let n pop
+        n fib println pop
+        n m =!
+    end
 
-    n 1+ let n pop
-    n fib println pop
-
-    true
+    del n
+    del m
 end
+
+15 main
