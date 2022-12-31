@@ -15,11 +15,11 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 
 | Name | Description
 | ---  | ---
-| `+`  | `a b c -- a b+c`
-| `-`  | `a b c -- a b-c`
-| `*`  | `a b c -- a b*c`
-| `/`  | `a b c -- a b/c`
-| `%`  | `a b c -- a b%c`
+| `+`  | `a b -- a+b`
+| `-`  | `a b -- a-b`
+| `*`  | `a b -- a*b`
+| `/`  | `a b -- a/b`
+| `%`  | `a b -- a%b`
 
 ## Comparison
 
