@@ -1,5 +1,7 @@
-10 10 = dup
+let n 0
 
-if do "hello" println pop end
-
-!if do "world" println pop end
+n 10 < while do
+    n 1 + let n dup
+    "Iteration #" print pop println pop
+    n 10 <
+end
