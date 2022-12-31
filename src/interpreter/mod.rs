@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::io::Write;
 use std::slice::Iter;
 
@@ -9,9 +9,9 @@ use crate::stack::Stack;
 
 pub struct Interpreter {
     stop_execution: bool,
-    procs: BTreeMap<String, Vec<Token>>,
-    vars: BTreeMap<String, VMType>,
-    private_vars: BTreeMap<String, VMType>,
+    procs: HashMap<String, Vec<Token>>,
+    vars: HashMap<String, VMType>,
+    private_vars: HashMap<String, VMType>,
     stack: Stack,
 }
 
@@ -20,9 +20,9 @@ impl Default for Interpreter {
     fn default() -> Self {
         Self {
             stop_execution: false,
-            procs: BTreeMap::default(),
-            private_vars: BTreeMap::default(),
-            vars: BTreeMap::default(),
+            procs: HashMap::default(),
+            private_vars: HashMap::default(),
+            vars: HashMap::default(),
             stack: Stack::default(),
         }
     }
@@ -30,13 +30,13 @@ impl Default for Interpreter {
 
 impl Interpreter {
     pub fn new(
-        procs: BTreeMap<String, Vec<Token>>,
-        vars: BTreeMap<String, VMType>,
+        procs: HashMap<String, Vec<Token>>,
+        vars: HashMap<String, VMType>,
         stack: Stack,
     ) -> Self {
         Self {
             stop_execution: false,
-            private_vars: BTreeMap::default(),
+            private_vars: HashMap::default(),
             procs,
             vars,
             stack,
@@ -53,7 +53,6 @@ impl Interpreter {
             match token.clone() {
                 Token::BlockStart(_) | Token::BlockEnd(_) => panic!(),
                 Token::Block(tokens, line) => self.handle_block_execution(tokens, line),
-
                 Token::Str(content, line) => self.handle_push_str(content, line),
                 Token::Integer(content, line) => self.handle_push_int(content, line),
                 Token::Float(content, line) => self.handle_push_float(content, line),
@@ -73,14 +72,11 @@ impl Interpreter {
                 Token::Take(line) => self.handle_take(line),
                 Token::Reverse(line) => self.handle_reverse(line),
                 Token::Identifier(identifier, line) => self.handle_identifier(&identifier, line),
-
                 Token::Dup(_) => self.stack.dup(),
                 Token::Swap(_) => self.stack.swap(),
                 Token::Clear(_) => self.stack.clear(),
                 Token::Pop(_) => self.stack.pop_nr(),
-
                 Token::Return(_) => self.stop_execution = true,
-
                 Token::Let(line) => {
                     let name = match tokens.next() {
                         Some(Token::Identifier(name, _)) => name.clone(),
