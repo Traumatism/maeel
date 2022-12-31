@@ -45,21 +45,6 @@ impl Stack {
     }
 }
 
-impl From<Vec<VMType>> for Stack {
-    fn from(value: Vec<VMType>) -> Self {
-        let mut new_stack = Stack::default();
-        let mut cloned_value = value;
-
-        cloned_value.reverse();
-
-        cloned_value
-            .iter()
-            .for_each(|ele| new_stack.push(ele.clone()));
-
-        new_stack
-    }
-}
-
 impl Stack {
     /// Clear all the stack values
     pub fn clear(&mut self) {

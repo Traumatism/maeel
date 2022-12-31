@@ -1,6 +1,5 @@
 proc main do
     dup 1 = ! while do
-
         dup 2 % 1 = if do
             3 * 1 + println
         end
