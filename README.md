@@ -49,6 +49,14 @@ end
 end
 ```
 
+Example:
+
+```
+10 5 > if do
+    "10 > 5" println pop
+end
+```
+
 ## If-else
 
 ```
@@ -64,11 +72,36 @@ end
 
 ```
 
+
+Example:
+
+```
+10 5 < dup
+
+if do
+    "10 < 5" println pop
+end
+
+!if do
+    "10 >= 5" println pop
+end
+```
+
 ## For loops
 
 ```
 <array> for do
     <instruction>
+end
+```
+
+Example:
+
+```
+1 2 3 4 5
+rotate
+5 take for do
+    "Iteration #" print pop println pop
 end
 ```
 
@@ -78,6 +111,19 @@ end
 <condition> while do
     <instruction>
     <condition>
+end
+```
+
+Example:
+
+
+```
+let n 0
+
+n 10 < while do
+    n 1 + let n dup
+    "Iteration #" print pop println pop
+    n 10 <
 end
 ```
 
