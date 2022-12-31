@@ -31,7 +31,7 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 | `^`   | `a b -- a xor b`
 | `!`   | `a -- ~a`
 | `and` | `a b -- a&b`
-| `or`  | `a b -- a|b`
+| `or`  | `a b -- a\|b`
 
 ## Procedures
 
