@@ -115,7 +115,7 @@ impl Stack {
         matches!(self.head, None)
     }
 
-    pub fn reverse_stack(&mut self) {
+    pub fn rotate(&mut self) {
         let mut temp_stack = Vec::default();
 
         while let Some(val) = self.pop() {

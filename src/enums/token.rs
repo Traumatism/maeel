@@ -24,7 +24,7 @@ pub enum Token {
     Lt(u16),                 // <
     Del(u16),                // del
     Take(u16),               // take
-    Reverse(u16),            // reverse
+    Rotate(u16),             // rotate
     Clear(u16),              // clear
     Dup(u16),                // dup
     Swap(u16),               // swap

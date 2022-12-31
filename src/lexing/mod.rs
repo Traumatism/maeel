@@ -91,7 +91,7 @@ pub fn lex_identifier(identifier: &str, line: u16) -> Token {
     keywords.insert("swap", Token::Swap(line));
 
     // Array manipulation
-    keywords.insert("reverse", Token::Reverse(line));
+    keywords.insert("rotate", Token::Rotate(line));
     keywords.insert("take", Token::Take(line));
 
     // Statements
