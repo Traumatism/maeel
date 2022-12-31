@@ -1,1 +1,5 @@
+10 10 = dup
 
+if do "hello" println pop end
+
+!if do "world" println pop end

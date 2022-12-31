@@ -70,7 +70,7 @@ impl Interpreter {
                 Token::Not(line) => self.handle_not(line),
                 Token::Eq(line) => self.handle_eq(line),
                 Token::Take(line) => self.handle_take(line),
-                Token::Reverse(line) => self.handle_reverse(line),
+                Token::Rotate(line) => self.handle_rotate(line),
                 Token::Identifier(identifier, line) => self.handle_identifier(&identifier, line),
                 Token::Dup(_) => self.stack.dup(),
                 Token::Swap(_) => self.stack.swap(),
@@ -214,8 +214,8 @@ impl Interpreter {
         }
     }
 
-    pub fn handle_reverse(&mut self, _line: u16) {
-        self.stack.reverse_stack()
+    pub fn handle_rotate(&mut self, _line: u16) {
+        self.stack.rotate()
     }
 
     pub fn handle_block_execution(&mut self, block: Vec<Token>, _line: u16) {
