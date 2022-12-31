@@ -1,0 +1,60 @@
+proc fib do
+    dup dup 1 = swap 0 = | ! if do
+        dup 1 - fib swap 2 - fib+
+    end
+end
+
+
+proc pi do
+    let n 0
+    let s 0
+    true while do
+        n 1 + let n pop
+        1 n n * / s + let s pop
+        n 1000000 =!
+    end
+    s 6 * sqrt
+end
+
+
+proc sqrt do
+    let sqrt_value 1 0
+    true while do
+        swap dup
+        sqrt_value / sqrt_value + 2 /
+        let sqrt_value pop
+        swap 1 + dup
+        30 =!
+    end
+    pop pop
+    sqrt_value
+end
+
+
+proc div do
+    let divisor pop
+    let dividend pop
+
+    0
+    dividend divisor > dividend divisor = or while do
+        1 +
+        dividend divisor - let dividend pop
+        dividend divisor > dividend divisor = or
+    end
+end
+
+
+proc pow do
+    let pow_number pop
+    let pow_exponent pop
+
+    1  @ output
+    0  @ ammount of iterations (0 <= pow_exponents)
+
+    true while do
+        swap pow_number * swap 1+ dup
+        pow_exponent =!
+    end
+
+    pop
+end
