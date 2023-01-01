@@ -43,6 +43,15 @@ impl Stack {
         self.push(a.clone());
         self.push(a)
     }
+
+    /// Duplicate the value below the head value
+    pub fn over(&mut self) {
+        let a = self.pop().unwrap();
+        let b = self.pop().unwrap();
+        self.push(a.clone());
+        self.push(b);
+        self.push(a)
+    }
 }
 
 impl Stack {
