@@ -6,10 +6,11 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 
 | Name   | Description
 | ---    | ---
-| `pop`  | `a b c -- a b`
-| `dup`  | `a b c -- a b c c`
+| `pop`  | `a -- a`
+| `dup`  | `a -- a a`
 | `rot`  | `a b c -- c b a`
-| `swap` | `a b c -- a c b`
+| `swap` | `a b -- b a`
+| `over` | `a b -- a b a`
 
 ## Arithmetic operations
 

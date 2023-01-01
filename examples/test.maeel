@@ -1,7 +1,0 @@
-let n 0
-
-n 10 < while do
-    n 1 + let n dup
-    "Iteration #" print pop println pop
-    n 10 <
-end

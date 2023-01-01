@@ -72,6 +72,7 @@ impl Interpreter {
                 Token::Take(line) => self.handle_take(line),
                 Token::Rotate(line) => self.handle_rotate(line),
                 Token::Identifier(identifier, line) => self.handle_identifier(&identifier, line),
+                Token::Over(_) => self.stack.over(),
                 Token::Dup(_) => self.stack.dup(),
                 Token::Swap(_) => self.stack.swap(),
                 Token::Clear(_) => self.stack.clear(),
