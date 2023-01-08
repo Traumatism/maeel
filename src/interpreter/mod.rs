@@ -45,6 +45,7 @@ impl Interpreter {
 
     /// Handle a single instruction
     pub fn handle_instruction(&mut self, tokens: &mut Iter<Token>) {
+
         while let Some(token) = tokens.next() {
             if self.stop_execution {
                 return;
@@ -61,6 +62,7 @@ impl Interpreter {
                 Token::Sub(line) => self.handle_sub(line),
                 Token::Mul(line) => self.handle_mul(line),
                 Token::Div(line) => self.handle_div(line),
+                Token::DivQ(line) => self.handle_divq(line),
                 Token::Modulo(line) => self.handle_modulo(line),
                 Token::Lt(line) => self.handle_lt(line),
                 Token::Gt(line) => self.handle_gt(line),
@@ -89,12 +91,16 @@ impl Interpreter {
                             Some(Token::Integer(n, _)) => VMType::Integer(*n),
                             Some(Token::Float(x, _)) => VMType::Float(*x),
                             Some(Token::Bool(p, _)) => VMType::Bool(*p),
+                            Some(Token::Over(_)) => {
+                                self.stack.over();
+                                self.stack.pop().unwrap()
+                            } 
                             Some(Token::Pop(_)) => self.stack.pop().unwrap(),
                             Some(Token::Dup(_)) => {
                                 self.stack.dup();
                                 self.stack.pop().unwrap()
                             }
-                            _ => panic!("line {line}: `let name` must be followed by a variable value (str, integer, float, bool, `dup`, `pop`)"),
+                            _ => panic!("line {line}: `let name` must be followed by a variable value (str, integer, float, bool, `dup`, `over`, `pop`)"),
                         };
 
                     if name.starts_with('_') {
@@ -111,7 +117,11 @@ impl Interpreter {
                     };
 
                     while let Some(VMType::Bool(true)) = self.stack.pop() {
-                        self.handle_block_execution(while_block.clone(), line)
+                        self.handle_block_execution(while_block.clone(), line);
+
+                        if self.stop_execution {
+                            break
+                        }
                     }
                 }
 
@@ -226,7 +236,6 @@ impl Interpreter {
             proc_parser.handle_instruction(&mut instruction.iter())
         }
 
-        self.stop_execution = proc_parser.stop_execution;
         self.procs = proc_parser.procs;
         self.stack = proc_parser.stack;
         self.vars = proc_parser.vars;
@@ -351,6 +360,17 @@ impl Interpreter {
         let b = self.stack.pop().unwrap();
 
         self.stack.push(VMType::Bool(a == b))
+    }
+
+    pub fn handle_divq(&mut self, _line: u16) {
+        let a = self.stack.pop().unwrap();
+        let b = self.stack.pop().unwrap();
+        let x = match (a, b) {
+            (VMType::Integer(a_0), VMType::Integer(b_0)) => b_0 / a_0 ,
+          _ => panic!()
+        };
+
+        self.stack.push(VMType::Integer(x))
     }
 
     pub fn handle_div(&mut self, _line: u16) {

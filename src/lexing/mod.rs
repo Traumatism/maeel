@@ -2,6 +2,11 @@ use crate::enums::token::Token;
 use std::collections::HashMap;
 
 /// Extract instructions from tokens
+///
+/// # Arguments
+///
+/// * `tokens` - The vec of tokens you want to split into instructions
+///
 pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     let mut instructions = Vec::default();
     let mut current_instruction = Vec::default();
@@ -22,6 +27,11 @@ pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
 }
 
 /// Extract code blocks from tokens
+///
+/// # Arguments
+///
+/// * `tokens` - The vec of tokens you want to extract the blocks from
+///
 pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
@@ -51,10 +61,10 @@ pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
                     }
                 }
 
-                match recurse {
-                    true => output.push(Token::Block(extract_blocks(block_tokens), *line)),
-                    false => output.push(Token::Block(block_tokens, *line)),
-                }
+                output.push(match recurse {
+                    true => Token::Block(extract_blocks(block_tokens), *line),
+                    false => Token::Block(block_tokens, *line),
+                })
             }
             _ => output.push(token.clone()),
         }
@@ -125,6 +135,7 @@ pub fn lex_single_char(chr: char, line: u16) -> Token {
     symbols.insert('!', Token::Not(line));
     symbols.insert('<', Token::Lt(line));
     symbols.insert('>', Token::Gt(line));
+    symbols.insert('|', Token::DivQ(line));
 
     let token = symbols.get(&chr);
 
@@ -143,7 +154,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
     while let Some(chr) = chars.pop() {
         match chr {
-            ' ' | '(' | ')' => (),
+            ' ' | '(' | ')' => (), // parenthesis are ignored
 
             '\n' => line += 1,
 
@@ -167,6 +178,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 tokens.push(Token::Str(content, line))
             }
+
             'a'..='z' | '_' => {
                 let mut content = String::from(chr);
 
@@ -220,6 +232,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     ),
                 });
             }
+
             _ => tokens.push(lex_single_char(chr, line)),
         }
     }
