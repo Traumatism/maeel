@@ -1,18 +1,7 @@
-proc fib do
-    dup dup 1 = swap 0 = | ! if do
-        dup 1 - fib swap 2 - fib+
-    end
+let n 0
+
+0 1 n 50 < while do
+    over + println
+    n 1 + let n pop
+    n 50 <
 end
-
-proc main do
-    let n 0
-    let m pop
-
-    n m = ! while do
-        n 1 + let n pop
-        n fib println pop
-        n m = !
-    end
-end
-
-15 main

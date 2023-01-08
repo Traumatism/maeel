@@ -3,9 +3,9 @@
 pub enum Token {
     Str(String, u16),        // "hello world"
     Integer(i64, u16),       // 123
-    Identifier(String, u16), // helloworld
+    Identifier(String, u16), // hello_world
     Float(f64, u16),         // 123.4
-    Bool(bool, u16),         // true|false
+    Bool(bool, u16),         // true false
     Let(u16),                // let
     If(u16),                 // if
     For(u16),                // for
@@ -15,6 +15,7 @@ pub enum Token {
     Sub(u16),                // -
     Mul(u16),                // *
     Div(u16),                // /
+    DivQ(u16),               // |
     And(u16),                // &
     Or(u16),                 // |
     Xor(u16),                // ^
@@ -32,7 +33,7 @@ pub enum Token {
     Pop(u16),                // pop
     Return(u16),             // return
     ProcStart(u16),          // proc
-    BlockStart(u16),
-    BlockEnd(u16),
-    Block(Vec<Token>, u16),
+    BlockStart(u16),         // do
+    BlockEnd(u16),           // end
+    Block(Vec<Token>, u16),  // do <this> end
 }

@@ -44,6 +44,14 @@ proc div do
 end
 
 
+proc fac do
+    let n pop
+    n 1 = let comp pop
+    comp if do n end
+    comp! if do n dup 1 - fac * end
+end
+
+
 proc pow do
     let pow_number pop
     let pow_exponent pop
