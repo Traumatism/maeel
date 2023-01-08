@@ -20,7 +20,6 @@ pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     instructions.push(current_instruction);
     instructions
 }
-
 /// Extract code blocks from tokens
 pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
     let mut output = Vec::new();
@@ -30,7 +29,6 @@ pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
         match token {
             Token::BlockStart(line) => {
                 let mut block_tokens = Vec::new();
-                let mut recurse = false;
                 let mut n = 0;
 
                 for token_0 in tokens_iter.by_ref() {
@@ -44,17 +42,13 @@ pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
                         },
                         Token::BlockStart(_) => {
                             n += 1;
-                            recurse = true;
                             block_tokens.push(token_0.clone())
                         }
                         _ => block_tokens.push(token_0.clone()),
                     }
                 }
 
-                match recurse {
-                    true => output.push(Token::Block(extract_blocks(block_tokens), *line)),
-                    false => output.push(Token::Block(block_tokens, *line)),
-                }
+                output.push(Token::Block(extract_blocks(block_tokens), *line))
             }
             _ => output.push(token.clone()),
         }
@@ -102,6 +96,7 @@ pub fn lex_identifier(identifier: &str, line: u16) -> Token {
     keywords.insert("let", Token::Let(line));
     keywords.insert("return", Token::Return(line));
     keywords.insert("while", Token::While(line));
+    keywords.insert("len", Token::Len(line));
 
     let token = keywords.get(identifier);
 
@@ -132,23 +127,21 @@ pub fn lex_single_char(chr: char, line: u16) -> Token {
         .unwrap_or_else(|| panic!("line {line}: Unkown symbol {chr}"))
         .clone()
 }
-
 /// Lex code
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
-    let mut chars = code.chars().collect::<Vec<char>>();
-    chars.reverse();
+    let mut chars = code.chars().rev().peekable();
 
     let mut tokens = Vec::new();
     let mut line = 1;
 
-    while let Some(chr) = chars.pop() {
+    while let Some(chr) = chars.next() {
         match chr {
             ' ' | '(' | ')' => (),
 
             '\n' => line += 1,
 
             '@' => {
-                while let Some(next) = chars.pop() {
+                while let Some(next) = chars.next() {
                     if next == '\n' {
                         break;
                     }
@@ -158,7 +151,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             '"' => {
                 let mut content = String::new();
 
-                while let Some(next) = chars.pop() {
+                while let Some(next) = chars.next() {
                     match next {
                         '"' => break,
                         _ => content.push(next),
@@ -170,11 +163,11 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             'a'..='z' | '_' => {
                 let mut content = String::from(chr);
 
-                while let Some(next) = chars.pop() {
+                while let Some(next) = chars.next() {
                     match next {
                         'a'..='z' | '_' => content.push(next),
                         _ => {
-                            chars.push(next);
+                            chars.next();
                             break;
                         }
                     }
@@ -187,19 +180,25 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 let mut content = String::from(chr);
                 let mut float = false;
 
-                while let Some(next) = chars.pop() {
+                let mut float = false;
+
+                while let Some(next) = chars.next() {
                     match next {
                         '0'..='9' => content.push(next),
 
                         '.' => {
-                            float = true;
-                            content.push('.')
+                            if float {
+                                panic!("line {line}: Unexpected `.`");
+                            } else {
+                                float = true;
+                                content.push('.')
+                            }
                         }
 
                         '_' => (),
 
                         _ => {
-                            chars.push(next);
+                            chars.next();
                             break;
                         }
                     }

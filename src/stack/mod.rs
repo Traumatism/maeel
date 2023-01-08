@@ -122,4 +122,35 @@ impl Stack {
             self.push(val);
         }
     }
+
+    pub fn new(value: VMType) -> Stack {
+      Stack {
+        head: None,
+      }
+    }
+
+    /// Returns the stack size
+    pub fn size(&mut self) -> int {
+      return self.head.is_some()? 1 : 0;
+    }
+
+    /// Returns the stack head
+    pub fn head(&mut self) -> Option<VMType> {
+      return self.head.is_some()? self.head.unwrap() : None;
+    }
+    
+    pub fn tail(&mut self) -> Stack {
+      let mut tail = Stack { head: None };
+      while self.head.is_some() {
+        tail.head = self.head.unwrap();
+        self.pop();
+      }
+      return tail;
+    }
+
+    pub fn push_all(&mut self, values: Vec<VMType>) {
+      while values.size() > 0 {
+        self.push(values.pop());
+      }
+    }
 }
