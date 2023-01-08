@@ -32,6 +32,7 @@ pub enum Token {
     Swap(u16),               // swap
     Pop(u16),                // pop
     Return(u16),             // return
+    Len(u16),                // len
     ProcStart(u16),          // proc
     BlockStart(u16),         // do
     BlockEnd(u16),           // end
