@@ -15,26 +15,29 @@ pub enum Token {
     Sub(u16),                // -
     Mul(u16),                // *
     Div(u16),                // /
-    DivQ(u16),               // |
-    And(u16),                // &
-    Or(u16),                 // |
-    Xor(u16),                // ^
-    Not(u16),                // !
-    Eq(u16),                 // =
-    Gt(u16),                 // >
-    Lt(u16),                 // <
-    Del(u16),                // del
-    Take(u16),               // take
-    Rotate(u16),             // rotate
-    Clear(u16),              // clear
-    Over(u16),               // over
-    Dup(u16),                // dup
-    Swap(u16),               // swap
-    Pop(u16),                // pop
-    Return(u16),             // return
-    Len(u16),                // len
-    ProcStart(u16),          // proc
-    BlockStart(u16),         // do
-    BlockEnd(u16),           // end
-    Block(Vec<Token>, u16),  // do <this> end
+
+    #[allow(dead_code)]
+    DivQ(u16), // |
+
+    And(u16),               // &
+    Or(u16),                // |
+    Xor(u16),               // ^
+    Not(u16),               // !
+    Eq(u16),                // =
+    Gt(u16),                // >
+    Lt(u16),                // <
+    Del(u16),               // del
+    Take(u16),              // take
+    Rotate(u16),            // rotate
+    Clear(u16),             // clear
+    Over(u16),              // over
+    Dup(u16),               // dup
+    Swap(u16),              // swap
+    Pop(u16),               // pop
+    Return(u16),            // return
+    Len(u16),               // len
+    ProcStart(u16),         // proc
+    BlockStart(u16),        // do
+    BlockEnd(u16),          // end
+    Block(Vec<Token>, u16), // do <this> end
 }

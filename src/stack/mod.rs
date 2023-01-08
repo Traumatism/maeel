@@ -122,18 +122,4 @@ impl Stack {
             self.push(val);
         }
     }
-
-    /// Returns the stack head
-    pub fn head(&mut self) -> Option<VMType> {
-        match &self.head {
-            Some(v) => Some(v.0.clone()),
-            None => None,
-        }
-    }
-
-    pub fn push_all(&mut self, values: &mut Vec<VMType>) {
-        while values.len() > 0 {
-            self.push(values.pop().unwrap());
-        }
-    }
 }
