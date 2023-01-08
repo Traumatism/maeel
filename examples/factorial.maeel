@@ -1,0 +1,10 @@
+proc fac do
+    let n pop
+    n 1 = let comp pop
+    comp if do n end
+    comp! if do n dup 1 - fac * end
+end
+
+
+
+7 fac println

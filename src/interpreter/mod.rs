@@ -73,6 +73,7 @@ impl Interpreter {
                 Token::Eq(line) => self.handle_eq(line),
                 Token::Take(line) => self.handle_take(line),
                 Token::Rotate(line) => self.handle_rotate(line),
+                Token::Len(line) => self.handle_len(line),
                 Token::Identifier(identifier, line) => self.handle_identifier(&identifier, line),
                 Token::Over(_) => self.stack.over(),
                 Token::Dup(_) => self.stack.dup(),
@@ -213,6 +214,11 @@ impl Interpreter {
 
     pub fn handle_push_bool(&mut self, content: bool, _line: u16) {
         self.stack.push(VMType::Bool(content));
+    }
+
+    pub fn handle_len(&mut self, _line: u16) {
+        let len = self.stack.pop().unwrap().len();
+        self.stack.push(VMType::Integer(len))
     }
 
     pub fn handle_take(&mut self, line: u16) {
