@@ -1,7 +1,9 @@
-let n 0
+let a 0
+let b 1
 
-0 1 n 50 < while do
-    over + println
-    n 1 + let n pop
-    n 50 <
+b 1_000_000 < while do
+    b let c dup
+    a b + let b dup println pop
+    c let a pop
+    b 1_000_000 <
 end
