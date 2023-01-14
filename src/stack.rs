@@ -1,125 +1,68 @@
+use std::vec::Vec;
+
 use crate::enums::vmtype::VMType;
-use std::mem::replace;
 
-/// A frame in a stack
-pub struct Frame(VMType, Option<Box<Frame>>);
-
-impl Frame {
-    pub fn new(value: VMType) -> Frame {
-        Self(value, None)
-    }
-}
-
-impl Clone for Frame {
-    fn clone(&self) -> Self {
-        Self(self.0.clone(), self.1.clone())
-    }
-}
-
-/// Stack data structure implementation
+#[derive(Default, Clone)]
 pub struct Stack {
-    pub head: Option<Frame>,
-}
-
-impl Clone for Stack {
-    fn clone(&self) -> Self {
-        Self {
-            head: self.head.clone(),
-        }
-    }
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for Stack {
-    fn default() -> Stack {
-        Stack { head: None }
-    }
+    data: Vec<VMType>,
 }
 
 impl Stack {
-    /// Duplicate the head value
-    pub fn dup(&mut self) {
-        let a = self.pop().unwrap();
-        self.push(a.clone());
-        self.push(a)
+    /// Pushes an element onto the top of the stack.
+    pub fn push(&mut self, element: VMType) {
+        self.data.push(element);
     }
 
-    /// Duplicate the value below the head value
-    pub fn over(&mut self) {
-        let a = self.pop().unwrap();
-        let b = self.pop().unwrap();
-        self.push(a.clone());
-        self.push(b);
-        self.push(a)
-    }
-}
-
-impl Stack {
-    /// Clear all the stack values
-    pub fn clear(&mut self) {
-        while self.head.is_some() {
-            self.pop();
-        }
-    }
-
-    /// Swap the two head values
-    pub fn swap(&mut self) {
-        let a = self.pop().unwrap();
-        let b = self.pop().unwrap();
-
-        self.push(a);
-        self.push(b);
-    }
-
-    /// Push a new value to the stack
-    pub fn push(&mut self, value: VMType) {
-        let mut node = Frame::new(value);
-
-        if let Some(stack) = replace(&mut self.head, None) {
-            node.1 = Some(Box::new(stack))
-        }
-
-        self.head = Some(node);
-    }
-
-    /// Pop the head value and return it in an Option
+    /// Removes the top element from the stack and returns it, if the stack is not empty.
     pub fn pop(&mut self) -> Option<VMType> {
-        match replace(&mut self.head, None) {
-            Some(stack) => {
-                self.head = stack.1.map(|n| *n);
-                Some(stack.0)
-            }
-            _ => None,
-        }
+        self.data.pop()
     }
 
-    /// Pop the head value and return it in an Option
-    pub fn pop_nr(&mut self) {
-        match replace(&mut self.head, None) {
-            Some(stack) => {
-                self.head = stack.1.map(|n| *n);
-            }
-            None => todo!(),
-        }
+    /// Returns the number of elements in the stack.
+    pub fn size(&self) -> usize {
+        self.data.len()
     }
 
-    /// Checks whether the stack is empty or not
-    #[allow(dead_code)]
-    pub fn is_empty(&self) -> bool {
-        matches!(self.head, None)
-    }
-
+    /// Rotates the top three elements of the stack.
     pub fn rotate(&mut self) {
-        let mut temp_stack = Vec::default();
+        if self.data.len() >= 3 {
+            let third = self.data.pop().unwrap();
+            let second = self.data.pop().unwrap();
+            let first = self.data.pop().unwrap();
 
-        while let Some(val) = self.pop() {
-            temp_stack.push(val);
+            self.data.push(second);
+            self.data.push(third);
+            self.data.push(first);
         }
+    }
 
-        temp_stack.reverse();
-
-        while let Some(val) = temp_stack.pop() {
-            self.push(val);
+    /// Duplicates the top element of the stack.
+    pub fn dup(&mut self) {
+        if let Some(x) = self.data.last() {
+            self.data.push(x.clone());
         }
+    }
+
+    /// Pushes a copy of the second element from the top onto the top of the stack.
+    pub fn over(&mut self) {
+        if self.data.len() >= 2 {
+            let second = &self.data[self.data.len() - 2];
+            self.data.push(second.clone());
+        }
+    }
+
+    /// Swaps the top two elements of the stack.
+    pub fn swap(&mut self) {
+        if self.data.len() >= 2 {
+            let second = self.data.pop().unwrap();
+            let first = self.data.pop().unwrap();
+            self.data.push(second);
+            self.data.push(first);
+        }
+    }
+
+    /// Removes all elements from the stack.
+    pub fn clear(&mut self) {
+        self.data.clear()
     }
 }

@@ -168,6 +168,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 tokens.push(Token::Str(content, line))
             }
+
             'a'..='z' | '_' => {
                 let mut content = String::from(chr);
 

@@ -2,35 +2,27 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::slice::Iter;
 
+use crate::lexing::extract_instructions;
 use crate::enums::token::Token;
 use crate::enums::vmtype::VMType;
-use crate::lexing::extract_instructions;
 use crate::stack::Stack;
 
+
+type Block = Vec<Token>;
+
+#[derive(Default)]
 pub struct Interpreter {
     stop_execution: bool,
-    procs: HashMap<String, Vec<Token>>,
     vars: HashMap<String, VMType>,
     private_vars: HashMap<String, VMType>,
+    procs: HashMap<String, Block>,
     stack: Stack,
 }
 
-#[allow(clippy::derivable_impls)]
-impl Default for Interpreter {
-    fn default() -> Self {
-        Self {
-            stop_execution: false,
-            procs: HashMap::default(),
-            private_vars: HashMap::default(),
-            vars: HashMap::default(),
-            stack: Stack::default(),
-        }
-    }
-}
 
 impl Interpreter {
     pub fn new(
-        procs: HashMap<String, Vec<Token>>,
+        procs: HashMap<String, Block>,
         vars: HashMap<String, VMType>,
         stack: Stack,
     ) -> Self {
@@ -79,8 +71,10 @@ impl Interpreter {
                 Token::Dup(_) => self.stack.dup(),
                 Token::Swap(_) => self.stack.swap(),
                 Token::Clear(_) => self.stack.clear(),
-                Token::Pop(_) => self.stack.pop_nr(),
                 Token::Return(_) => self.stop_execution = true,
+                Token::Pop(_) => {
+                    self.stack.pop().unwrap();
+                }
                 Token::Let(line) => {
                     let name = match tokens.next() {
                         Some(Token::Identifier(name, _)) => name.clone(),
@@ -180,20 +174,22 @@ impl Interpreter {
                 }
 
                 Token::ProcStart(line) => {
-                    self.procs.insert(
-                        match tokens.next().unwrap() {
-                            Token::Identifier(name, _) => name,
-                            _ => panic!(
-                                "line {line}: `proc` must be followed by the procedure name."
-                            ),
+                    let proc_name = match tokens.next().unwrap() {
+                        Token::Identifier(name, _) => name,
+                        _ => panic!(
+                            "line {line}: `proc` must be followed by the procedure name."
+                        ),
+                    };
+
+                    let proc_block = match tokens.next().unwrap() {
+                        Token::Block(proc_tokens, _) => proc_tokens.clone(),
+                        _ => {
+                            panic!("line {line}: `proc name` must be followed by a code block.")
                         }
-                        .to_string(),
-                        match tokens.next().unwrap() {
-                            Token::Block(proc_tokens, _) => proc_tokens.clone(),
-                            _ => {
-                                panic!("line {line}: `proc name` must be followed by a code block.")
-                            }
-                        },
+                    };
+
+                    self.procs.insert(
+                        String::from(proc_name), proc_block,
                     );
                 }
             }
@@ -217,8 +213,7 @@ impl Interpreter {
     }
 
     pub fn handle_len(&mut self, _line: u16) {
-        let len = self.stack.pop().unwrap().len();
-        self.stack.push(VMType::Integer(len))
+        self.stack.push(VMType::Integer(self.stack.size() as i64))
     }
 
     pub fn handle_take(&mut self, line: u16) {
@@ -235,7 +230,7 @@ impl Interpreter {
         self.stack.rotate()
     }
 
-    pub fn handle_block_execution(&mut self, block: Vec<Token>, _line: u16) {
+    pub fn handle_block_execution(&mut self, block: Block, _line: u16) {
         let mut proc_parser = Self::new(self.procs.clone(), self.vars.clone(), self.stack.clone());
 
         for instruction in extract_instructions(block) {
@@ -271,6 +266,7 @@ impl Interpreter {
                     "print" => {
                         |content: String| std::io::stdout().write_all(content.as_bytes()).unwrap()
                     }
+
                     _ => panic!(),
                 })(e.to_string());
 
@@ -278,6 +274,7 @@ impl Interpreter {
             }
 
             identifier => {
+
                 if let Some(value) = self.vars.get(identifier) {
                     return self.stack.push(value.clone());
                 }
@@ -371,12 +368,13 @@ impl Interpreter {
     pub fn handle_divq(&mut self, _line: u16) {
         let a = self.stack.pop().unwrap();
         let b = self.stack.pop().unwrap();
-        let x = match (a, b) {
-            (VMType::Integer(a_0), VMType::Integer(b_0)) => b_0 / a_0 ,
+
+        let n = match (a, b) {
+            (VMType::Integer(a0), VMType::Integer(b0)) => b0 / a0 ,
           _ => panic!()
         };
 
-        self.stack.push(VMType::Integer(x))
+        self.stack.push(VMType::Integer(n))
     }
 
     pub fn handle_div(&mut self, _line: u16) {
