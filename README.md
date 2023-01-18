@@ -61,13 +61,13 @@ end
 ## If-else
 
 ```
-<condition> dup
+<condition> let comp pop
 
-if do
+comp if do
     <instruction>
 end
 
-!if do
+comp! if do
     <instruction>
 end
 
@@ -77,13 +77,13 @@ end
 Example:
 
 ```
-10 5 < dup
+10 5 < let comp pop
 
-if do
+comp if do
     "10 < 5" println pop
 end
 
-!if do
+comp! if do
     "10 >= 5" println pop
 end
 ```
@@ -99,8 +99,7 @@ end
 Example:
 
 ```
-1 2 3 4 5
-rotate
+5 4 3 2 1
 5 take for do
     "Iteration #" print pop println pop
 end

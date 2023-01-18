@@ -5,6 +5,4 @@ proc fac do
     comp! if do n dup 1 - fac * end
 end
 
-
-
 7 fac println
