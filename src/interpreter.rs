@@ -2,11 +2,10 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::slice::Iter;
 
-use crate::lexing::extract_instructions;
 use crate::enums::token::Token;
 use crate::enums::vmtype::VMType;
+use crate::lexing::extract_instructions;
 use crate::stack::Stack;
-
 
 type Block = Vec<Token>;
 
@@ -19,13 +18,8 @@ pub struct Interpreter {
     stack: Stack,
 }
 
-
 impl Interpreter {
-    pub fn new(
-        procs: HashMap<String, Block>,
-        vars: HashMap<String, VMType>,
-        stack: Stack,
-    ) -> Self {
+    pub fn new(procs: HashMap<String, Block>, vars: HashMap<String, VMType>, stack: Stack) -> Self {
         Self {
             stop_execution: false,
             private_vars: HashMap::default(),
@@ -37,7 +31,6 @@ impl Interpreter {
 
     /// Handle a single instruction
     pub fn handle_instruction(&mut self, tokens: &mut Iter<Token>) {
-
         while let Some(token) = tokens.next() {
             if self.stop_execution {
                 return;
@@ -89,7 +82,7 @@ impl Interpreter {
                             Some(Token::Over(_)) => {
                                 self.stack.over();
                                 self.stack.pop().unwrap()
-                            } 
+                            },
                             Some(Token::Pop(_)) => self.stack.pop().unwrap(),
                             Some(Token::Dup(_)) => {
                                 self.stack.dup();
@@ -115,7 +108,7 @@ impl Interpreter {
                         self.handle_block_execution(while_block.clone(), line);
 
                         if self.stop_execution {
-                            break
+                            break;
                         }
                     }
                 }
@@ -176,9 +169,7 @@ impl Interpreter {
                 Token::ProcStart(line) => {
                     let proc_name = match tokens.next().unwrap() {
                         Token::Identifier(name, _) => name,
-                        _ => panic!(
-                            "line {line}: `proc` must be followed by the procedure name."
-                        ),
+                        _ => panic!("line {line}: `proc` must be followed by the procedure name."),
                     };
 
                     let proc_block = match tokens.next().unwrap() {
@@ -188,9 +179,7 @@ impl Interpreter {
                         }
                     };
 
-                    self.procs.insert(
-                        String::from(proc_name), proc_block,
-                    );
+                    self.procs.insert(String::from(proc_name), proc_block);
                 }
             }
         }
@@ -251,9 +240,6 @@ impl Interpreter {
                 }
             },
 
-            // Parse a print/println instruction
-            //
-            // Print stack head to stdout
             "print" | "println" => {
                 let e = self.stack.pop().unwrap_or_else(|| panic!());
 
@@ -274,7 +260,6 @@ impl Interpreter {
             }
 
             identifier => {
-
                 if let Some(value) = self.vars.get(identifier) {
                     return self.stack.push(value.clone());
                 }
@@ -370,8 +355,8 @@ impl Interpreter {
         let b = self.stack.pop().unwrap();
 
         let n = match (a, b) {
-            (VMType::Integer(a0), VMType::Integer(b0)) => b0 / a0 ,
-          _ => panic!()
+            (VMType::Integer(a0), VMType::Integer(b0)) => b0 / a0,
+            _ => panic!(),
         };
 
         self.stack.push(VMType::Integer(n))

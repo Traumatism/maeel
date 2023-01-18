@@ -16,7 +16,10 @@ fn main() {
 
     let mut interpreter = Interpreter::default();
 
-    extract_instructions(extract_blocks(lex_into_tokens(&content)))
+    let tokens = lex_into_tokens(&content);
+    let blocks = extract_blocks(tokens);
+
+    extract_instructions(blocks)
         .iter()
         .for_each(|instruction| interpreter.handle_instruction(&mut instruction.iter()));
 }
