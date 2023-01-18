@@ -1,0 +1,11 @@
+proc assert do
+    !if do
+        println
+        1 exit
+    end
+
+    pop
+end
+
+
+"1!=2" 2 2 = assert
