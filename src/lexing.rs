@@ -65,50 +65,33 @@ pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
 
 /// Lex an identifier
 pub fn lex_identifier(identifier: &str, line: u16) -> Token {
-    let mut keywords = HashMap::new();
-
-    // Booleans values
-    keywords.insert("true", Token::Bool(true, line));
-    keywords.insert("false", Token::Bool(false, line));
-
-    // Boolean operations
-    keywords.insert("or", Token::Or(line));
-    keywords.insert("and", Token::And(line));
-    keywords.insert("not", Token::Not(line));
-    keywords.insert("xor", Token::Xor(line));
-    keywords.insert("eq", Token::Eq(line));
-
-    // Block borders
-    keywords.insert("do", Token::BlockStart(line));
-    keywords.insert("end", Token::BlockEnd(line));
-
-    keywords.insert("proc", Token::ProcStart(line));
-
-    // Stack manipulation
-    keywords.insert("dup", Token::Dup(line));
-    keywords.insert("pop", Token::Pop(line));
-    keywords.insert("clear", Token::Clear(line));
-    keywords.insert("swap", Token::Swap(line));
-    keywords.insert("over", Token::Over(line));
-
-    // Array manipulation
-    keywords.insert("rotate", Token::Rotate(line));
-    keywords.insert("take", Token::Take(line));
-    keywords.insert("len", Token::Len(line));
-
-    // Statements
-    keywords.insert("for", Token::For(line));
-    keywords.insert("del", Token::Del(line));
-    keywords.insert("if", Token::If(line));
-    keywords.insert("let", Token::Let(line));
-    keywords.insert("return", Token::Return(line));
-    keywords.insert("while", Token::While(line));
-
-    let token = keywords.get(identifier);
-
-    token
-        .unwrap_or(&Token::Identifier(String::from(identifier), line))
-        .clone()
+    match identifier {
+        "true" => Token::Bool(true, line),
+        "false" => Token::Bool(false, line),
+        "or" => Token::Or(line),
+        "and" => Token::And(line),
+        "not" => Token::Not(line),
+        "xor" => Token::Xor(line),
+        "eq" => Token::Eq(line),
+        "do" => Token::BlockStart(line),
+        "end" => Token::BlockEnd(line),
+        "proc" => Token::ProcStart(line),
+        "dup" => Token::Dup(line),
+        "pop" => Token::Pop(line),
+        "clear" => Token::Clear(line),
+        "swap" => Token::Swap(line),
+        "over" => Token::Over(line),
+        "rot" => Token::Rotate(line),
+        "take" => Token::Take(line),
+        "len" => Token::Len(line),
+        "for" => Token::For(line),
+        "del" => Token::Del(line),
+        "if" => Token::If(line),
+        "let" => Token::Let(line),
+        "return" => Token::Return(line),
+        "while" => Token::While(line),
+        _ => Token::Identifier(String::from(identifier), line),
+    }
 }
 
 /// Lex a single character
