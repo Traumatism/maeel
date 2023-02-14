@@ -4,7 +4,7 @@ proc main do
             3 * 1 + println
         end
 
-        dup 2 % 0 = if do
+        dup 2 % 0 = ? do
             2 / println
         end
 

@@ -107,6 +107,9 @@ pub fn lex_single_char(chr: char, line: u16) -> Token {
         '!' => Token::Not(line),
         '<' => Token::Lt(line),
         '>' => Token::Gt(line),
+        '?' => Token::If(line),
+        ';' => Token::BlockEnd(line),
+        ':' => Token::BlockStart(line),
         _ => panic!("line {line}: Unkown symbol {chr}"),
     }
 }

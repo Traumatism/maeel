@@ -106,6 +106,7 @@ impl Mul for VMType {
             (VMType::Float(x), VMType::Float(y)) => VMType::Float(x * y),
             (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 * x),
             (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x * n as f64),
+            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p & q),
             (a, b) => panic!("can't mul {a:?} and {b:?}"),
         }
     }
@@ -160,6 +161,7 @@ impl Add for VMType {
             (VMType::Float(x), VMType::Float(y)) => VMType::Float(x + y),
             (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 + x),
             (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x + n as f64),
+            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p | q),
             (other, VMType::Array(mut array)) => {
                 array.push(other);
                 VMType::Array(array)

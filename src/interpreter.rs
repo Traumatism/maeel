@@ -8,22 +8,25 @@ use crate::vmtype::VMType;
 
 type Block = Vec<Token>;
 
-#[derive(Default, Clone)]
-pub struct Stack {
+
+#[derive(Default)]
+pub struct Interpreter {
+    stop_execution: bool,
+    vars: HashMap<String, VMType>,
+    private_vars: HashMap<String, VMType>,
+    procs: HashMap<String, Block>,
     data: Vec<VMType>,
 }
 
-impl Stack {
-    fn push(&mut self, element: VMType) {
-        self.data.push(element);
-    }
-
-    fn pop(&mut self) -> Option<VMType> {
-        self.data.pop()
-    }
-
-    fn size(&self) -> usize {
-        self.data.len()
+impl Interpreter {
+    pub fn new(procs: HashMap<String, Block>, vars: HashMap<String, VMType>, data: Vec<VMType>) -> Self {
+        Self {
+            stop_execution: false,
+            private_vars: HashMap::default(),
+            procs,
+            vars,
+            data,
+        }
     }
 
     fn rotate(&mut self) {
@@ -60,31 +63,6 @@ impl Stack {
         }
     }
 
-    fn clear(&mut self) {
-        self.data.clear()
-    }
-}
-
-#[derive(Default)]
-pub struct Interpreter {
-    stop_execution: bool,
-    vars: HashMap<String, VMType>,
-    private_vars: HashMap<String, VMType>,
-    procs: HashMap<String, Block>,
-    stack: Stack,
-}
-
-impl Interpreter {
-    pub fn new(procs: HashMap<String, Block>, vars: HashMap<String, VMType>, stack: Stack) -> Self {
-        Self {
-            stop_execution: false,
-            private_vars: HashMap::default(),
-            procs,
-            vars,
-            stack,
-        }
-    }
-
     pub fn handle_instruction(&mut self, tokens: &mut Iter<Token>) {
         while let Some(token) = tokens.next() {
             if self.stop_execution {
@@ -115,13 +93,13 @@ impl Interpreter {
                 Token::Rotate(line) => self.handle_rotate(line),
                 Token::Len(line) => self.handle_len(line),
                 Token::Identifier(identifier, line) => self.handle_identifier(&identifier, line),
-                Token::Over(_) => self.stack.over(),
-                Token::Dup(_) => self.stack.dup(),
-                Token::Swap(_) => self.stack.swap(),
-                Token::Clear(_) => self.stack.clear(),
+                Token::Over(_) => self.over(),
+                Token::Dup(_) => self.dup(),
+                Token::Swap(_) => self.swap(),
+                Token::Clear(_) => self.data.clear(),
                 Token::Return(_) => self.stop_execution = true,
                 Token::Pop(_) => {
-                    self.stack.pop().unwrap();
+                    self.data.pop().unwrap();
                 }
                 Token::Let(line) => {
                     let name = match tokens.next() {
@@ -135,13 +113,13 @@ impl Interpreter {
                             Some(Token::Float(x, _)) => VMType::Float(*x),
                             Some(Token::Bool(p, _)) => VMType::Bool(*p),
                             Some(Token::Over(_)) => {
-                                self.stack.over();
-                                self.stack.pop().unwrap()
+                                self.over();
+                                self.data.pop().unwrap()
                             },
-                            Some(Token::Pop(_)) => self.stack.pop().unwrap(),
+                            Some(Token::Pop(_)) => self.data.pop().unwrap(),
                             Some(Token::Dup(_)) => {
-                                self.stack.dup();
-                                self.stack.pop().unwrap()
+                                self.dup();
+                                self.data.pop().unwrap()
                             }
                             _ => panic!("line {line}: `let name` must be followed by a variable value (str, integer, float, bool, `dup`, `over`, `pop`)"),
                         };
@@ -159,7 +137,7 @@ impl Interpreter {
                         _ => panic!("line {line}: `while` must be followed by a code block."),
                     };
 
-                    while let Some(VMType::Bool(true)) = self.stack.pop() {
+                    while let Some(VMType::Bool(true)) = self.data.pop() {
                         self.handle_block_execution(while_block.clone(), line);
 
                         if self.stop_execution {
@@ -174,7 +152,7 @@ impl Interpreter {
                         _ => panic!("line {line}: `for` must be followed by a code block."),
                     };
 
-                    let array = match self.stack.pop() {
+                    let array = match self.data.pop() {
                         Some(VMType::Array(array)) => array,
                         _ => {
                             panic!("line {line}: `for` requires an array on the stack.")
@@ -206,7 +184,7 @@ impl Interpreter {
                         _ => panic!("line {line}: `if` must be followed by a code block."),
                     };
 
-                    if match self.stack.pop() {
+                    if match self.data.pop() {
                         Some(VMType::Bool(e)) => e,
                         _ => panic!("line {line}: `if` requires a boolean value on the stack."),
                     } {
@@ -241,54 +219,54 @@ impl Interpreter {
     }
 
     pub fn handle_push_str(&mut self, content: String, _line: u16) {
-        self.stack.push(VMType::Str(content));
+        self.data.push(VMType::Str(content));
     }
 
     pub fn handle_push_int(&mut self, content: i64, _line: u16) {
-        self.stack.push(VMType::Integer(content));
+        self.data.push(VMType::Integer(content));
     }
 
     pub fn handle_push_float(&mut self, content: f64, _line: u16) {
-        self.stack.push(VMType::Float(content));
+        self.data.push(VMType::Float(content));
     }
 
     pub fn handle_push_bool(&mut self, content: bool, _line: u16) {
-        self.stack.push(VMType::Bool(content));
+        self.data.push(VMType::Bool(content));
     }
 
     pub fn handle_len(&mut self, _line: u16) {
-        self.stack.push(VMType::Integer(self.stack.size() as i64))
+        self.data.push(VMType::Integer(self.data.len() as i64))
     }
 
     pub fn handle_take(&mut self, line: u16) {
-        match self.stack.pop() {
+        match self.data.pop() {
             Some(VMType::Integer(n)) => {
-                let array = (0..n).map(|_| self.stack.pop().unwrap()).collect();
-                self.stack.push(VMType::Array(array))
+                let array = (0..n).map(|_| self.data.pop().unwrap()).collect();
+                self.data.push(VMType::Array(array))
             }
             _ => panic!("line {line}: `take` requires an array on the take."),
         }
     }
 
     pub fn handle_rotate(&mut self, _line: u16) {
-        self.stack.rotate()
+        self.rotate()
     }
 
     pub fn handle_block_execution(&mut self, block: Block, _line: u16) {
-        let mut proc_parser = Self::new(self.procs.clone(), self.vars.clone(), self.stack.clone());
+        let mut proc_parser = Self::new(self.procs.clone(), self.vars.clone(), self.data.clone());
 
         for instruction in extract_instructions(block) {
             proc_parser.handle_instruction(&mut instruction.iter())
         }
 
         self.procs = proc_parser.procs;
-        self.stack = proc_parser.stack;
+        self.data = proc_parser.data;
         self.vars = proc_parser.vars;
     }
 
     pub fn handle_identifier(&mut self, identifier: &str, line: u16) {
         match identifier {
-            "exit" => match self.stack.pop().unwrap() {
+            "exit" => match self.data.pop().unwrap() {
                 VMType::Integer(status) => std::process::exit(status as i32),
                 _ => {
                     panic!("line {line}: exit requires an integer (the exit status) on the stack.")
@@ -296,7 +274,7 @@ impl Interpreter {
             },
 
             "print" | "println" => {
-                let e = self.stack.pop().unwrap_or_else(|| panic!());
+                let e = self.data.pop().unwrap_or_else(|| panic!());
 
                 (match identifier {
                     "println" => |content: String| {
@@ -311,16 +289,16 @@ impl Interpreter {
                     _ => panic!(),
                 })(e.to_string());
 
-                self.stack.push(e);
+                self.data.push(e);
             }
 
             identifier => {
                 if let Some(value) = self.vars.get(identifier) {
-                    return self.stack.push(value.clone());
+                    return self.data.push(value.clone());
                 }
 
                 if let Some(value) = self.private_vars.get(identifier) {
-                    return self.stack.push(value.clone());
+                    return self.data.push(value.clone());
                 }
 
                 let proc_tokens = self.procs.get(identifier).expect(identifier).clone();
@@ -330,97 +308,97 @@ impl Interpreter {
     }
 
     pub fn handle_modulo(&mut self, _line: u16) {
-        let a = self.stack.pop().unwrap();
-        let b = self.stack.pop().unwrap();
+        let a = self.data.pop().unwrap();
+        let b = self.data.pop().unwrap();
 
-        self.stack.push(b % a)
+        self.data.push(b % a)
     }
 
     pub fn handle_add(&mut self, _line: u16) {
-        let a = self.stack.pop().unwrap();
-        let b = self.stack.pop().unwrap();
+        let a = self.data.pop().unwrap();
+        let b = self.data.pop().unwrap();
 
-        self.stack.push(a + b)
+        self.data.push(a + b)
     }
 
     pub fn handle_gt(&mut self, _line: u16) {
-        let a = self.stack.pop().unwrap();
-        let b = self.stack.pop().unwrap();
+        let a = self.data.pop().unwrap();
+        let b = self.data.pop().unwrap();
 
-        self.stack.push(VMType::Bool(b > a))
+        self.data.push(VMType::Bool(b > a))
     }
 
     pub fn handle_lt(&mut self, _line: u16) {
-        let a = self.stack.pop().unwrap();
-        let b = self.stack.pop().unwrap();
+        let a = self.data.pop().unwrap();
+        let b = self.data.pop().unwrap();
 
-        self.stack.push(VMType::Bool(b < a))
+        self.data.push(VMType::Bool(b < a))
     }
 
     pub fn handle_mul(&mut self, _line: u16) {
-        let a = self.stack.pop().unwrap();
-        let b = self.stack.pop().unwrap();
+        let a = self.data.pop().unwrap();
+        let b = self.data.pop().unwrap();
 
-        self.stack.push(a * b)
+        self.data.push(a * b)
     }
 
     pub fn handle_sub(&mut self, _line: u16) {
-        let a = self.stack.pop().unwrap();
-        let b = self.stack.pop().unwrap();
+        let a = self.data.pop().unwrap();
+        let b = self.data.pop().unwrap();
 
-        self.stack.push(b - a)
+        self.data.push(b - a)
     }
 
     pub fn handle_or(&mut self, _line: u16) {
-        let p = self.stack.pop().unwrap();
-        let q = self.stack.pop().unwrap();
+        let p = self.data.pop().unwrap();
+        let q = self.data.pop().unwrap();
 
-        self.stack.push(p | q)
+        self.data.push(p | q)
     }
 
     pub fn handle_xor(&mut self, _line: u16) {
-        let p = self.stack.pop().unwrap();
-        let q = self.stack.pop().unwrap();
+        let p = self.data.pop().unwrap();
+        let q = self.data.pop().unwrap();
 
-        self.stack.push(p ^ q)
+        self.data.push(p ^ q)
     }
 
     pub fn handle_and(&mut self, _line: u16) {
-        let p = self.stack.pop().unwrap();
-        let q = self.stack.pop().unwrap();
+        let p = self.data.pop().unwrap();
+        let q = self.data.pop().unwrap();
 
-        self.stack.push(p & q)
+        self.data.push(p & q)
     }
 
     pub fn handle_not(&mut self, _line: u16) {
-        let p = self.stack.pop().unwrap();
+        let p = self.data.pop().unwrap();
 
-        self.stack.push(!p)
+        self.data.push(!p)
     }
 
     pub fn handle_eq(&mut self, _line: u16) {
-        let a = self.stack.pop().unwrap();
-        let b = self.stack.pop().unwrap();
+        let a = self.data.pop().unwrap();
+        let b = self.data.pop().unwrap();
 
-        self.stack.push(VMType::Bool(a == b))
+        self.data.push(VMType::Bool(a == b))
     }
 
     pub fn handle_divq(&mut self, _line: u16) {
-        let a = self.stack.pop().unwrap();
-        let b = self.stack.pop().unwrap();
+        let a = self.data.pop().unwrap();
+        let b = self.data.pop().unwrap();
 
         let n = match (a, b) {
             (VMType::Integer(a0), VMType::Integer(b0)) => b0 / a0,
             _ => panic!(),
         };
 
-        self.stack.push(VMType::Integer(n))
+        self.data.push(VMType::Integer(n))
     }
 
     pub fn handle_div(&mut self, _line: u16) {
-        let a = self.stack.pop().unwrap();
-        let b = self.stack.pop().unwrap();
+        let a = self.data.pop().unwrap();
+        let b = self.data.pop().unwrap();
 
-        self.stack.push(b / a)
+        self.data.push(b / a)
     }
 }

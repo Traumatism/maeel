@@ -1,22 +1,21 @@
 proc fib do
-    dup dup 1 = swap 0 = or ! if do
+    dup dup 1= swap 0= +!? do
         dup 1 - fib swap 2 - fib+
     end
 end
 
 
 proc sqrt do
-    let output 1
-    0
+    let output 1 0
 
     true while do
         swap
         dup output /
         output + 2
         / let sqrt_value pop
-        swap 1+
+        swap 1 +
 
-        dup 30 =!
+        dup 30 = !
     end
 
     pop pop
@@ -29,10 +28,10 @@ proc div do
     let dividend pop
 
     0
-    dividend divisor > dividend divisor = or while do
+    dividend divisor > dividend divisor = + while do
         1 +
         dividend divisor - let dividend pop
-        dividend divisor > dividend divisor = or
+        dividend divisor > dividend divisor = +
     end
 end
 
@@ -53,8 +52,8 @@ proc pow do
     0  @ ammount of iterations (0 <= pow_exponents)
 
     true while do
-        swap pow_number * swap 1+ dup
-        pow_exponent =!
+        swap pow_number * swap 1 + dup
+        pow_exponent = !
     end
 
     pop
