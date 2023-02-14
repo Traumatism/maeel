@@ -1,13 +1,13 @@
 use std::env::args;
 use std::fs::read_to_string;
 
-mod lexing;
+use interpreter::Interpreter;
 use lexing::{extract_blocks, extract_instructions, lex_into_tokens};
 
 mod interpreter;
-use interpreter::Interpreter;
-
-mod enums;
+mod lexing;
+mod token;
+mod vmtype;
 
 fn main() {
     let args = args().collect::<Vec<String>>();

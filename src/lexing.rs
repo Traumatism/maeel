@@ -1,7 +1,5 @@
-use crate::enums::token::Token;
-use std::collections::HashMap;
+use crate::token::Token;
 
-/// Extract instructions from tokens
 pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     let mut instructions = Vec::default();
     let mut current_instruction = Vec::default();
@@ -18,52 +16,53 @@ pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     }
 
     instructions.push(current_instruction);
+
     instructions
 }
 
-/// Extract code blocks from tokens
 pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
 
     while let Some(token) = tokens_iter.next() {
-        match token {
+        output.push(match token {
             Token::BlockStart(line) => {
                 let mut block_tokens = Vec::new();
                 let mut recurse = false;
                 let mut n = 0;
 
                 for token_0 in tokens_iter.by_ref() {
-                    match token_0 {
+                    block_tokens.push(match token_0 {
                         Token::BlockEnd(_) => match n {
                             0 => break,
                             _ => {
                                 n -= 1;
-                                block_tokens.push(token_0.clone())
+                                token_0.clone()
                             }
                         },
+
                         Token::BlockStart(_) => {
                             n += 1;
                             recurse = true;
-                            block_tokens.push(token_0.clone())
+
+                            token_0.clone()
                         }
-                        _ => block_tokens.push(token_0.clone()),
-                    }
+                        _ => token_0.clone(),
+                    })
                 }
 
                 match recurse {
-                    true => output.push(Token::Block(extract_blocks(block_tokens), *line)),
-                    false => output.push(Token::Block(block_tokens, *line)),
+                    true => Token::Block(extract_blocks(block_tokens), *line),
+                    false => Token::Block(block_tokens, *line),
                 }
             }
-            _ => output.push(token.clone()),
-        }
+            _ => token.clone(),
+        })
     }
 
     output
 }
 
-/// Lex an identifier
 pub fn lex_identifier(identifier: &str, line: u16) -> Token {
     match identifier {
         "true" => Token::Bool(true, line),
@@ -94,30 +93,24 @@ pub fn lex_identifier(identifier: &str, line: u16) -> Token {
     }
 }
 
-/// Lex a single character
 pub fn lex_single_char(chr: char, line: u16) -> Token {
-    let mut symbols = HashMap::new();
-
-    symbols.insert('&', Token::And(line));
-    symbols.insert('^', Token::Xor(line));
-    symbols.insert('+', Token::Add(line));
-    symbols.insert('*', Token::Mul(line));
-    symbols.insert('/', Token::Div(line));
-    symbols.insert('-', Token::Sub(line));
-    symbols.insert('=', Token::Eq(line));
-    symbols.insert('%', Token::Modulo(line));
-    symbols.insert('!', Token::Not(line));
-    symbols.insert('<', Token::Lt(line));
-    symbols.insert('>', Token::Gt(line));
-
-    let token = symbols.get(&chr);
-
-    token
-        .unwrap_or_else(|| panic!("line {line}: Unkown symbol {chr}"))
-        .clone()
+    match chr {
+        '&' => Token::And(line),
+        '^' => Token::Xor(line),
+        '+' => Token::Add(line),
+        '*' => Token::Mul(line),
+        '/' => Token::Div(line),
+        '|' => Token::DivQ(line),
+        '-' => Token::Sub(line),
+        '=' => Token::Eq(line),
+        '%' => Token::Modulo(line),
+        '!' => Token::Not(line),
+        '<' => Token::Lt(line),
+        '>' => Token::Gt(line),
+        _ => panic!("line {line}: Unkown symbol {chr}"),
+    }
 }
 
-/// Lex code
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut chars = code.chars().collect::<Vec<char>>();
     chars.reverse();
@@ -126,10 +119,14 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut line = 1;
 
     while let Some(chr) = chars.pop() {
-        match chr {
-            ' ' | '(' | ')' => (),
+        let token = match chr {
+            ' ' | '(' | ')' => None,
 
-            '\n' => line += 1,
+            '\n' => {
+                line += 1;
+
+                None
+            }
 
             '@' => {
                 while let Some(next) = chars.pop() {
@@ -137,6 +134,8 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                         break;
                     }
                 }
+
+                None
             }
 
             '"' => {
@@ -149,7 +148,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                 }
 
-                tokens.push(Token::Str(content, line))
+                Some(Token::Str(content, line))
             }
 
             'a'..='z' | '_' => {
@@ -165,7 +164,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                 }
 
-                tokens.push(lex_identifier(&content, line).clone());
+                Some(lex_identifier(&content, line).clone())
             }
 
             '0'..='9' => {
@@ -175,14 +174,11 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 while let Some(next) = chars.pop() {
                     match next {
                         '0'..='9' => content.push(next),
-
                         '.' => {
                             float = true;
                             content.push('.')
                         }
-
                         '_' => (),
-
                         _ => {
                             chars.push(next);
                             break;
@@ -190,7 +186,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                 }
 
-                tokens.push(match float {
+                Some(match float {
                     true => Token::Float(
                         content.parse::<f64>().unwrap_or_else(|_| {
                             panic!("line {line}: Failed to parse `{content}` into a float")
@@ -203,9 +199,13 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                         }),
                         line,
                     ),
-                });
+                })
             }
-            _ => tokens.push(lex_single_char(chr, line)),
+            _ => Some(lex_single_char(chr, line)),
+        };
+
+        if let Some(token) = token {
+            tokens.push(token)
         }
     }
 

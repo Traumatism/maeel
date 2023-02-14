@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::io::Write;
 use std::slice::Iter;
 
-use crate::enums::token::Token;
-use crate::enums::vmtype::VMType;
 use crate::lexing::extract_instructions;
+use crate::token::Token;
+use crate::vmtype::VMType;
 
 type Block = Vec<Token>;
 
@@ -14,19 +14,19 @@ pub struct Stack {
 }
 
 impl Stack {
-    pub fn push(&mut self, element: VMType) {
+    fn push(&mut self, element: VMType) {
         self.data.push(element);
     }
 
-    pub fn pop(&mut self) -> Option<VMType> {
+    fn pop(&mut self) -> Option<VMType> {
         self.data.pop()
     }
 
-    pub fn size(&self) -> usize {
+    fn size(&self) -> usize {
         self.data.len()
     }
 
-    pub fn rotate(&mut self) {
+    fn rotate(&mut self) {
         if self.data.len() >= 3 {
             let third = self.data.pop().unwrap();
             let second = self.data.pop().unwrap();
@@ -38,20 +38,20 @@ impl Stack {
         }
     }
 
-    pub fn dup(&mut self) {
+    fn dup(&mut self) {
         if let Some(x) = self.data.last() {
             self.data.push(x.clone());
         }
     }
 
-    pub fn over(&mut self) {
+    fn over(&mut self) {
         if self.data.len() >= 2 {
             let second = &self.data[self.data.len() - 2];
             self.data.push(second.clone());
         }
     }
 
-    pub fn swap(&mut self) {
+    fn swap(&mut self) {
         if self.data.len() >= 2 {
             let second = self.data.pop().unwrap();
             let first = self.data.pop().unwrap();
@@ -60,7 +60,7 @@ impl Stack {
         }
     }
 
-    pub fn clear(&mut self) {
+    fn clear(&mut self) {
         self.data.clear()
     }
 }
@@ -85,7 +85,6 @@ impl Interpreter {
         }
     }
 
-    /// Handle a single instruction
     pub fn handle_instruction(&mut self, tokens: &mut Iter<Token>) {
         while let Some(token) = tokens.next() {
             if self.stop_execution {
