@@ -63,57 +63,97 @@ pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
     output
 }
 
+/// Turn an identifier into a token
+///
+/// # Argument
+/// `identifier` - Identifier to turn into a token
+/// `line` - Line the identifier is at
+///
 pub fn lex_identifier(identifier: &str, line: u16) -> Token {
     match identifier {
         "true" => Token::Bool(true, line),
         "false" => Token::Bool(false, line),
-        "or" => Token::Or(line),
+
+        "sub" => Token::Sub(line),
+        "add" => Token::Add(line),
+        "mul" => Token::Mul(line),
+        "mod" => Token::Modulo(line),
+        "div" => Token::Div(line),
+        "divq" => Token::DivQ(line),
+
         "and" => Token::And(line),
-        "not" => Token::Not(line),
+        "or" => Token::Or(line),
         "xor" => Token::Xor(line),
+        "not" => Token::Not(line),
+
+        "if" => Token::If(line),
+        "for" => Token::For(line),
+        "while" => Token::While(line),
+
         "eq" => Token::Eq(line),
-        "do" => Token::BlockStart(line),
-        "end" => Token::BlockEnd(line),
-        "proc" => Token::ProcStart(line),
+        "gt" => Token::Gt(line),
+        "lt" => Token::Lt(line),
+
+        "rot" => Token::Rotate(line),
+        "clear" => Token::Clear(line),
+        "over" => Token::Over(line),
+        "take" => Token::Take(line),
+        "swap" => Token::Swap(line),
+        "del" => Token::Del(line),
         "dup" => Token::Dup(line),
         "pop" => Token::Pop(line),
-        "clear" => Token::Clear(line),
-        "swap" => Token::Swap(line),
-        "over" => Token::Over(line),
-        "rot" => Token::Rotate(line),
-        "take" => Token::Take(line),
         "len" => Token::Len(line),
-        "for" => Token::For(line),
-        "del" => Token::Del(line),
-        "if" => Token::If(line),
+
         "let" => Token::Let(line),
+        "proc" => Token::ProcStart(line),
         "return" => Token::Return(line),
-        "while" => Token::While(line),
+
+        "do" => Token::BlockStart(line),
+        "end" => Token::BlockEnd(line),
         _ => Token::Identifier(String::from(identifier), line),
     }
 }
 
+/// Turn a character/symbol into a token
+///
+/// # Argument
+/// `chr` - Character to turn into a token
+/// `line` - Line the character is at
+///
 pub fn lex_single_char(chr: char, line: u16) -> Token {
     match chr {
-        '&' => Token::And(line),
-        '^' => Token::Xor(line),
+        '-' => Token::Sub(line),
         '+' => Token::Add(line),
         '*' => Token::Mul(line),
+        '%' => Token::Modulo(line),
         '/' => Token::Div(line),
         '|' => Token::DivQ(line),
-        '-' => Token::Sub(line),
-        '=' => Token::Eq(line),
-        '%' => Token::Modulo(line),
+
+        '&' => Token::And(line),
+        '~' => Token::Or(line),
+        '^' => Token::Xor(line),
         '!' => Token::Not(line),
-        '<' => Token::Lt(line),
-        '>' => Token::Gt(line),
+
         '?' => Token::If(line),
-        ';' => Token::BlockEnd(line),
+        '§' => Token::For(line),
+        '$' => Token::While(line),
+
+        '=' => Token::Eq(line),
+        '>' => Token::Gt(line),
+        '<' => Token::Lt(line),
+
         ':' => Token::BlockStart(line),
+        ';' => Token::BlockEnd(line),
+
         _ => panic!("line {line}: Unkown symbol {chr}"),
     }
 }
 
+/// Lex a whole code into tokens
+///
+/// # Arguments
+/// `code` - Code to turn into tokens
+///
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut chars = code.chars().collect::<Vec<char>>();
     chars.reverse();
@@ -213,4 +253,41 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     }
 
     tokens
+}
+
+#[cfg(test)]
+mod lexing_tests {
+    use super::{lex_identifier, lex_into_tokens, Token};
+
+    #[test]
+    fn test_lex_identifiers() {
+        assert_eq!(
+            lex_identifier("foo", 0),
+            Token::Identifier(String::from("foo"), 0)
+        );
+
+        assert_eq!(
+            lex_identifier("bar", 0),
+            Token::Identifier(String::from("bar"), 0)
+        );
+
+        assert_eq!(lex_identifier("add", 0), Token::Add(0));
+        assert_eq!(lex_identifier("mul", 0), Token::Mul(0));
+    }
+
+    #[test]
+    fn test_lex_into_tokens_simple() {
+        let expression = "1 2.5\n+ \"hello\" -";
+
+        assert_eq!(
+            lex_into_tokens(expression),
+            vec![
+                Token::Integer(1, 1),
+                Token::Float(2.5, 1),
+                Token::Add(2),
+                Token::Str(String::from("hello"), 2),
+                Token::Sub(2),
+            ]
+        )
+    }
 }
