@@ -12,13 +12,11 @@ mod vmtype;
 fn main() {
     let args = args().collect::<Vec<String>>();
     let content = read_to_string(args.get(1).unwrap()).expect("Failed to open file");
+    let tokens = lex_into_tokens(&content);
 
     let mut interpreter = Interpreter::default();
 
-    let tokens = lex_into_tokens(&content);
-    let blocks = extract_blocks(tokens);
-
-    extract_instructions(blocks)
+    extract_instructions(extract_blocks(tokens))
         .iter()
         .for_each(|instruction| interpreter.handle_instruction(&mut instruction.iter()));
 }

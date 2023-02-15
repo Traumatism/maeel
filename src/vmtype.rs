@@ -12,10 +12,12 @@ pub enum VMType {
 impl PartialOrd for VMType {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
-            (VMType::Integer(m), VMType::Integer(n)) => Some(m.cmp(n)),
-            (VMType::Float(x), VMType::Float(y)) => Some(x.total_cmp(y)),
-            (VMType::Float(x), VMType::Integer(n)) => Some(x.total_cmp(&(*n as f64))),
-            (VMType::Integer(n), VMType::Float(x)) => Some(x.total_cmp(&(*n as f64))),
+            (VMType::Integer(a), VMType::Integer(b)) => Some(a.cmp(b)),
+            (VMType::Float(a), VMType::Float(b)) => Some(a.total_cmp(b)),
+            (VMType::Integer(a), VMType::Float(b)) | (VMType::Float(b), VMType::Integer(a)) => {
+                Some(b.total_cmp(&(*a as f64)))
+            }
+
             (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
@@ -26,11 +28,11 @@ impl PartialEq for VMType {
         match (self, other) {
             (VMType::Str(a), VMType::Str(b)) => a == b,
             (VMType::Array(a), VMType::Array(b)) => a == b,
-            (VMType::Float(x), VMType::Integer(n)) => *x == (*n as f64),
-            (VMType::Integer(n), VMType::Float(x)) => (*n as f64) == *x,
-            (VMType::Integer(m), VMType::Integer(n)) => m == n,
-            (VMType::Float(x), VMType::Float(y)) => x == y,
-            (VMType::Bool(p), VMType::Bool(q)) => p == q,
+            (VMType::Float(a), VMType::Integer(b)) => *a == (*b as f64),
+            (VMType::Integer(a), VMType::Float(b)) => (*a as f64) == *b,
+            (VMType::Integer(a), VMType::Integer(b)) => a == b,
+            (VMType::Float(a), VMType::Float(b)) => a == b,
+            (VMType::Bool(a), VMType::Bool(b)) => a == b,
             _ => false,
         }
     }
@@ -39,11 +41,11 @@ impl PartialEq for VMType {
 impl ToString for VMType {
     fn to_string(&self) -> String {
         match self {
-            VMType::Float(x) => x.to_string(),
-            VMType::Integer(n) => n.to_string(),
-            VMType::Str(c) => c.to_string(),
-            VMType::Bool(p) => p.to_string(),
-            VMType::Array(array) => format!("{array:?}"),
+            VMType::Float(a) => a.to_string(),
+            VMType::Integer(a) => a.to_string(),
+            VMType::Str(a) => a.to_string(),
+            VMType::Bool(a) => a.to_string(),
+            VMType::Array(a) => format!("{a:?}"),
         }
     }
 }
@@ -53,7 +55,7 @@ impl BitXor for VMType {
 
     fn bitxor(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p ^ q),
+            (VMType::Bool(a), VMType::Bool(b)) => VMType::Bool(a ^ b),
             (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
@@ -64,10 +66,10 @@ impl Sub for VMType {
 
     fn sub(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m - n),
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x - y),
-            (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 - x),
-            (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x - n as f64),
+            (VMType::Integer(a), VMType::Integer(b)) => VMType::Integer(a - b),
+            (VMType::Float(a), VMType::Float(b)) => VMType::Float(a - b),
+            (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 - b),
+            (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a - b as f64),
             (a, b) => panic!("can't sub {a:?} and {b:?}"),
         }
     }
@@ -78,7 +80,7 @@ impl BitOr for VMType {
 
     fn bitor(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p | q),
+            (VMType::Bool(a), VMType::Bool(b)) => VMType::Bool(a | b),
             (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
@@ -89,9 +91,9 @@ impl Not for VMType {
 
     fn not(self) -> Self::Output {
         match self {
-            VMType::Float(x) => VMType::Float(x * -1.),
-            VMType::Integer(n) => VMType::Integer(-n),
-            VMType::Bool(p) => VMType::Bool(!p),
+            VMType::Float(a) => VMType::Float(a * -1.),
+            VMType::Integer(a) => VMType::Integer(-a),
+            VMType::Bool(a) => VMType::Bool(!a),
             a => panic!("can't invert {a:?}"),
         }
     }
@@ -102,11 +104,11 @@ impl Mul for VMType {
 
     fn mul(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m * n),
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x * y),
-            (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 * x),
-            (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x * n as f64),
-            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p & q),
+            (VMType::Integer(a), VMType::Integer(b)) => VMType::Integer(a * b),
+            (VMType::Float(a), VMType::Float(b)) => VMType::Float(a * b),
+            (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 * b),
+            (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a * b as f64),
+            (VMType::Bool(a), VMType::Bool(b)) => VMType::Bool(a & b),
             (a, b) => panic!("can't mul {a:?} and {b:?}"),
         }
     }
@@ -117,10 +119,10 @@ impl Rem for VMType {
 
     fn rem(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m % n),
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x % y),
-            (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 % x),
-            (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x % n as f64),
+            (VMType::Integer(a), VMType::Integer(b)) => VMType::Integer(a % b),
+            (VMType::Float(a), VMType::Float(b)) => VMType::Float(a % b),
+            (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 % b),
+            (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a % b as f64),
             (a, b) => panic!("can't modulo {a:?} and {b:?}"),
         }
     }
@@ -131,10 +133,10 @@ impl Div for VMType {
 
     fn div(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Float(m as f64 / n as f64),
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x / y),
-            (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 / x),
-            (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x / n as f64),
+            (VMType::Integer(a), VMType::Integer(b)) => VMType::Float(a as f64 / b as f64),
+            (VMType::Float(a), VMType::Float(b)) => VMType::Float(a / b),
+            (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 / b),
+            (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a / b as f64),
             (a, b) => panic!("can't divide {a:?} and {b:?}"),
         }
     }
@@ -145,7 +147,7 @@ impl BitAnd for VMType {
 
     fn bitand(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p & q),
+            (VMType::Bool(a), VMType::Bool(b)) => VMType::Bool(a & b),
             (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
@@ -156,20 +158,18 @@ impl Add for VMType {
 
     fn add(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (VMType::Str(s), VMType::Str(t)) => VMType::Str(s + &t),
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m + n),
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x + y),
-            (VMType::Integer(n), VMType::Float(x)) => VMType::Float(n as f64 + x),
-            (VMType::Float(x), VMType::Integer(n)) => VMType::Float(x + n as f64),
-            (VMType::Bool(p), VMType::Bool(q)) => VMType::Bool(p | q),
-            (other, VMType::Array(mut array)) => {
+            (VMType::Str(a), VMType::Str(b)) => VMType::Str(a + &b),
+            (VMType::Integer(a), VMType::Integer(b)) => VMType::Integer(a + b),
+            (VMType::Float(a), VMType::Float(b)) => VMType::Float(a + b),
+            (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 + b),
+            (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a + b as f64),
+            (VMType::Bool(a), VMType::Bool(b)) => VMType::Bool(a | b),
+
+            (other, VMType::Array(mut array)) | (VMType::Array(mut array), other) => {
                 array.push(other);
                 VMType::Array(array)
             }
-            (VMType::Array(mut array), other) => {
-                array.push(other);
-                VMType::Array(array)
-            }
+
             (a, b) => panic!("can't add {a:?} and {b:?}"),
         }
     }

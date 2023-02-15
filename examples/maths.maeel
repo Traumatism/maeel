@@ -23,19 +23,6 @@ proc sqrt do
 end
 
 
-proc div do
-    let divisor pop
-    let dividend pop
-
-    0
-    dividend divisor > dividend divisor = + while do
-        1 +
-        dividend divisor - let dividend pop
-        dividend divisor > dividend divisor = +
-    end
-end
-
-
 proc fac do
     let n pop
     n 1 = let comp pop
