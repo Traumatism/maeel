@@ -1,1 +1,2 @@
-1 2 3 3 take len println
+let x 0
+x println
