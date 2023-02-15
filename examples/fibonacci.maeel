@@ -1,5 +1,7 @@
 let a 0
 let b 1
+a println
+"hello" println
 
 b 1_000_000 < while do
     b let c dup

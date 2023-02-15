@@ -4,28 +4,41 @@ use crate::token::Token;
 use crate::vmtype::VMType;
 
 use std::collections::HashMap;
-use std::io::Write;
 use std::slice::Iter;
 
+macro_rules! pop {
+    ($self:ident) => {
+        $self.data.pop().unwrap()
+    };
+
+    ($self:ident, $no_unwrap:expr) => {
+        $self.data.pop()
+    };
+}
+
 macro_rules! push {
-    ($self:ident, $vmtype:expr, $content:expr) => {
+    ($self:ident, $content:expr) => {
+        $self.data.push($content)
+    };
+
+    ($self:ident, $content:expr, $vmtype:expr) => {
         $self.data.push($vmtype($content))
     };
 }
 
 macro_rules! binary_op {
     ($self:ident, $operator:tt) => {{
-        let a = $self.data.pop().unwrap();
-        let b = $self.data.pop().unwrap();
+        let a = pop!($self);
+        let b = pop!($self);
 
-        $self.data.push(b $operator a);
+        push!($self, b $operator a);
     }};
 
     ($self:ident, $operator:tt, $vmtype:expr) => {{
-        let a = $self.data.pop().unwrap();
-        let b = $self.data.pop().unwrap();
+        let a = pop!($self);
+        let b = pop!($self);
 
-        $self.data.push($vmtype(b $operator a))
+        push!($self, b $operator a, $vmtype)
     }};
 }
 
@@ -65,20 +78,20 @@ impl Interpreter {
     /// Rotate the 3 top element
     fn rotate(&mut self) {
         if self.data.len() >= 3 {
-            let third = self.data.pop().unwrap();
-            let second = self.data.pop().unwrap();
-            let first = self.data.pop().unwrap();
+            let third = pop!(self);
+            let second = pop!(self);
+            let first = pop!(self);
 
-            self.data.push(second);
-            self.data.push(third);
-            self.data.push(first);
+            push!(self, second);
+            push!(self, third);
+            push!(self, first);
         }
     }
 
     /// Duplicate the top element
     fn dup(&mut self) {
-        if let Some(x) = self.data.last() {
-            self.data.push(x.clone());
+        if let Some(x) = self.data.last().cloned() {
+            push!(self, x);
         }
     }
 
@@ -86,17 +99,18 @@ impl Interpreter {
     fn over(&mut self) {
         if self.data.len() >= 2 {
             let second = &self.data[self.data.len() - 2];
-            self.data.push(second.clone());
+            push!(self, second.clone());
         }
     }
 
     /// Swap the 2 top elements
     fn swap(&mut self) {
         if self.data.len() >= 2 {
-            let second = self.data.pop().unwrap();
-            let first = self.data.pop().unwrap();
-            self.data.push(second);
-            self.data.push(first);
+            let second = pop!(self);
+            let first = pop!(self);
+
+            push!(self, second);
+            push!(self, first);
         }
     }
 
@@ -112,129 +126,117 @@ impl Interpreter {
             }
 
             match token.clone() {
-                Token::Dup(_) => self.dup(),
-                Token::Swap(_) => self.swap(),
-                Token::Over(_) => self.over(),
-                Token::Rotate(_) => self.rotate(),
-                Token::Clear(_) => self.data.clear(),
-
-                Token::Len(_) => push!(self, VMType::Integer, self.data.len() as i64),
-                Token::Str(content, _) => push!(self, VMType::Str, content),
-                Token::Bool(content, _) => push!(self, VMType::Bool, content),
-                Token::Float(content, _) => push!(self, VMType::Float, content),
-                Token::Integer(content, _) => push!(self, VMType::Integer, content),
-
-                Token::Or(_) => binary_op!(self, |),
-                Token::Sub(_) => binary_op!(self, -),
-                Token::Add(_) => binary_op!(self, +),
-                Token::Mul(_) => binary_op!(self, *),
-                Token::Div(_) => binary_op!(self, /),
-                Token::And(_) => binary_op!(self, &),
-                Token::Xor(_) => binary_op!(self, ^),
-                Token::Gt(_) => binary_op!(self, >, VMType::Bool),
-                Token::Lt(_) => binary_op!(self, <, VMType::Bool),
-                Token::Eq(_) => binary_op!(self, ==, VMType::Bool),
-                Token::Modulo(_) => binary_op!(self, %),
-
-                Token::Not(_) => {
-                    let p = self.data.pop().unwrap();
-
-                    self.data.push(!p)
+                Token::Str(content) => push!(self, content, VMType::Str),
+                Token::Bool(content) => push!(self, content, VMType::Bool),
+                Token::Float(content) => push!(self, content, VMType::Float),
+                Token::Integer(content) => push!(self, content, VMType::Integer),
+                Token::Dup => self.dup(),
+                Token::Swap => self.swap(),
+                Token::Over => self.over(),
+                Token::Rotate => self.rotate(),
+                Token::Clear => self.data.clear(),
+                Token::Len => push!(self, self.data.len() as i64, VMType::Integer),
+                Token::Or => binary_op!(self, |),
+                Token::Sub => binary_op!(self, -),
+                Token::Add => binary_op!(self, +),
+                Token::Mul => binary_op!(self, *),
+                Token::Div => binary_op!(self, /),
+                Token::And => binary_op!(self, &),
+                Token::Xor => binary_op!(self, ^),
+                Token::Modulo => binary_op!(self, %),
+                Token::Gt => binary_op!(self, >, VMType::Bool),
+                Token::Lt => binary_op!(self, <, VMType::Bool),
+                Token::Eq => binary_op!(self, ==, VMType::Bool),
+                Token::Not => {
+                    let p = pop!(self);
+                    push!(self, !p)
                 }
-                Token::DivQ(_) => {
-                    let a = self.data.pop().unwrap();
-                    let b = self.data.pop().unwrap();
+
+                Token::DivQ => {
+                    let a = pop!(self);
+                    let b = pop!(self);
 
                     let n = match (a, b) {
                         (VMType::Integer(a0), VMType::Integer(b0)) => b0 / a0,
                         _ => panic!(),
                     };
 
-                    push!(self, VMType::Integer, n)
+                    push!(self, n, VMType::Integer)
                 }
-                Token::Take(line) => match self.data.pop() {
+                Token::Take => match pop!(self, 1) {
                     Some(VMType::Integer(n)) => {
-                        let array = (0..n).map(|_| self.data.pop().unwrap()).collect();
-                        push!(self, VMType::Array, array)
+                        let array = (0..n).map(|_| pop!(self)).collect();
+                        push!(self, array, VMType::Array)
                     }
-                    _ => panic!("line {line}: `take` requires an array on the take."),
+                    _ => panic!(),
                 },
-                Token::Identifier(identifier, line) => {
+                Token::Identifier(identifier) => {
                     match identifier.as_str() {
-                        "exit" => match self.data.pop().unwrap() {
+                        "exit" => match pop!(self) {
                             VMType::Integer(status) => std::process::exit(status as i32),
                             _ => {
-                                panic!("line {line}: exit requires an integer (the exit status) on the stack.")
+                                panic!()
                             }
                         },
 
                         "print" | "println" => {
-                            let e = self.data.pop().unwrap_or_else(|| panic!());
+                            let element = pop!(self);
 
                             (match identifier.as_str() {
-                                "println" => |content: String| {
-                                    std::io::stdout()
-                                        .write_all((content + "\n").as_bytes())
-                                        .unwrap()
-                                },
-                                "print" => |content: String| {
-                                    std::io::stdout().write_all(content.as_bytes()).unwrap()
-                                },
-
+                                "println" => |content: String| println!("{content}"),
+                                "print" => |content: String| print!("{content}"),
                                 _ => panic!(),
-                            })(e.to_string());
+                            })(element.to_string());
 
-                            self.data.push(e);
+                            push!(self, element);
                         }
 
                         identifier => {
                             if let Some(value) = self.vars.get(identifier) {
-                                return self.data.push(value.clone());
+                                push!(self, value.clone());
+                            } else if let Some(value) = self.private_vars.get(identifier) {
+                                push!(self, value.clone());
+                            } else {
+                                let proc_tokens = self.procs.get(identifier).unwrap().clone();
+                                self.handle_block_execution(proc_tokens);
                             }
-
-                            if let Some(value) = self.private_vars.get(identifier) {
-                                return self.data.push(value.clone());
-                            }
-
-                            let proc_tokens = self.procs.get(identifier).expect(identifier).clone();
-                            self.handle_block_execution(proc_tokens, line);
                         }
                     };
                 }
 
-                Token::Del(line) => {
+                Token::Del => {
                     self.vars.remove(match tokens.next() {
-                        Some(Token::Identifier(name, _)) => name,
-                        _ => panic!("line {line}: `del` requires a value on the stack."),
+                        Some(Token::Identifier(name)) => name,
+                        _ => panic!(),
                     });
                 }
-                Token::Pop(_) => {
-                    self.data.pop().unwrap();
+                Token::Pop => {
+                    pop!(self);
                 }
-                Token::BlockStart(_) | Token::BlockEnd(_) => panic!(),
-                Token::Block(tokens, line) => self.handle_block_execution(tokens, line),
-                Token::Let(line) => {
+                Token::BlockStart | Token::BlockEnd => panic!(),
+                Token::Block(tokens) => self.handle_block_execution(tokens),
+                Token::Let => {
                     let name = match tokens.next() {
-                        Some(Token::Identifier(name, _)) => name.clone(),
-                        _ => panic!("line {line}: `let` must be followed by a variable name."),
+                        Some(Token::Identifier(name)) => name.clone(),
+                        _ => panic!(),
                     };
 
                     let value = match tokens.next() {
-                            Some(Token::Str(content, _)) => VMType::Str(content.clone()),
-                            Some(Token::Integer(n, _)) => VMType::Integer(*n),
-                            Some(Token::Float(x, _)) => VMType::Float(*x),
-                            Some(Token::Bool(p, _)) => VMType::Bool(*p),
-                            Some(Token::Over(_)) => {
-                                self.over();
-                                self.data.pop().unwrap()
-                            },
-                            Some(Token::Pop(_)) => self.data.pop().unwrap(),
-                            Some(Token::Dup(_)) => {
-                                self.dup();
-                                self.data.pop().unwrap()
-                            }
-                            _ => panic!("line {line}: `let name` must be followed by a variable value (str, integer, float, bool, `dup`, `over`, `pop`)"),
-                        };
+                        Some(Token::Str(content)) => VMType::Str(content.clone()),
+                        Some(Token::Integer(n)) => VMType::Integer(*n),
+                        Some(Token::Float(x)) => VMType::Float(*x),
+                        Some(Token::Bool(p)) => VMType::Bool(*p),
+                        Some(Token::Over) => {
+                            self.over();
+                            pop!(self)
+                        }
+                        Some(Token::Pop) => pop!(self),
+                        Some(Token::Dup) => {
+                            self.dup();
+                            pop!(self)
+                        }
+                        _ => panic!(),
+                    };
 
                     if name.starts_with('_') {
                         self.private_vars.insert(name, value);
@@ -242,61 +244,62 @@ impl Interpreter {
                         self.vars.insert(name, value);
                     }
                 }
-                Token::ProcStart(line) => {
+                Token::ProcStart => {
                     let proc_name = match tokens.next().unwrap() {
-                        Token::Identifier(name, _) => name,
-                        _ => panic!("line {line}: `proc` must be followed by the procedure name."),
+                        Token::Identifier(name) => name,
+                        _ => panic!(),
                     };
 
                     let proc_block = match tokens.next().unwrap() {
-                        Token::Block(proc_tokens, _) => proc_tokens.clone(),
+                        Token::Block(proc_tokens) => proc_tokens.clone(),
                         _ => {
-                            panic!("line {line}: `proc name` must be followed by a code block.")
+                            panic!()
                         }
                     };
 
                     self.procs.insert(String::from(proc_name), proc_block);
                 }
-                Token::Return(_) => self.stop_execution = true,
-                Token::While(line) => {
+
+                Token::Return => self.stop_execution = true,
+
+                Token::While => {
                     let while_block = match tokens.next() {
-                        Some(Token::Block(if_tokens, _)) => if_tokens.clone(),
-                        _ => panic!("line {line}: `while` must be followed by a code block."),
+                        Some(Token::Block(while_tokens)) => while_tokens.clone(),
+                        _ => panic!(),
                     };
 
-                    while let Some(VMType::Bool(true)) = self.data.pop() {
-                        self.handle_block_execution(while_block.clone(), line);
+                    while let Some(VMType::Bool(true)) = pop!(self, 1) {
+                        self.handle_block_execution(while_block.clone());
 
                         if self.stop_execution {
                             break;
                         }
                     }
                 }
-                Token::For(line) => {
+
+                Token::For => {
                     let for_block = match tokens.next() {
-                        Some(Token::Block(if_tokens, _)) => if_tokens.clone(),
-                        _ => panic!("line {line}: `for` must be followed by a code block."),
+                        Some(Token::Block(if_tokens)) => if_tokens.clone(),
+                        _ => panic!(),
                     };
 
-                    let array = match self.data.pop() {
+                    let array = match pop!(self, 1) {
                         Some(VMType::Array(array)) => array,
                         _ => {
-                            panic!("line {line}: `for` requires an array on the stack.")
+                            panic!()
                         }
                     };
 
                     for element in array {
                         match element {
-                            VMType::Str(content) => push!(self, VMType::Str, content),
-                            VMType::Integer(content) => push!(self, VMType::Integer, content),
-                            VMType::Float(content) => push!(self, VMType::Float, content),
-                            VMType::Bool(content) => push!(self, VMType::Bool, content),
-                            _ => panic!(
-                                "line {line}: `for` array content can be: (str, int, float, bool)."
-                            ),
+                            VMType::Str(content) => push!(self, content, VMType::Str),
+                            VMType::Integer(content) => push!(self, content, VMType::Integer),
+                            VMType::Float(content) => push!(self, content, VMType::Float),
+                            VMType::Bool(content) => push!(self, content, VMType::Bool),
+                            _ => panic!(),
                         }
 
-                        self.handle_block_execution(for_block.clone(), line);
+                        self.handle_block_execution(for_block.clone());
 
                         if self.stop_execution {
                             break;
@@ -304,24 +307,24 @@ impl Interpreter {
                     }
                 }
 
-                Token::If(line) => {
+                Token::If => {
                     let block = match tokens.next() {
-                        Some(Token::Block(if_tokens, _)) => if_tokens.clone(),
-                        _ => panic!("line {line}: `if` must be followed by a code block."),
+                        Some(Token::Block(if_tokens)) => if_tokens.clone(),
+                        _ => panic!(),
                     };
 
-                    if match self.data.pop() {
+                    if match pop!(self, 1) {
                         Some(VMType::Bool(e)) => e,
-                        _ => panic!("line {line}: `if` requires a boolean value on the stack."),
+                        _ => panic!(),
                     } {
-                        self.handle_block_execution(block, line)
+                        self.handle_block_execution(block)
                     }
                 }
             }
         }
     }
 
-    pub fn handle_block_execution(&mut self, block: Block, _line: u16) {
+    pub fn handle_block_execution(&mut self, block: Block) {
         let mut proc_parser = Self::new(self.procs.clone(), self.vars.clone(), self.data.clone());
 
         for instruction in extract_instructions(block) {
