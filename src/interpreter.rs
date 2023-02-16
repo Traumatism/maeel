@@ -1,4 +1,4 @@
-use crate::lexing::extract_instructions;
+use crate::lexer::extract_instructions;
 use crate::token::Token;
 use crate::vmtype::VMType;
 
