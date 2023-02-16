@@ -1,4 +1,4 @@
-use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Not, Rem, Sub};
+use std::ops::{Add, BitXor, Div, Mul, Not, Rem, Sub};
 
 #[derive(Debug, Clone)]
 pub enum VMType {
@@ -75,17 +75,6 @@ impl Sub for VMType {
     }
 }
 
-impl BitOr for VMType {
-    type Output = VMType;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (VMType::Bool(a), VMType::Bool(b)) => VMType::Bool(a | b),
-            (a, b) => panic!("can't compare {a:?} and {b:?}"),
-        }
-    }
-}
-
 impl Not for VMType {
     type Output = VMType;
 
@@ -138,17 +127,6 @@ impl Div for VMType {
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 / b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a / b as f64),
             (a, b) => panic!("can't divide {a:?} and {b:?}"),
-        }
-    }
-}
-
-impl BitAnd for VMType {
-    type Output = VMType;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (VMType::Bool(a), VMType::Bool(b)) => VMType::Bool(a & b),
-            (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
 }
