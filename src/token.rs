@@ -12,8 +12,6 @@ pub enum Token {
     Mul,
     Modulo,
     Div,
-    And,
-    Or,
     Xor,
     Not,
     Eq,

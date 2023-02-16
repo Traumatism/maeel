@@ -67,8 +67,6 @@ macro_rules! lex_identifier {
         match $identifier.as_str() {
             "true" => Token::Bool(true),
             "false" => Token::Bool(false),
-            "and" => Token::And,
-            "or" => Token::Or,
             "xor" => Token::Xor,
             "not" => Token::Not,
             "if" => Token::If,
@@ -109,6 +107,7 @@ macro_rules! lex_single_char {
         }
     };
 }
+
 /// Lex a whole code into tokens
 ///
 /// # Arguments

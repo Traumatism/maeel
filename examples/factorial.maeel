@@ -2,11 +2,13 @@ proc fac do
     let n pop
     n 1 = let comp pop
 
-    comp?:
-        n;
+    comp if do
+        n
+    end
 
-    comp!?:
-        n dup 1-fac*;
+    comp not if do
+        n dup 1-fac*
+    end
 end
 
-22 fac println
+7 fac println

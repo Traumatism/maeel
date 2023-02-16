@@ -30,9 +30,9 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 | `<`   | `a b -- a<b`
 | `>`   | `a b -- a>b`
 | `^`   | `a b -- a xor b`
-| `!`   | `a -- ~a`
-| `and` | `a b -- a&b`
-| `or`  | `a b -- a\|b`
+| `!`   | `a -- not a`
+| `*`   | `a b -- a and b`
+| `+`   | `a b -- a or b`
 
 ## Procedures
 
