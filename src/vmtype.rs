@@ -17,7 +17,6 @@ impl PartialOrd for VMType {
             (VMType::Integer(a), VMType::Float(b)) | (VMType::Float(b), VMType::Integer(a)) => {
                 Some(b.total_cmp(&(*a as f64)))
             }
-
             (a, b) => panic!("can't compare {a:?} and {b:?}"),
         }
     }
@@ -71,7 +70,8 @@ impl Not for VMType {
         match self {
             VMType::Float(a) => VMType::Float(a * -1.),
             VMType::Integer(a) => VMType::Integer(-a),
-            VMType::Bool(a) => VMType::Bool(!a),
+            VMType::Bool(true) => VMType::Bool(false),
+            VMType::Bool(false) => VMType::Bool(true),
             a => panic!("can't invert {a:?}"),
         }
     }
@@ -86,7 +86,6 @@ impl Mul for VMType {
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a * b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 * b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a * b as f64),
-
             (VMType::Bool(false), VMType::Bool(_)) => VMType::Bool(false),
             (VMType::Bool(_), VMType::Bool(false)) => VMType::Bool(false),
             (VMType::Bool(true), VMType::Bool(true)) => VMType::Bool(true),
@@ -106,16 +105,13 @@ impl Add for VMType {
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a + b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 + b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a + b as f64),
-
             (VMType::Bool(true), VMType::Bool(_)) => VMType::Bool(true),
             (VMType::Bool(_), VMType::Bool(true)) => VMType::Bool(true),
             (VMType::Bool(false), VMType::Bool(false)) => VMType::Bool(false),
-
             (other, VMType::Array(mut array)) | (VMType::Array(mut array), other) => {
                 array.push(other);
                 VMType::Array(array)
             }
-
             (a, b) => panic!("can't add {a:?} and {b:?}"),
         }
     }
