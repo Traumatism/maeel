@@ -1,21 +1,3 @@
-proc sqrt do
-    let output 1 0
-
-    true while do
-        swap
-        dup output /
-        output + 2
-        / let sqrt_value pop
-        swap 1 +
-
-        dup 30 = !
-    end
-
-    pop pop
-    output
-end
-
-
 proc fac do
     let n pop
     n 1 = let comp pop
