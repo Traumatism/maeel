@@ -62,92 +62,53 @@ pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
     output
 }
 
-/// Turn an identifier into a token
-///
-/// # Argument
-/// `identifier` - Identifier to turn into a token
-/// `line` - Line the identifier is at
-///
-pub fn lex_identifier(identifier: &str) -> Token {
-    match identifier {
-        "true" => Token::Bool(true),
-        "false" => Token::Bool(false),
-
-        "sub" => Token::Sub,
-        "add" => Token::Add,
-        "mul" => Token::Mul,
-        "mod" => Token::Modulo,
-        "div" => Token::Div,
-        "divq" => Token::DivQ,
-
-        "and" => Token::And,
-        "or" => Token::Or,
-        "xor" => Token::Xor,
-        "not" => Token::Not,
-
-        "if" => Token::If,
-        "for" => Token::For,
-        "while" => Token::While,
-
-        "eq" => Token::Eq,
-        "gt" => Token::Gt,
-        "lt" => Token::Lt,
-
-        "rot" => Token::Rotate,
-        "clear" => Token::Clear,
-        "over" => Token::Over,
-        "take" => Token::Take,
-        "swap" => Token::Swap,
-        "del" => Token::Del,
-        "dup" => Token::Dup,
-        "pop" => Token::Pop,
-        "len" => Token::Len,
-
-        "let" => Token::Let,
-        "proc" => Token::ProcStart,
-        "return" => Token::Return,
-
-        "do" => Token::BlockStart,
-        "end" => Token::BlockEnd,
-        _ => Token::Identifier(String::from(identifier)),
-    }
+macro_rules! lex_identifier {
+    ($identifier:expr) => {
+        match $identifier.as_str() {
+            "true" => Token::Bool(true),
+            "false" => Token::Bool(false),
+            "and" => Token::And,
+            "or" => Token::Or,
+            "xor" => Token::Xor,
+            "not" => Token::Not,
+            "if" => Token::If,
+            "for" => Token::For,
+            "while" => Token::While,
+            "rot" => Token::Rotate,
+            "clear" => Token::Clear,
+            "over" => Token::Over,
+            "take" => Token::Take,
+            "swap" => Token::Swap,
+            "del" => Token::Del,
+            "dup" => Token::Dup,
+            "pop" => Token::Pop,
+            "len" => Token::Len,
+            "let" => Token::Let,
+            "proc" => Token::ProcStart,
+            "return" => Token::Return,
+            "do" => Token::BlockStart,
+            "end" => Token::BlockEnd,
+            _ => Token::Identifier(String::from($identifier)),
+        }
+    };
 }
 
-/// Turn a character/symbol into a token
-///
-/// # Argument
-/// `chr` - Character to turn into a token
-/// `line` - Line the character is at
-///
-pub fn lex_single_char(chr: char) -> Token {
-    match chr {
-        '-' => Token::Sub,
-        '+' => Token::Add,
-        '*' => Token::Mul,
-        '%' => Token::Modulo,
-        '/' => Token::Div,
-        '|' => Token::DivQ,
-
-        '&' => Token::And,
-        '~' => Token::Or,
-        '^' => Token::Xor,
-        '!' => Token::Not,
-
-        '?' => Token::If,
-        '§' => Token::For,
-        '$' => Token::While,
-
-        '=' => Token::Eq,
-        '>' => Token::Gt,
-        '<' => Token::Lt,
-
-        ':' => Token::BlockStart,
-        ';' => Token::BlockEnd,
-
-        _ => panic!(),
-    }
+macro_rules! lex_single_char {
+    ($chr:expr) => {
+        match $chr {
+            '-' => Token::Sub,
+            '+' => Token::Add,
+            '*' => Token::Mul,
+            '%' => Token::Modulo,
+            '/' => Token::Div,
+            '!' => Token::Not,
+            '=' => Token::Eq,
+            '>' => Token::Gt,
+            '<' => Token::Lt,
+            _ => panic!(),
+        }
+    };
 }
-
 /// Lex a whole code into tokens
 ///
 /// # Arguments
@@ -158,17 +119,10 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     chars.reverse();
 
     let mut tokens = Vec::new();
-    let mut line = 1;
 
     while let Some(chr) = chars.pop() {
         let token = match chr {
-            ' ' | '(' | ')' => None,
-
-            '\n' => {
-                line += 1;
-
-                None
-            }
+            ' ' | '(' | ')' | '\n' => None,
 
             '@' => {
                 while let Some(next) = chars.pop() {
@@ -206,7 +160,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                 }
 
-                Some(lex_identifier(&content).clone())
+                Some(lex_identifier!(&content))
             }
 
             '0'..='9' => {
@@ -229,15 +183,11 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 }
 
                 Some(match float {
-                    true => Token::Float(content.parse::<f64>().unwrap_or_else(|_| {
-                        panic!("line {line}: Failed to parse `{content}` into a float")
-                    })),
-                    false => Token::Integer(content.parse::<i64>().unwrap_or_else(|_| {
-                        panic!("line {line}: Failed to parse `{content}` into an integer")
-                    })),
+                    true => Token::Float(content.parse::<f64>().unwrap()),
+                    false => Token::Integer(content.parse::<i64>().unwrap()),
                 })
             }
-            _ => Some(lex_single_char(chr)),
+            _ => Some(lex_single_char!(chr)),
         };
 
         if let Some(token) = token {
