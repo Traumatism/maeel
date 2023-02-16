@@ -13,11 +13,14 @@ pub fn format(tokens: Vec<Token>) -> String {
             Token::Newline => (),
 
             Token::BlockStart => {
-                if !output.ends_with('\n') {
-                    output.push('\n');
+                if output.ends_with('\n') {
+                    output = String::from(&output[0..output.len() - 1])
                 }
 
-                output.push_str(&INDENT.repeat(indents));
+                if !output.ends_with(' ') {
+                    output.push(' ')
+                }
+
                 output.push_str("do");
 
                 indents += 1;
@@ -120,28 +123,35 @@ pub fn format(tokens: Vec<Token>) -> String {
                 output.push_str(&format!("let {} {}\n", identifier, value))
             }
 
-            Token::Sub => output.push_str("- "),
-            Token::Add => output.push_str("+ "),
-            Token::Mul => output.push_str("* "),
-            Token::Mod => output.push_str("% "),
-            Token::Div => output.push_str("/ "),
-            Token::Not => output.push_str("! "),
-            Token::Eq => output.push_str("= "),
-            Token::Gt => output.push_str("> "),
-            Token::Lt => output.push_str("< "),
+            Token::While => {
+                if output.ends_with('\n') {
+                    output = String::from(&output[0..output.len() - 1])
+                }
 
-            Token::Clear => output.push_str(" clear "),
-            Token::Over => output.push_str(" over "),
-            Token::Take => output.push_str(" take "),
-            Token::Swap => output.push_str(" swap "),
-            Token::Del => output.push_str(" del "),
-            Token::Dup => output.push_str(" dup "),
-            Token::Pop => output.push_str(" pop "),
-            Token::Return => output.push_str(" return "),
+                output.push_str(" while")
+            }
 
             Token::If => output.push_str(" if "),
             Token::For => output.push_str(" for "),
-            Token::While => output.push_str(" while "),
+
+            Token::Eq => output.push('='),
+            Token::Gt => output.push('>'),
+            Token::Lt => output.push('<'),
+            Token::Sub => output.push('-'),
+            Token::Add => output.push('+'),
+            Token::Mul => output.push('*'),
+            Token::Mod => output.push('%'),
+            Token::Div => output.push('/'),
+            Token::Not => output.push('!'),
+
+            Token::Del => output.push_str(" del "),
+            Token::Dup => output.push_str(" dup "),
+            Token::Pop => output.push_str(" pop "),
+            Token::Over => output.push_str(" over "),
+            Token::Take => output.push_str(" take "),
+            Token::Swap => output.push_str(" swap "),
+            Token::Clear => output.push_str(" clear "),
+            Token::Return => output.push_str(" return "),
         }
     }
 
