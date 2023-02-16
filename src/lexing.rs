@@ -19,39 +19,42 @@ pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     instructions
 }
 
-pub fn extract_blocks(tokens: Vec<Token>) -> Vec<Token> {
+pub fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<Token>, bool) {
+    let mut block_tokens = Vec::new();
+    let mut recurse = false;
+    let mut n = 0;
+
+    for token in tokens_iter.by_ref() {
+        match token {
+            Token::BlockEnd => match n {
+                0 => break,
+                _ => {
+                    n -= 1;
+                    block_tokens.push(token.clone());
+                }
+            },
+            Token::BlockStart => {
+                n += 1;
+                recurse = true;
+                block_tokens.push(token.clone());
+            }
+            _ => block_tokens.push(token.clone()),
+        }
+    }
+
+    (block_tokens, recurse)
+}
+
+pub fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
 
     while let Some(token) = tokens_iter.next() {
         output.push(match token {
             Token::BlockStart => {
-                let mut block_tokens = Vec::new();
-                let mut recurse = false;
-                let mut n = 0;
-
-                for token_0 in tokens_iter.by_ref() {
-                    block_tokens.push(match token_0 {
-                        Token::BlockEnd => match n {
-                            0 => break,
-                            _ => {
-                                n -= 1;
-                                token_0.clone()
-                            }
-                        },
-
-                        Token::BlockStart => {
-                            n += 1;
-                            recurse = true;
-
-                            token_0.clone()
-                        }
-                        _ => token_0.clone(),
-                    })
-                }
-
+                let (block_tokens, recurse) = extract_block_tokens(&mut tokens_iter);
                 match recurse {
-                    true => Token::Block(extract_blocks(block_tokens)),
+                    true => Token::Block(extract_blocks(&block_tokens)),
                     false => Token::Block(block_tokens),
                 }
             }

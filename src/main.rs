@@ -15,7 +15,7 @@ fn main() {
     let tokens = lex_into_tokens(&content);
 
     let mut interpreter = Interpreter::default();
-    extract_instructions(extract_blocks(tokens))
+    extract_instructions(extract_blocks(&tokens))
         .iter()
         .for_each(|instruction| interpreter.handle_instruction(&mut instruction.iter()));
 }
