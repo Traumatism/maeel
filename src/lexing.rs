@@ -19,7 +19,7 @@ pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     instructions
 }
 
-pub fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<Token>, bool) {
+fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<Token>, bool) {
     let mut block_tokens = Vec::new();
     let mut recurse = false;
     let mut n = 0;
@@ -45,7 +45,7 @@ pub fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<T
     (block_tokens, recurse)
 }
 
-pub fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
+fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
 
@@ -68,24 +68,24 @@ pub fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
 macro_rules! lex_identifier {
     ($identifier:expr) => {
         match $identifier.as_str() {
-            "true" => Token::Bool(true),
-            "false" => Token::Bool(false),
-            "not" => Token::Not,
             "if" => Token::If,
+            "not" => Token::Not,
+            "let" => Token::Let,
             "for" => Token::For,
-            "while" => Token::While,
-            "clear" => Token::Clear,
-            "over" => Token::Over,
-            "take" => Token::Take,
-            "swap" => Token::Swap,
             "del" => Token::Del,
             "dup" => Token::Dup,
             "pop" => Token::Pop,
-            "let" => Token::Let,
-            "proc" => Token::ProcStart,
+            "over" => Token::Over,
+            "take" => Token::Take,
+            "swap" => Token::Swap,
+            "clear" => Token::Clear,
+            "while" => Token::While,
+            "end" => Token::BlockEnd,
             "return" => Token::Return,
             "do" => Token::BlockStart,
-            "end" => Token::BlockEnd,
+            "proc" => Token::ProcStart,
+            "true" => Token::Bool(true),
+            "false" => Token::Bool(false),
             _ => Token::Identifier(String::from($identifier)),
         }
     };
@@ -94,24 +94,23 @@ macro_rules! lex_identifier {
 macro_rules! lex_single_char {
     ($chr:expr) => {
         match $chr {
-            '-' => Token::Sub,
-            '+' => Token::Add,
-            '*' => Token::Mul,
-            '%' => Token::Modulo,
-            '/' => Token::Div,
-            '!' => Token::Not,
             '=' => Token::Eq,
             '>' => Token::Gt,
             '<' => Token::Lt,
+            '!' => Token::Not,
+            '-' => Token::Sub,
+            '+' => Token::Add,
+            '*' => Token::Mul,
+            '/' => Token::Div,
+            '%' => Token::Modulo,
             _ => panic!(),
         }
     };
 }
 
-/// Lex a whole code into tokens
-///
-/// # Arguments
-/// `code` - Code to turn into tokens
+/// The lex_into_tokens function takes a string code as input, and
+/// returns a vector of Tokens representing the lexical tokens
+/// found in the input string.
 ///
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut chars = code.chars().collect::<Vec<char>>();
@@ -169,11 +168,18 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 while let Some(next) = chars.pop() {
                     match next {
                         '0'..='9' => content.push(next),
+
+                        '.' if float => {
+                            panic!()
+                        }
+
                         '.' => {
                             float = true;
                             content.push('.')
                         }
+
                         '_' => (),
+
                         _ => {
                             chars.push(next);
                             break;
@@ -194,5 +200,5 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
         }
     }
 
-    tokens
+    extract_blocks(&tokens)
 }
