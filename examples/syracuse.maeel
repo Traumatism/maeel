@@ -1,15 +1,15 @@
 proc main do
     dup 1 = ! while do
         dup 2 % 1 = if do
-            3 * 1 + println
+            3 * 1 + print " -> " print pop
         end
 
-        dup 2 % 0 = ? do
-            2 / println
+        dup 2 % 0 = if do
+            2 / print " -> " print pop
         end
 
         dup 1 = !
     end
 end
 
-15 main
+777777777777777777 main
