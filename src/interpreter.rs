@@ -6,6 +6,24 @@ use crate::vmtype::VMType;
 use std::collections::HashMap;
 use std::slice::Iter;
 
+macro_rules! next_block {
+    ($tokens:expr) => {
+        match $tokens.next() {
+            Some(Token::Block(block)) => block.clone(),
+            _ => panic!(),
+        }
+    };
+}
+
+macro_rules! next_identifier {
+    ($tokens:expr) => {
+        match $tokens.next() {
+            Some(Token::Identifier(value)) => value.clone(),
+            _ => panic!(),
+        }
+    };
+}
+
 macro_rules! pop {
     ($self:ident) => {
         $self.data.pop().unwrap()
@@ -40,6 +58,21 @@ macro_rules! binary_op {
 
         push!($self, b $operator a, $vmtype)
     }};
+}
+
+macro_rules! run_block {
+    ($self:ident, $block:ident) => {
+        let mut proc_parser =
+            Interpreter::new($self.procs.clone(), $self.vars.clone(), $self.data.clone());
+
+        for instruction in extract_instructions($block.clone()) {
+            proc_parser.handle_instruction(&mut instruction.iter())
+        }
+
+        $self.procs = proc_parser.procs;
+        $self.data = proc_parser.data;
+        $self.vars = proc_parser.vars;
+    };
 }
 
 /// Maeel interpreter
@@ -126,6 +159,9 @@ impl Interpreter {
             }
 
             match token.clone() {
+                Token::Return => self.stop_execution = true,
+                Token::BlockStart | Token::BlockEnd => panic!(),
+
                 Token::Str(content) => push!(self, content, VMType::Str),
                 Token::Bool(content) => push!(self, content, VMType::Bool),
                 Token::Float(content) => push!(self, content, VMType::Float),
@@ -147,21 +183,22 @@ impl Interpreter {
                 Token::Gt => binary_op!(self, >, VMType::Bool),
                 Token::Lt => binary_op!(self, <, VMType::Bool),
                 Token::Eq => binary_op!(self, ==, VMType::Bool),
+                Token::Del => {
+                    self.vars.remove(&next_identifier!(tokens));
+                }
+                Token::Pop => {
+                    pop!(self);
+                }
+                Token::Block(tokens) => {
+                    run_block!(self, tokens);
+                }
                 Token::Not => {
                     let p = pop!(self);
-                    push!(self, !p)
+                    push!(self, !p);
                 }
-
-                Token::DivQ => {
-                    let a = pop!(self);
-                    let b = pop!(self);
-
-                    let n = match (a, b) {
-                        (VMType::Integer(a0), VMType::Integer(b0)) => b0 / a0,
-                        _ => panic!(),
-                    };
-
-                    push!(self, n, VMType::Integer)
+                Token::ProcStart => {
+                    self.procs
+                        .insert(next_identifier!(tokens), next_block!(tokens));
                 }
                 Token::Take => match pop!(self, 1) {
                     Some(VMType::Integer(n)) => {
@@ -181,13 +218,11 @@ impl Interpreter {
 
                         "print" | "println" => {
                             let element = pop!(self);
-
-                            (match identifier.as_str() {
-                                "println" => |content: String| println!("{content}"),
-                                "print" => |content: String| print!("{content}"),
+                            match identifier.as_str() {
+                                "println" => println!("{}", element.to_string()),
+                                "print" => print!("{}", element.to_string()),
                                 _ => panic!(),
-                            })(element.to_string());
-
+                            };
                             push!(self, element);
                         }
 
@@ -198,28 +233,13 @@ impl Interpreter {
                                 push!(self, value.clone());
                             } else {
                                 let proc_tokens = self.procs.get(identifier).unwrap().clone();
-                                self.handle_block_execution(proc_tokens);
+                                run_block!(self, proc_tokens);
                             }
                         }
                     };
                 }
-
-                Token::Del => {
-                    self.vars.remove(match tokens.next() {
-                        Some(Token::Identifier(name)) => name,
-                        _ => panic!(),
-                    });
-                }
-                Token::Pop => {
-                    pop!(self);
-                }
-                Token::BlockStart | Token::BlockEnd => panic!(),
-                Token::Block(tokens) => self.handle_block_execution(tokens),
                 Token::Let => {
-                    let name = match tokens.next() {
-                        Some(Token::Identifier(name)) => name.clone(),
-                        _ => panic!(),
-                    };
+                    let name = next_identifier!(tokens);
 
                     let value = match tokens.next() {
                         Some(Token::Str(content)) => VMType::Str(content.clone()),
@@ -238,39 +258,15 @@ impl Interpreter {
                         _ => panic!(),
                     };
 
-                    if name.starts_with('_') {
-                        self.private_vars.insert(name, value);
-                    } else {
-                        self.vars.insert(name, value);
-                    }
-                }
-                Token::ProcStart => {
-                    let proc_name = match tokens.next().unwrap() {
-                        Token::Identifier(name) => name,
-                        _ => panic!(),
+                    match name.starts_with('_') {
+                        true => self.private_vars.insert(name, value),
+                        false => self.vars.insert(name, value),
                     };
-
-                    let proc_block = match tokens.next().unwrap() {
-                        Token::Block(proc_tokens) => proc_tokens.clone(),
-                        _ => {
-                            panic!()
-                        }
-                    };
-
-                    self.procs.insert(String::from(proc_name), proc_block);
                 }
-
-                Token::Return => self.stop_execution = true,
-
                 Token::While => {
-                    let while_block = match tokens.next() {
-                        Some(Token::Block(while_tokens)) => while_tokens.clone(),
-                        _ => panic!(),
-                    };
-
+                    let while_block = next_block!(tokens);
                     while let Some(VMType::Bool(true)) = pop!(self, 1) {
-                        self.handle_block_execution(while_block.clone());
-
+                        run_block!(self, while_block);
                         if self.stop_execution {
                             break;
                         }
@@ -278,18 +274,13 @@ impl Interpreter {
                 }
 
                 Token::For => {
-                    let for_block = match tokens.next() {
-                        Some(Token::Block(if_tokens)) => if_tokens.clone(),
-                        _ => panic!(),
-                    };
-
+                    let for_block = next_block!(tokens);
                     let array = match pop!(self, 1) {
                         Some(VMType::Array(array)) => array,
                         _ => {
                             panic!()
                         }
                     };
-
                     for element in array {
                         match element {
                             VMType::Str(content) => push!(self, content, VMType::Str),
@@ -298,9 +289,7 @@ impl Interpreter {
                             VMType::Bool(content) => push!(self, content, VMType::Bool),
                             _ => panic!(),
                         }
-
-                        self.handle_block_execution(for_block.clone());
-
+                        run_block!(self, for_block);
                         if self.stop_execution {
                             break;
                         }
@@ -308,31 +297,15 @@ impl Interpreter {
                 }
 
                 Token::If => {
-                    let block = match tokens.next() {
-                        Some(Token::Block(if_tokens)) => if_tokens.clone(),
-                        _ => panic!(),
-                    };
-
+                    let if_block = next_block!(tokens);
                     if match pop!(self, 1) {
                         Some(VMType::Bool(e)) => e,
                         _ => panic!(),
                     } {
-                        self.handle_block_execution(block)
+                        run_block!(self, if_block);
                     }
                 }
             }
         }
-    }
-
-    pub fn handle_block_execution(&mut self, block: Block) {
-        let mut proc_parser = Self::new(self.procs.clone(), self.vars.clone(), self.data.clone());
-
-        for instruction in extract_instructions(block) {
-            proc_parser.handle_instruction(&mut instruction.iter())
-        }
-
-        self.procs = proc_parser.procs;
-        self.data = proc_parser.data;
-        self.vars = proc_parser.vars;
     }
 }
