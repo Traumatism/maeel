@@ -82,6 +82,7 @@ impl Interpreter {
             }
 
             match token.clone() {
+                Token::Newline => (),
                 Token::Return => self.stop_execution = true,
                 Token::Clear => self.data.clear(),
                 Token::BlockStart | Token::BlockEnd => panic!(),
@@ -105,7 +106,7 @@ impl Interpreter {
                 Token::Add => binary_op!(self, +),
                 Token::Mul => binary_op!(self, *),
                 Token::Div => binary_op!(self, /),
-                Token::Modulo => binary_op!(self, %),
+                Token::Mod => binary_op!(self, %),
                 Token::Gt => binary_op!(self, >, VMType::Bool),
                 Token::Lt => binary_op!(self, <, VMType::Bool),
                 Token::Eq => binary_op!(self, ==, VMType::Bool),

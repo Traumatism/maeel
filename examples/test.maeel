@@ -1,5 +1,7 @@
-let a 0
+do
 
-while a 10 < do
-    a 1 + let a pop
+
+
+"hello world" do do 123 end 123.2 end
+
 end
