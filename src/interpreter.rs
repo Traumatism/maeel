@@ -5,19 +5,17 @@ use crate::vmtype::VMType;
 use std::collections::HashMap;
 use std::slice::Iter;
 
-macro_rules! next_block {
-    ($tokens:expr) => {
+macro_rules! next {
+    ($tokens:expr, "identifier") => {
         match $tokens.next() {
-            Some(Token::Block(block)) => block.clone(),
+            Some(Token::Identifier(value)) => value.clone(),
             _ => panic!(),
         }
     };
-}
 
-macro_rules! next_identifier {
-    ($tokens:expr) => {
+    ($tokens:expr, "block") => {
         match $tokens.next() {
-            Some(Token::Identifier(value)) => value.clone(),
+            Some(Token::Block(block)) => block.clone(),
             _ => panic!(),
         }
     };
@@ -70,10 +68,10 @@ macro_rules! run_block {
 /// Maeel interpreter
 #[derive(Default)]
 pub struct Interpreter {
-    stop_execution: bool,
+    data: Vec<VMType>,
     vars: HashMap<String, VMType>,
     procs: HashMap<String, Vec<Token>>,
-    data: Vec<VMType>,
+    stop_execution: bool,
 }
 
 impl Interpreter {
@@ -117,7 +115,7 @@ impl Interpreter {
                 Token::Eq => binary_op!(self, ==, VMType::Bool),
 
                 Token::Del => {
-                    self.vars.remove(&next_identifier!(tokens));
+                    self.vars.remove(&next!(tokens, "identifier"));
                 }
 
                 Token::Pop => {
@@ -135,7 +133,7 @@ impl Interpreter {
 
                 Token::ProcStart => {
                     self.procs
-                        .insert(next_identifier!(tokens), next_block!(tokens));
+                        .insert(next!(tokens, "identifier"), next!(tokens, "block"));
                 }
 
                 Token::Take => match pop!(self, 1) {
@@ -179,7 +177,7 @@ impl Interpreter {
                 }
 
                 Token::Let => {
-                    let name = next_identifier!(tokens);
+                    let name = next!(tokens, "identifier");
 
                     let value = match tokens.next() {
                         Some(Token::Str(content)) => VMType::Str(content.clone()),
@@ -196,7 +194,7 @@ impl Interpreter {
                 }
 
                 Token::While => {
-                    let while_block = next_block!(tokens);
+                    let while_block = next!(tokens, "block");
 
                     while let VMType::Bool(true) = pop!(self) {
                         run_block!(self, while_block);
@@ -208,7 +206,7 @@ impl Interpreter {
                 }
 
                 Token::For => {
-                    let for_block = next_block!(tokens);
+                    let for_block = next!(tokens, "block");
 
                     let array = match pop!(self, 1) {
                         Some(VMType::Array(array)) => array,
@@ -228,7 +226,7 @@ impl Interpreter {
                 }
 
                 Token::If => {
-                    let if_block = next_block!(tokens);
+                    let if_block = next!(tokens, "block");
                     if match pop!(self, 1) {
                         Some(VMType::Bool(e)) => e,
                         _ => panic!(),
