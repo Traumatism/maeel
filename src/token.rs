@@ -1,3 +1,9 @@
+/// The `Token` enum stores all tokens that the
+/// lexer can identify
+///
+/// The `Clone` trait is implemented, which allows
+/// the enum members to be easily copied and cloned.
+///
 #[derive(Clone)]
 pub enum Token {
     Block(Vec<Token>),

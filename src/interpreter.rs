@@ -75,11 +75,6 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    /// Handle one instruction
-    ///
-    /// # Arguments
-    /// `tokens` - The instruction
-    ///
     pub fn handle_instruction(&mut self, tokens: &mut Iter<Token>) {
         while let Some(token) = tokens.next() {
             if self.stop_execution {
@@ -88,6 +83,7 @@ impl Interpreter {
 
             match token.clone() {
                 Token::Return => self.stop_execution = true,
+                Token::Clear => self.data.clear(),
                 Token::BlockStart | Token::BlockEnd => panic!(),
                 Token::Str(content) => push!(self, content, VMType::Str),
                 Token::Bool(content) => push!(self, content, VMType::Bool),
@@ -104,7 +100,7 @@ impl Interpreter {
                 Token::Over => {
                     push!(self, self.data[self.data.len() - 2].clone());
                 }
-                Token::Clear => self.data.clear(),
+
                 Token::Sub => binary_op!(self, -),
                 Token::Add => binary_op!(self, +),
                 Token::Mul => binary_op!(self, *),

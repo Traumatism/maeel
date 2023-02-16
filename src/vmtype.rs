@@ -1,5 +1,11 @@
 use std::ops::{Add, Div, Mul, Not, Rem, Sub};
 
+/// The `VMType` enum stores all data types that the
+/// interpreter can work with
+///
+/// The `Clone` and `Debug` traits are implemented, which allows
+/// the enum members to be easily copied, cloned, and printed.
+///
 #[derive(Debug, Clone)]
 pub enum VMType {
     Float(f64),
