@@ -61,16 +61,9 @@ macro_rules! binary_op {
 
 macro_rules! run_block {
     ($self:ident, $block:ident) => {
-        let mut new_interpreter =
-            Interpreter::new($self.procs.clone(), $self.vars.clone(), $self.data.clone());
-
         for instruction in extract_instructions($block.clone()) {
-            new_interpreter.handle_instruction(&mut instruction.iter())
+            $self.handle_instruction(&mut instruction.iter())
         }
-
-        $self.procs = new_interpreter.procs;
-        $self.data = new_interpreter.data;
-        $self.vars = new_interpreter.vars;
     };
 }
 
@@ -84,27 +77,6 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-    /// Returns a new interpreter
-    ///
-    /// # Arguments
-    ///
-    /// * `procs` - A Hashmap that maps procedure names to procedure tokens
-    /// * `vars` - A Hashmap thats maps variable names to values
-    /// * `data` - A Vec of VMType that represent the current stack
-    ///
-    pub fn new(
-        procs: HashMap<String, Vec<Token>>,
-        vars: HashMap<String, VMType>,
-        data: Vec<VMType>,
-    ) -> Self {
-        Self {
-            stop_execution: false,
-            procs,
-            vars,
-            data,
-        }
-    }
-
     /// Handle one instruction
     ///
     /// # Arguments
@@ -237,21 +209,18 @@ impl Interpreter {
 
                 Token::For => {
                     let for_block = next_block!(tokens);
+
                     let array = match pop!(self, 1) {
                         Some(VMType::Array(array)) => array,
                         _ => {
                             panic!()
                         }
                     };
+
                     for element in array {
-                        match element {
-                            VMType::Str(content) => push!(self, content, VMType::Str),
-                            VMType::Integer(content) => push!(self, content, VMType::Integer),
-                            VMType::Float(content) => push!(self, content, VMType::Float),
-                            VMType::Bool(content) => push!(self, content, VMType::Bool),
-                            _ => panic!(),
-                        }
+                        push!(self, element);
                         run_block!(self, for_block);
+
                         if self.stop_execution {
                             break;
                         }
