@@ -1,11 +1,10 @@
 let a 0
 let b 1
-a println
-"hello" println
 
-b 1_000_000 < while do
-    b let c dup
-    a b + let b dup println pop
-    c let a pop
-    b 1_000_000 <
+b 1_000_000 < while do  @ while b < 1,000,000
+    b let c dup         @ c <- b
+    a b + let b dup     @ b <- a + b
+    println pop
+    c let a pop         @ a <- c
+    b 1_000_000 <       @ check if b is still < 1,000,000
 end

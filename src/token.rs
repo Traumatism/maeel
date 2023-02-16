@@ -1,7 +1,6 @@
-pub type Block = Vec<Token>;
-
 #[derive(Clone)]
 pub enum Token {
+    Block(Vec<Token>),
     Str(String),
     Integer(i64),
     Identifier(String),
@@ -12,12 +11,10 @@ pub enum Token {
     Mul,
     Modulo,
     Div,
-    Xor,
     Not,
     Eq,
     Gt,
     Lt,
-    Rotate,
     Clear,
     Over,
     Take,
@@ -25,12 +22,10 @@ pub enum Token {
     Del,
     Dup,
     Pop,
-    Len,
     Let,
     ProcStart,
     Return,
     BlockStart,
-    Block(Block),
     BlockEnd,
     If,
     For,
