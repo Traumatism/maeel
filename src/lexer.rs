@@ -19,7 +19,7 @@ pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     instructions
 }
 
-fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<Token>, bool) {
+pub fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<Token>, bool) {
     let mut block_tokens = Vec::new();
     let mut recurse = false;
     let mut n = 0;
@@ -45,7 +45,7 @@ fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<Token
     (block_tokens, recurse)
 }
 
-fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
+pub fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
 
@@ -102,7 +102,8 @@ macro_rules! lex_single_char {
             '+' => Token::Add,
             '*' => Token::Mul,
             '/' => Token::Div,
-            '%' => Token::Modulo,
+            '%' => Token::Mod,
+            '\n' => Token::Newline,
             _ => panic!(),
         }
     };
@@ -120,7 +121,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
     while let Some(chr) = chars.pop() {
         let token = match chr {
-            ' ' | '(' | ')' | '\n' => None,
+            ' ' | '(' | ')' => None,
 
             '@' => {
                 while let Some(next) = chars.pop() {
@@ -200,5 +201,5 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
         }
     }
 
-    extract_blocks(&tokens)
+    tokens
 }
