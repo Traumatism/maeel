@@ -2,10 +2,10 @@ use std::env::args;
 use std::fs::read_to_string;
 
 use crate::interpreter::Interpreter;
-use crate::lexing::{extract_instructions, lex_into_tokens};
+use crate::lexer::{extract_instructions, lex_into_tokens};
 
 mod interpreter;
-mod lexing;
+mod lexer;
 mod token;
 mod vmtype;
 
