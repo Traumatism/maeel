@@ -1,6 +1,6 @@
 # The maeel programming language
 
-Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), **maeel** is a concatenative [stack oriented programming language](https://en.wikipedia.org/wiki/Stack-oriented_programming) built with ~1000 lines of Rust from scratch without any thirdparty library.
+Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), **maeel** is a concatenative [stack oriented programming language](https://en.wikipedia.org/wiki/Stack-oriented_programming) built with ~800 lines of Rust from scratch without any thirdparty library.
 
 ## Stack manipulation
 
@@ -8,7 +8,6 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 | ---    | ---
 | `pop`  | `a -- a`
 | `dup`  | `a -- a a`
-| `rot`  | `a b c -- c b a`
 | `swap` | `a b -- b a`
 | `over` | `a b -- a b a`
 
@@ -29,7 +28,6 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 | `=`   | `a b -- a==b`
 | `<`   | `a b -- a<b`
 | `>`   | `a b -- a>b`
-| `^`   | `a b -- a xor b`
 | `!`   | `a -- not a`
 | `*`   | `a b -- a and b`
 | `+`   | `a b -- a or b`

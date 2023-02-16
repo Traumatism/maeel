@@ -1,5 +1,4 @@
 use crate::lexing::extract_instructions;
-use crate::token::Block;
 use crate::token::Token;
 use crate::vmtype::VMType;
 
@@ -62,16 +61,16 @@ macro_rules! binary_op {
 
 macro_rules! run_block {
     ($self:ident, $block:ident) => {
-        let mut proc_parser =
+        let mut new_interpreter =
             Interpreter::new($self.procs.clone(), $self.vars.clone(), $self.data.clone());
 
         for instruction in extract_instructions($block.clone()) {
-            proc_parser.handle_instruction(&mut instruction.iter())
+            new_interpreter.handle_instruction(&mut instruction.iter())
         }
 
-        $self.procs = proc_parser.procs;
-        $self.data = proc_parser.data;
-        $self.vars = proc_parser.vars;
+        $self.procs = new_interpreter.procs;
+        $self.data = new_interpreter.data;
+        $self.vars = new_interpreter.vars;
     };
 }
 
@@ -80,8 +79,7 @@ macro_rules! run_block {
 pub struct Interpreter {
     stop_execution: bool,
     vars: HashMap<String, VMType>,
-    private_vars: HashMap<String, VMType>,
-    procs: HashMap<String, Block>,
+    procs: HashMap<String, Vec<Token>>,
     data: Vec<VMType>,
 }
 
@@ -95,55 +93,15 @@ impl Interpreter {
     /// * `data` - A Vec of VMType that represent the current stack
     ///
     pub fn new(
-        procs: HashMap<String, Block>,
+        procs: HashMap<String, Vec<Token>>,
         vars: HashMap<String, VMType>,
         data: Vec<VMType>,
     ) -> Self {
         Self {
             stop_execution: false,
-            private_vars: HashMap::default(),
             procs,
             vars,
             data,
-        }
-    }
-
-    /// Rotate the 3 top element
-    fn rotate(&mut self) {
-        if self.data.len() >= 3 {
-            let third = pop!(self);
-            let second = pop!(self);
-            let first = pop!(self);
-
-            push!(self, second);
-            push!(self, third);
-            push!(self, first);
-        }
-    }
-
-    /// Duplicate the top element
-    fn dup(&mut self) {
-        if let Some(x) = self.data.last().cloned() {
-            push!(self, x);
-        }
-    }
-
-    /// Duplicate the element under the top element
-    fn over(&mut self) {
-        if self.data.len() >= 2 {
-            let second = &self.data[self.data.len() - 2];
-            push!(self, second.clone());
-        }
-    }
-
-    /// Swap the 2 top elements
-    fn swap(&mut self) {
-        if self.data.len() >= 2 {
-            let second = pop!(self);
-            let first = pop!(self);
-
-            push!(self, second);
-            push!(self, first);
         }
     }
 
@@ -161,43 +119,53 @@ impl Interpreter {
             match token.clone() {
                 Token::Return => self.stop_execution = true,
                 Token::BlockStart | Token::BlockEnd => panic!(),
-
                 Token::Str(content) => push!(self, content, VMType::Str),
                 Token::Bool(content) => push!(self, content, VMType::Bool),
                 Token::Float(content) => push!(self, content, VMType::Float),
                 Token::Integer(content) => push!(self, content, VMType::Integer),
-                Token::Dup => self.dup(),
-                Token::Swap => self.swap(),
-                Token::Over => self.over(),
-                Token::Rotate => self.rotate(),
+                Token::Dup => push!(self, self.data.last().cloned().unwrap()),
+                Token::Swap => {
+                    let second = pop!(self);
+                    let first = pop!(self);
+
+                    push!(self, second);
+                    push!(self, first);
+                }
+                Token::Over => {
+                    push!(self, self.data[self.data.len() - 2].clone());
+                }
                 Token::Clear => self.data.clear(),
-                Token::Len => push!(self, self.data.len() as i64, VMType::Integer),
                 Token::Sub => binary_op!(self, -),
                 Token::Add => binary_op!(self, +),
                 Token::Mul => binary_op!(self, *),
                 Token::Div => binary_op!(self, /),
-                Token::Xor => binary_op!(self, ^),
                 Token::Modulo => binary_op!(self, %),
                 Token::Gt => binary_op!(self, >, VMType::Bool),
                 Token::Lt => binary_op!(self, <, VMType::Bool),
                 Token::Eq => binary_op!(self, ==, VMType::Bool),
+
                 Token::Del => {
                     self.vars.remove(&next_identifier!(tokens));
                 }
+
                 Token::Pop => {
                     pop!(self);
                 }
+
                 Token::Block(tokens) => {
                     run_block!(self, tokens);
                 }
+
                 Token::Not => {
                     let p = pop!(self);
                     push!(self, !p);
                 }
+
                 Token::ProcStart => {
                     self.procs
                         .insert(next_identifier!(tokens), next_block!(tokens));
                 }
+
                 Token::Take => match pop!(self, 1) {
                     Some(VMType::Integer(n)) => {
                         let array = (0..n).map(|_| pop!(self)).collect();
@@ -205,6 +173,7 @@ impl Interpreter {
                     }
                     _ => panic!(),
                 },
+
                 Token::Identifier(identifier) => {
                     match identifier.as_str() {
                         "exit" => match pop!(self) {
@@ -214,20 +183,20 @@ impl Interpreter {
                             }
                         },
 
-                        "print" | "println" => {
+                        "println" => {
                             let element = pop!(self);
-                            match identifier.as_str() {
-                                "println" => println!("{}", element.to_string()),
-                                "print" => print!("{}", element.to_string()),
-                                _ => panic!(),
-                            };
+                            println!("{}", element.to_string());
+                            push!(self, element);
+                        }
+
+                        "print" => {
+                            let element = pop!(self);
+                            print!("{}", element.to_string());
                             push!(self, element);
                         }
 
                         identifier => {
                             if let Some(value) = self.vars.get(identifier) {
-                                push!(self, value.clone());
-                            } else if let Some(value) = self.private_vars.get(identifier) {
                                 push!(self, value.clone());
                             } else {
                                 let proc_tokens = self.procs.get(identifier).unwrap().clone();
@@ -236,6 +205,7 @@ impl Interpreter {
                         }
                     };
                 }
+
                 Token::Let => {
                     let name = next_identifier!(tokens);
 
@@ -244,27 +214,21 @@ impl Interpreter {
                         Some(Token::Integer(n)) => VMType::Integer(*n),
                         Some(Token::Float(x)) => VMType::Float(*x),
                         Some(Token::Bool(p)) => VMType::Bool(*p),
-                        Some(Token::Over) => {
-                            self.over();
-                            pop!(self)
-                        }
+                        Some(Token::Over) => self.data[self.data.len() - 2].clone(),
+                        Some(Token::Dup) => self.data.last().cloned().unwrap(),
                         Some(Token::Pop) => pop!(self),
-                        Some(Token::Dup) => {
-                            self.dup();
-                            pop!(self)
-                        }
                         _ => panic!(),
                     };
 
-                    match name.starts_with('_') {
-                        true => self.private_vars.insert(name, value),
-                        false => self.vars.insert(name, value),
-                    };
+                    self.vars.insert(name, value);
                 }
+
                 Token::While => {
                     let while_block = next_block!(tokens);
-                    while let Some(VMType::Bool(true)) = pop!(self, 1) {
+
+                    while let VMType::Bool(true) = pop!(self) {
                         run_block!(self, while_block);
+
                         if self.stop_execution {
                             break;
                         }
