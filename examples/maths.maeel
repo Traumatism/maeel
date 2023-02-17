@@ -1,3 +1,16 @@
+proc sqrt do
+    let a pop
+    let n 0
+    a 2 / let y pop
+    n 5 < while do
+        a y / y + 2
+        / let y pop
+        n 1 + let n pop
+        n 5 <
+    end
+    y
+end
+
 proc fac do
     let n pop
     n 1 = let comp pop
@@ -5,13 +18,12 @@ proc fac do
     comp! if do n dup 1 - fac * end
 end
 
-
 proc pow do
     let pow_number pop
     let pow_exponent pop
 
-    1  @ output
-    0  @ ammount of iterations (0 <= pow_exponents)
+    1
+    0
 
     true while do
         swap pow_number * swap 1 + dup

@@ -13,7 +13,9 @@ if __name__ == "__main__":
         encoding="utf-8",
     ).read()
 
-    program_content = program_content.replace("\n", " ")
+    program_content = (
+        program_content.replace("\n", " ").replace("\\", "\\\\").replace('"', '\\"')
+    )
 
     lexer_content = open(
         "src/lexer.rs",
@@ -66,5 +68,5 @@ fn main() {
 
     output_file.close()
 
-    os.system(f"rustc {output_file_name} 2>/dev/null")
+    os.system(f"rustc -Copt-level=3 {output_file_name} 2>/dev/null")
     os.remove(f"{output_file_name}")
