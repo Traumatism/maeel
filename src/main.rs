@@ -8,8 +8,6 @@ use crate::lexer::{extract_blocks, extract_instructions, lex_into_tokens};
 mod formatter;
 mod interpreter;
 mod lexer;
-mod token;
-mod vmtype;
 
 macro_rules! usage {
     () => {
@@ -18,9 +16,9 @@ macro_rules! usage {
 Maeel interpreter usage
 =======================
 
-    maeel lex <file>    <> Turn file into tokens
-    maeel run <file>    <> Execute a maeel program
-    maeel fmt <file>    <> Format a maeel program
+maeel run <file>    <> Execute a maeel program
+maeel fmt <file>    <> Format a maeel program
+maeel lex <file>    <> Turn file into tokens
 
             "#
         )

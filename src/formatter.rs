@@ -1,6 +1,4 @@
-#![allow(clippy::single_char_add_str)]
-
-use crate::token::Token;
+use crate::lexer::Token;
 
 const INDENT: &str = "    ";
 
@@ -13,7 +11,7 @@ macro_rules! rm_last_char {
 macro_rules! rm_if_present {
     ($string:expr, $chr:expr) => {
         if $string.ends_with($chr) {
-            String::from(&$string[0..$string.len() - 1])
+            rm_last_char!($string)
         } else {
             $string
         }
@@ -41,8 +39,11 @@ pub fn format(tokens: Vec<Token>) -> String {
     let mut indents = 0;
 
     let mut tokens_stack = tokens.into_iter().rev().collect::<Vec<Token>>();
+    let mut last_tokens_stack = Vec::new();
 
     while let Some(token) = tokens_stack.pop() {
+        last_tokens_stack.push(token.clone());
+
         match token {
             Token::BlockStart => {
                 output = rm_if_present!(output, "\n");
@@ -67,29 +68,144 @@ pub fn format(tokens: Vec<Token>) -> String {
             }
 
             Token::If => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let if_token = last_tokens_stack.pop().unwrap();
+                let token_before_if = last_tokens_stack.pop();
 
-                output.push_str("if")
+                last_tokens_stack.push(if_token);
+
+                if let Some(token_d1) = token_before_if {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Sub
+                        | Token::Add
+                        | Token::Mul
+                        | Token::Mod
+                        | Token::Div
+                        | Token::Not
+                        | Token::Eq
+                        | Token::Gt
+                        | Token::Lt => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ")
+                        }
+                        Token::BlockStart => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents)
+                        }
+                        _ => (),
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
             }
 
             Token::For => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let for_token = last_tokens_stack.pop().unwrap();
+                let token_before_for = last_tokens_stack.pop();
 
-                output.push_str("for")
+                last_tokens_stack.push(for_token);
+
+                if let Some(token_d1) = token_before_for {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Sub
+                        | Token::Add
+                        | Token::Mul
+                        | Token::Mod
+                        | Token::Div
+                        | Token::Not
+                        | Token::Eq
+                        | Token::Gt
+                        | Token::Lt => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ")
+                        }
+                        Token::BlockStart => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents)
+                        }
+                        _ => (),
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
             }
 
             Token::While => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let while_token = last_tokens_stack.pop().unwrap();
+                let token_before_while = last_tokens_stack.pop();
+
+                last_tokens_stack.push(while_token);
+
+                if let Some(token_d1) = token_before_while {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Sub
+                        | Token::Add
+                        | Token::Mul
+                        | Token::Mod
+                        | Token::Div
+                        | Token::Not
+                        | Token::Eq
+                        | Token::Gt
+                        | Token::Lt => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ")
+                        }
+                        Token::BlockStart => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents)
+                        }
+                        _ => (),
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
 
                 output.push_str("while")
             }
 
             Token::Let => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let let_token = last_tokens_stack.pop().unwrap();
+                let token_before_let = last_tokens_stack.pop();
+
+                last_tokens_stack.push(let_token);
+
+                if let Some(token_d1) = token_before_let {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Sub
+                        | Token::Add
+                        | Token::Mul
+                        | Token::Mod
+                        | Token::Div
+                        | Token::Not
+                        | Token::Eq
+                        | Token::Gt
+                        | Token::Lt => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ")
+                        }
+                        Token::BlockStart => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents)
+                        }
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
 
                 output.push_str("let ");
 
@@ -104,6 +220,7 @@ pub fn format(tokens: Vec<Token>) -> String {
                     Token::Dup => output.push_str("dup"),
                     Token::Over => output.push_str("over"),
                     Token::Pop => output.push_str("pop"),
+
                     Token::Str(content) => output.push_str(&format!("{:?}", content)),
                     Token::Integer(content) => output.push_str(&content.to_string()),
                     Token::Float(content) => output.push_str(&content.to_string()),
@@ -131,8 +248,20 @@ pub fn format(tokens: Vec<Token>) -> String {
             }
 
             Token::Identifier(content) => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let identifier_token = last_tokens_stack.pop().unwrap();
+                let token_before_identifier = last_tokens_stack.pop();
+
+                last_tokens_stack.push(identifier_token);
+
+                if let Some(Token::ProcStart) = token_before_identifier {
+                    last_tokens_stack.push(Token::ProcStart);
+
+                    output = rm_if_present!(output, "\n");
+                    output = add_if_missing!(output, " ");
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
 
                 output.push_str(&content);
                 output.push('\n')
@@ -155,66 +284,436 @@ pub fn format(tokens: Vec<Token>) -> String {
             }
 
             Token::Sub => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let operator_token = last_tokens_stack.pop().unwrap();
+                let token_before_operator = last_tokens_stack.pop();
 
-                output.push_str("-");
+                last_tokens_stack.push(operator_token);
+
+                if let Some(token_d1) = token_before_operator {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Str(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Integer(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Identifier(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Float(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Bool(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
+
+                output.push('-');
+                output = add_if_missing!(output, " ")
             }
 
             Token::Add => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let operator_token = last_tokens_stack.pop().unwrap();
+                let token_before_operator = last_tokens_stack.pop();
 
-                output.push_str("+");
+                last_tokens_stack.push(operator_token);
+
+                if let Some(token_d1) = token_before_operator {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Str(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Integer(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Identifier(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Float(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Bool(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
+
+                output.push('+');
+                output = add_if_missing!(output, " ")
             }
 
             Token::Mul => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let operator_token = last_tokens_stack.pop().unwrap();
+                let token_before_operator = last_tokens_stack.pop();
 
-                output.push_str("*");
+                last_tokens_stack.push(operator_token);
+
+                if let Some(token_d1) = token_before_operator {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Str(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Integer(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Identifier(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Float(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Bool(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
+
+                output.push('*');
+                output = add_if_missing!(output, " ")
             }
 
             Token::Mod => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let operator_token = last_tokens_stack.pop().unwrap();
+                let token_before_operator = last_tokens_stack.pop();
 
-                output.push_str("%");
+                last_tokens_stack.push(operator_token);
+
+                if let Some(token_d1) = token_before_operator {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Str(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Integer(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Identifier(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Float(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Bool(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
+
+                output.push('%');
+                output = add_if_missing!(output, " ")
             }
 
             Token::Div => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let operator_token = last_tokens_stack.pop().unwrap();
+                let token_before_operator = last_tokens_stack.pop();
 
-                output.push_str("/");
+                last_tokens_stack.push(operator_token);
+
+                if let Some(token_d1) = token_before_operator {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Str(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Integer(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Identifier(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Float(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Bool(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
+
+                output.push('/');
+                output = add_if_missing!(output, " ")
             }
 
             Token::Not => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let operator_token = last_tokens_stack.pop().unwrap();
+                let token_before_operator = last_tokens_stack.pop();
 
-                output.push_str("!");
+                last_tokens_stack.push(operator_token);
+
+                if let Some(token_d1) = token_before_operator {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Str(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Integer(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Identifier(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Float(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Bool(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
+
+                output.push('!');
+                output = add_if_missing!(output, " ")
             }
 
             Token::Eq => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let operator_token = last_tokens_stack.pop().unwrap();
+                let token_before_operator = last_tokens_stack.pop();
 
-                output.push_str("=");
+                last_tokens_stack.push(operator_token);
+
+                if let Some(token_d1) = token_before_operator {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Str(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Integer(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Identifier(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Float(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Bool(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
+
+                output.push('=');
+                output = add_if_missing!(output, " ")
             }
 
             Token::Gt => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let operator_token = last_tokens_stack.pop().unwrap();
+                let token_before_operator = last_tokens_stack.pop();
 
-                output.push_str(">");
+                last_tokens_stack.push(operator_token);
+
+                if let Some(token_d1) = token_before_operator {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Str(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Integer(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Identifier(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Float(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Bool(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
+
+                output.push('>');
+                output = add_if_missing!(output, " ")
             }
 
             Token::Lt => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
+                let operator_token = last_tokens_stack.pop().unwrap();
+                let token_before_operator = last_tokens_stack.pop();
 
-                output.push_str("<");
+                last_tokens_stack.push(operator_token);
+
+                if let Some(token_d1) = token_before_operator {
+                    last_tokens_stack.push(token_d1.clone());
+
+                    match token_d1 {
+                        Token::Str(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Integer(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Identifier(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Float(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+
+                        Token::Bool(_) => {
+                            output = rm_if_present!(output, "\n");
+                            output = add_if_missing!(output, " ");
+                        }
+                        _ => {
+                            output = add_if_missing!(output, "\n");
+                            output = add_indents!(output, indents);
+                        }
+                    }
+                } else {
+                    output = add_if_missing!(output, "\n");
+                    output = add_indents!(output, indents);
+                }
+
+                output.push('<');
+                output = add_if_missing!(output, " ")
             }
 
             Token::Clear => {
