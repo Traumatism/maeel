@@ -3,3 +3,4 @@
 maeel
 Cargo.lock
 compiler-tests
+*_out
