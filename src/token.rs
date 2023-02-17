@@ -31,7 +31,6 @@ pub enum Token {
     Let,
     ProcStart,
     Return,
-    Newline,
     BlockStart,
     BlockEnd,
     If,

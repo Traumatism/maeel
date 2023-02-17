@@ -9,18 +9,19 @@ macro_rules! next {
     ($tokens:expr, "identifier") => {
         match $tokens.next() {
             Some(Token::Identifier(value)) => value.clone(),
-            _ => panic!(),
+            token => panic!("Expected identifier, got {:?}", token),
         }
     };
 
     ($tokens:expr, "block") => {
         match $tokens.next() {
             Some(Token::Block(block)) => block.clone(),
-            _ => panic!(),
+            token => panic!("Expected block, got {:?}", token),
         }
     };
 }
 
+#[macro_export]
 macro_rules! pop {
     ($self:ident) => {
         $self.data.pop().unwrap()
@@ -31,6 +32,7 @@ macro_rules! pop {
     };
 }
 
+#[macro_export]
 macro_rules! push {
     ($self:ident, $content:expr) => {
         $self.data.push($content)
@@ -68,7 +70,7 @@ macro_rules! run_block {
 /// Maeel interpreter
 #[derive(Default)]
 pub struct Interpreter {
-    data: Vec<VMType>,
+    pub data: Vec<VMType>,
     vars: HashMap<String, VMType>,
     procs: HashMap<String, Vec<Token>>,
     stop_execution: bool,
@@ -82,7 +84,6 @@ impl Interpreter {
             }
 
             match token.clone() {
-                Token::Newline => (),
                 Token::Return => self.stop_execution = true,
                 Token::Clear => self.data.clear(),
                 Token::BlockStart | Token::BlockEnd => panic!(),

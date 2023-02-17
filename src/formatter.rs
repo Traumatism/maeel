@@ -1,6 +1,40 @@
+#![allow(clippy::single_char_add_str)]
+
 use crate::token::Token;
 
 const INDENT: &str = "    ";
+
+macro_rules! rm_last_char {
+    ($string:expr) => {
+        String::from(&$string[0..$string.len() - 1])
+    };
+}
+
+macro_rules! rm_if_present {
+    ($string:expr, $chr:expr) => {
+        if $string.ends_with($chr) {
+            String::from(&$string[0..$string.len() - 1])
+        } else {
+            $string
+        }
+    };
+}
+
+macro_rules! add_if_missing {
+    ($string:expr, $chr:expr) => {
+        if !$string.ends_with($chr) {
+            $string + $chr
+        } else {
+            $string
+        }
+    };
+}
+
+macro_rules! add_indents {
+    ($string:expr, $indents:expr) => {
+        $string + &INDENT.repeat($indents)
+    };
+}
 
 pub fn format(tokens: Vec<Token>) -> String {
     let mut output = String::new();
@@ -10,16 +44,9 @@ pub fn format(tokens: Vec<Token>) -> String {
 
     while let Some(token) = tokens_stack.pop() {
         match token {
-            Token::Newline => (),
-
             Token::BlockStart => {
-                if output.ends_with('\n') {
-                    output = String::from(&output[0..output.len() - 1])
-                }
-
-                if !output.ends_with(' ') {
-                    output.push(' ')
-                }
+                output = rm_if_present!(output, "\n");
+                output = add_if_missing!(output, " ");
 
                 output.push_str("do");
 
@@ -32,126 +59,226 @@ pub fn format(tokens: Vec<Token>) -> String {
 
             Token::BlockEnd => {
                 indents -= 1;
-                if !output.ends_with('\n') {
-                    output.push('\n');
-                }
 
-                output.push_str(&INDENT.repeat(indents));
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
                 output.push_str("end\n")
             }
 
-            Token::Str(content) => {
-                if !output.ends_with('\n') {
-                    output.push('\n');
-                }
+            Token::If => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
 
-                output.push_str(&INDENT.repeat(indents));
-                output.push_str(&format!("{:?}", content));
+                output.push_str("if")
             }
 
-            Token::Integer(content) => {
-                if !output.ends_with('\n') {
-                    output.push('\n');
-                }
+            Token::For => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
 
-                output.push_str(&INDENT.repeat(indents));
-                output.push_str(&format!("{}", content));
-            }
-
-            Token::Identifier(content) => {
-                if !output.ends_with('\n') {
-                    output.push('\n');
-                }
-
-                output.push_str(&INDENT.repeat(indents));
-                output.push_str(&content);
-            }
-
-            Token::Float(content) => {
-                if !output.ends_with('\n') {
-                    output.push('\n');
-                }
-
-                output.push_str(&INDENT.repeat(indents));
-                output.push_str(&format!("{}", content));
-            }
-
-            Token::Bool(content) => {
-                if !output.ends_with('\n') {
-                    output.push('\n');
-                }
-
-                output.push_str(&format!("{}", content));
-                output.push_str(&INDENT.repeat(indents));
-            }
-
-            Token::ProcStart => {
-                if !output.ends_with('\n') {
-                    output.push('\n');
-                }
-
-                output.push_str(&INDENT.repeat(indents));
-                output.push_str("proc ");
-            }
-
-            Token::Let => {
-                if !output.ends_with('\n') {
-                    output.push('\n');
-                }
-
-                let identifier = match tokens_stack.pop() {
-                    Some(Token::Identifier(identifier)) => identifier,
-                    _ => panic!(),
-                };
-
-                let value = match tokens_stack.pop() {
-                    Some(Token::Pop) => String::from("pop"),
-                    Some(Token::Dup) => String::from("dup"),
-                    Some(Token::Over) => String::from("over"),
-                    Some(Token::Str(content)) => format!("{:?}", content),
-                    Some(Token::Integer(content)) => format!("{}", content),
-                    Some(Token::Float(content)) => format!("{}", content),
-                    Some(Token::Bool(content)) => format!("{}", content),
-                    _ => panic!(),
-                };
-
-                output = match value.as_str() {
-                    "pop" | "dup" | "value" => String::from(&output[0..output.len() - 1]) + " ",
-                    _ => output,
-                };
-
-                output.push_str(&format!("let {} {}\n", identifier, value))
+                output.push_str("for")
             }
 
             Token::While => {
-                if output.ends_with('\n') {
-                    output = String::from(&output[0..output.len() - 1])
-                }
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
 
-                output.push_str(" while")
+                output.push_str("while")
             }
 
-            Token::If => output.push_str(" if "),
-            Token::For => output.push_str(" for "),
+            Token::Let => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
 
-            Token::Eq => output.push('='),
-            Token::Gt => output.push('>'),
-            Token::Lt => output.push('<'),
-            Token::Sub => output.push('-'),
-            Token::Add => output.push('+'),
-            Token::Mul => output.push('*'),
-            Token::Mod => output.push('%'),
-            Token::Div => output.push('/'),
-            Token::Not => output.push('!'),
+                output.push_str("let ");
 
-            Token::Del => output.push_str(" del "),
-            Token::Dup => output.push_str(" dup "),
-            Token::Pop => output.push_str(" pop "),
-            Token::Over => output.push_str(" over "),
-            Token::Take => output.push_str(" take "),
-            Token::Swap => output.push_str(" swap "),
-            Token::Clear => output.push_str(" clear "),
-            Token::Return => output.push_str(" return "),
+                match tokens_stack.pop().unwrap() {
+                    Token::Identifier(content) => output.push_str(&content),
+                    _ => panic!(),
+                }
+
+                output.push(' ');
+
+                match tokens_stack.pop().unwrap() {
+                    Token::Dup => output.push_str("dup"),
+                    Token::Over => output.push_str("over"),
+                    Token::Pop => output.push_str("pop"),
+                    Token::Str(content) => output.push_str(&format!("{:?}", content)),
+                    Token::Integer(content) => output.push_str(&content.to_string()),
+                    Token::Float(content) => output.push_str(&content.to_string()),
+                    Token::Bool(content) => output.push_str(&content.to_string()),
+                    token => panic!("{token:?}"),
+                }
+
+                output.push('\n');
+            }
+
+            Token::Str(content) => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str(&format!("{:?}", content));
+                output.push('\n')
+            }
+
+            Token::Integer(content) => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str(&content.to_string());
+                output.push('\n')
+            }
+
+            Token::Identifier(content) => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str(&content);
+                output.push('\n')
+            }
+
+            Token::Float(content) => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str(&content.to_string());
+                output.push('\n')
+            }
+
+            Token::Bool(content) => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str(&content.to_string());
+                output.push('\n')
+            }
+
+            Token::Sub => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("-");
+            }
+
+            Token::Add => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("+");
+            }
+
+            Token::Mul => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("*");
+            }
+
+            Token::Mod => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("%");
+            }
+
+            Token::Div => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("/");
+            }
+
+            Token::Not => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("!");
+            }
+
+            Token::Eq => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("=");
+            }
+
+            Token::Gt => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str(">");
+            }
+
+            Token::Lt => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("<");
+            }
+
+            Token::Clear => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("clear");
+            }
+
+            Token::Over => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("over");
+            }
+
+            Token::Take => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("take");
+            }
+
+            Token::Swap => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("swap");
+            }
+
+            Token::Del => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("del");
+            }
+
+            Token::Dup => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("dup");
+            }
+
+            Token::Pop => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("pop");
+            }
+
+            Token::ProcStart => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("proc");
+            }
+
+            Token::Return => {
+                output = add_if_missing!(output, "\n");
+                output = add_indents!(output, indents);
+
+                output.push_str("return");
+            }
         }
     }
 

@@ -1,7 +1,28 @@
-do
+ let 
+a
+0
+ let 
+b
+1
+b
+1000000
+< while do
+    b
+ let 
+    c
+ dup 
+    a
+    b
++ let 
+    b
+ dup 
+    println
+ pop 
+    c
+ let 
+    a
+ pop 
+    b
+    1000000
+< end
 
-
-
-"hello world" do do 123 end 123.2 end
-
-end

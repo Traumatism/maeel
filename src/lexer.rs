@@ -103,7 +103,6 @@ macro_rules! lex_single_char {
             '*' => Token::Mul,
             '/' => Token::Div,
             '%' => Token::Mod,
-            '\n' => Token::Newline,
             _ => panic!(),
         }
     };
@@ -121,7 +120,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
     while let Some(chr) = chars.pop() {
         let token = match chr {
-            ' ' | '(' | ')' => None,
+            ' ' | '(' | ')' | '\n' => None,
 
             '@' => {
                 while let Some(next) = chars.pop() {
