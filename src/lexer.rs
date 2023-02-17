@@ -1,4 +1,42 @@
-use crate::token::Token;
+/// The `Token` enum stores all tokens that the
+/// lexer can identify
+///
+/// The `Clone` trait is implemented, which allows
+/// the enum members to be easily copied and cloned.
+///
+#[derive(Clone, Debug)]
+pub enum Token {
+    Block(Vec<Token>),
+    Str(String),
+    Integer(i64),
+    Identifier(String),
+    Float(f64),
+    Bool(bool),
+    Sub,
+    Add,
+    Mul,
+    Mod,
+    Div,
+    Not,
+    Eq,
+    Gt,
+    Lt,
+    Clear,
+    Over,
+    Take,
+    Swap,
+    Del,
+    Dup,
+    Pop,
+    Let,
+    ProcStart,
+    Return,
+    BlockStart,
+    BlockEnd,
+    If,
+    For,
+    While,
+}
 
 pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     let mut instructions = Vec::default();
@@ -121,16 +159,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     while let Some(chr) = chars.pop() {
         let token = match chr {
             ' ' | '(' | ')' | '\n' => None,
-
-            '@' => {
-                while let Some(next) = chars.pop() {
-                    if next == '\n' {
-                        break;
-                    }
-                }
-
-                None
-            }
 
             '"' => {
                 let mut content = String::new();
