@@ -131,7 +131,7 @@ let <name> <value>
 
 <value> let <name> pop
 <value> let <name> dup
-<value> let <name> over
+<value> <ignored_value> let <name> over
 ```
 
 Value can be a positive integer, a float, a string or a boolean.

@@ -140,28 +140,28 @@ pub fn format(tokens: Vec<Token>) -> String {
                 output.push_str("end\n")
             }
 
-            Token::Return => zero_arg_keyword!("return", output, indents),
-            Token::Clear => zero_arg_keyword!("clear", output, indents),
-            Token::Over => zero_arg_keyword!("over", output, indents),
-            Token::Take => zero_arg_keyword!("take", output, indents),
-            Token::Swap => zero_arg_keyword!("swap", output, indents),
             Token::Pop => zero_arg_keyword!("pop", output, indents),
             Token::Del => zero_arg_keyword!("del", output, indents),
             Token::Dup => zero_arg_keyword!("dup", output, indents),
+            Token::Over => zero_arg_keyword!("over", output, indents),
+            Token::Take => zero_arg_keyword!("take", output, indents),
+            Token::Swap => zero_arg_keyword!("swap", output, indents),
+            Token::Clear => zero_arg_keyword!("clear", output, indents),
+            Token::Return => zero_arg_keyword!("return", output, indents),
 
-            Token::While => one_arg_keyword!("while", last_tokens_stack, output, indents),
-            Token::For => one_arg_keyword!("for", last_tokens_stack, output, indents),
             Token::If => one_arg_keyword!("if", last_tokens_stack, output, indents),
+            Token::For => one_arg_keyword!("for", last_tokens_stack, output, indents),
+            Token::While => one_arg_keyword!("while", last_tokens_stack, output, indents),
 
+            Token::Eq => one_arg_operator!('=', last_tokens_stack, output, indents),
+            Token::Gt => one_arg_operator!('>', last_tokens_stack, output, indents),
+            Token::Lt => one_arg_operator!('<', last_tokens_stack, output, indents),
             Token::Sub => one_arg_operator!('-', last_tokens_stack, output, indents),
             Token::Add => one_arg_operator!('+', last_tokens_stack, output, indents),
             Token::Mul => one_arg_operator!('*', last_tokens_stack, output, indents),
             Token::Mod => one_arg_operator!('%', last_tokens_stack, output, indents),
             Token::Div => one_arg_operator!('/', last_tokens_stack, output, indents),
             Token::Not => one_arg_operator!('!', last_tokens_stack, output, indents),
-            Token::Eq => one_arg_operator!('=', last_tokens_stack, output, indents),
-            Token::Gt => one_arg_operator!('>', last_tokens_stack, output, indents),
-            Token::Lt => one_arg_operator!('<', last_tokens_stack, output, indents),
 
             Token::Let => {
                 one_arg_keyword!("let", last_tokens_stack, output, indents);
