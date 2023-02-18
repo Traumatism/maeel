@@ -85,7 +85,7 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(if_token);
 
-                if let Some(token_d1) = token_before_if {
+                output = if let Some(token_d1) = token_before_if {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
@@ -97,20 +97,15 @@ pub fn format(tokens: Vec<Token>) -> String {
                         | Token::Not
                         | Token::Eq
                         | Token::Gt
-                        | Token::Lt => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ")
-                        }
-                        Token::BlockStart => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents)
-                        }
-                        _ => (),
+                        | Token::Lt => rm_line!(output),
+                        Token::BlockStart => jmp_line!(output, indents),
+                        _ => output,
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
+
+                output.push_str("if")
             }
 
             Token::For => {
@@ -119,7 +114,7 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(for_token);
 
-                if let Some(token_d1) = token_before_for {
+                output = if let Some(token_d1) = token_before_for {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
@@ -131,20 +126,15 @@ pub fn format(tokens: Vec<Token>) -> String {
                         | Token::Not
                         | Token::Eq
                         | Token::Gt
-                        | Token::Lt => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ")
-                        }
-                        Token::BlockStart => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents)
-                        }
-                        _ => (),
+                        | Token::Lt => rm_line!(output),
+                        Token::BlockStart => jmp_line!(output, indents),
+                        _ => output,
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
+
+                output.push_str("for")
             }
 
             Token::While => {
@@ -153,7 +143,7 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(while_token);
 
-                if let Some(token_d1) = token_before_while {
+                output = if let Some(token_d1) = token_before_while {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
@@ -165,20 +155,13 @@ pub fn format(tokens: Vec<Token>) -> String {
                         | Token::Not
                         | Token::Eq
                         | Token::Gt
-                        | Token::Lt => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ")
-                        }
-                        Token::BlockStart => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents)
-                        }
-                        _ => (),
+                        | Token::Lt => rm_line!(output),
+                        Token::BlockStart => jmp_line!(output, indents),
+                        _ => output,
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push_str("while")
             }
@@ -192,7 +175,7 @@ pub fn format(tokens: Vec<Token>) -> String {
                 if let Some(token_d1) = token_before_let {
                     last_tokens_stack.push(token_d1.clone());
 
-                    match token_d1 {
+                    output = match token_d1 {
                         Token::Sub
                         | Token::Add
                         | Token::Mul
@@ -201,17 +184,10 @@ pub fn format(tokens: Vec<Token>) -> String {
                         | Token::Not
                         | Token::Eq
                         | Token::Gt
-                        | Token::Lt => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ")
-                        }
-                        Token::BlockStart => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents)
-                        }
+                        | Token::Lt => rm_line!(output),
+                        Token::BlockStart => jmp_line!(output, indents),
                         _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
+                            jmp_line!(output, indents)
                         }
                     }
                 } else {
@@ -330,22 +306,20 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(operator_token);
 
-                if let Some(token_d1) = token_before_operator {
+                output = if let Some(token_d1) = token_before_operator {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => output = rm_line!(output),
-                        Token::Integer(_) => output = rm_line!(output),
-                        Token::Identifier(_) => output = rm_line!(output),
-                        Token::Float(_) => output = rm_line!(output),
-                        Token::Bool(_) => output = rm_line!(output),
-                        _ => {
-                            output = jmp_line!(output, indents);
-                        }
+                        Token::Str(_) => rm_line!(output),
+                        Token::Integer(_) => rm_line!(output),
+                        Token::Identifier(_) => rm_line!(output),
+                        Token::Float(_) => rm_line!(output),
+                        Token::Bool(_) => rm_line!(output),
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = jmp_line!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push('+');
                 output = add_if_missing!(output, " ")
@@ -357,22 +331,20 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(operator_token);
 
-                if let Some(token_d1) = token_before_operator {
+                output = if let Some(token_d1) = token_before_operator {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => output = rm_line!(output),
-                        Token::Integer(_) => output = rm_line!(output),
-                        Token::Identifier(_) => output = rm_line!(output),
-                        Token::Float(_) => output = rm_line!(output),
-                        Token::Bool(_) => output = rm_line!(output),
-                        _ => {
-                            output = jmp_line!(output, indents);
-                        }
+                        Token::Str(_) => rm_line!(output),
+                        Token::Integer(_) => rm_line!(output),
+                        Token::Identifier(_) => rm_line!(output),
+                        Token::Float(_) => rm_line!(output),
+                        Token::Bool(_) => rm_line!(output),
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = jmp_line!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push('*');
                 output = add_if_missing!(output, " ")
@@ -384,22 +356,20 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(operator_token);
 
-                if let Some(token_d1) = token_before_operator {
+                output = if let Some(token_d1) = token_before_operator {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => output = rm_line!(output),
-                        Token::Integer(_) => output = rm_line!(output),
-                        Token::Identifier(_) => output = rm_line!(output),
-                        Token::Float(_) => output = rm_line!(output),
-                        Token::Bool(_) => output = rm_line!(output),
-                        _ => {
-                            output = jmp_line!(output, indents);
-                        }
+                        Token::Str(_) => rm_line!(output),
+                        Token::Integer(_) => rm_line!(output),
+                        Token::Identifier(_) => rm_line!(output),
+                        Token::Float(_) => rm_line!(output),
+                        Token::Bool(_) => rm_line!(output),
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = jmp_line!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push('%');
                 output = add_if_missing!(output, " ")
@@ -411,22 +381,20 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(operator_token);
 
-                if let Some(token_d1) = token_before_operator {
+                output = if let Some(token_d1) = token_before_operator {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => output = rm_line!(output),
-                        Token::Integer(_) => output = rm_line!(output),
-                        Token::Identifier(_) => output = rm_line!(output),
-                        Token::Float(_) => output = rm_line!(output),
-                        Token::Bool(_) => output = rm_line!(output),
-                        _ => {
-                            output = jmp_line!(output, indents);
-                        }
+                        Token::Str(_) => rm_line!(output),
+                        Token::Integer(_) => rm_line!(output),
+                        Token::Identifier(_) => rm_line!(output),
+                        Token::Float(_) => rm_line!(output),
+                        Token::Bool(_) => rm_line!(output),
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = jmp_line!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push('/');
                 output = add_if_missing!(output, " ")
@@ -438,22 +406,20 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(operator_token);
 
-                if let Some(token_d1) = token_before_operator {
+                output = if let Some(token_d1) = token_before_operator {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => output = rm_line!(output),
-                        Token::Integer(_) => output = rm_line!(output),
-                        Token::Identifier(_) => output = rm_line!(output),
-                        Token::Float(_) => output = rm_line!(output),
-                        Token::Bool(_) => output = rm_line!(output),
-                        _ => {
-                            output = jmp_line!(output, indents);
-                        }
+                        Token::Str(_) => rm_line!(output),
+                        Token::Integer(_) => rm_line!(output),
+                        Token::Identifier(_) => rm_line!(output),
+                        Token::Float(_) => rm_line!(output),
+                        Token::Bool(_) => rm_line!(output),
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = jmp_line!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push('!');
                 output = add_if_missing!(output, " ")
@@ -465,20 +431,20 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(operator_token);
 
-                if let Some(token_d1) = token_before_operator {
+                output = if let Some(token_d1) = token_before_operator {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => output = rm_line!(output),
-                        Token::Integer(_) => output = rm_line!(output),
-                        Token::Identifier(_) => output = rm_line!(output),
-                        Token::Float(_) => output = rm_line!(output),
-                        Token::Bool(_) => output = rm_line!(output),
-                        _ => output = jmp_line!(output, indents),
+                        Token::Str(_) => rm_line!(output),
+                        Token::Integer(_) => rm_line!(output),
+                        Token::Identifier(_) => rm_line!(output),
+                        Token::Float(_) => rm_line!(output),
+                        Token::Bool(_) => rm_line!(output),
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = jmp_line!(output, indents)
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push('=');
                 output = add_if_missing!(output, " ")
@@ -490,20 +456,20 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(operator_token);
 
-                if let Some(token_d1) = token_before_operator {
+                output = if let Some(token_d1) = token_before_operator {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => output = rm_line!(output),
-                        Token::Integer(_) => output = rm_line!(output),
-                        Token::Identifier(_) => output = rm_line!(output),
-                        Token::Float(_) => output = rm_line!(output),
-                        Token::Bool(_) => output = rm_line!(output),
-                        _ => output = jmp_line!(output, indents),
+                        Token::Str(_) => rm_line!(output),
+                        Token::Integer(_) => rm_line!(output),
+                        Token::Identifier(_) => rm_line!(output),
+                        Token::Float(_) => rm_line!(output),
+                        Token::Bool(_) => rm_line!(output),
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = jmp_line!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push('>');
                 output = add_if_missing!(output, " ")
@@ -515,22 +481,20 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(operator_token);
 
-                if let Some(token_d1) = token_before_operator {
+                output = if let Some(token_d1) = token_before_operator {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => output = rm_line!(output),
-                        Token::Integer(_) => output = rm_line!(output),
-                        Token::Identifier(_) => output = rm_line!(output),
-                        Token::Float(_) => output = rm_line!(output),
-                        Token::Bool(_) => output = rm_line!(output),
-                        _ => {
-                            output = jmp_line!(output, indents);
-                        }
+                        Token::Str(_) => rm_line!(output),
+                        Token::Integer(_) => rm_line!(output),
+                        Token::Identifier(_) => rm_line!(output),
+                        Token::Float(_) => rm_line!(output),
+                        Token::Bool(_) => rm_line!(output),
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = jmp_line!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push('<');
                 output = add_if_missing!(output, " ")
