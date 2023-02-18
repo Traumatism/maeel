@@ -57,6 +57,20 @@ pub fn format(tokens: Vec<Token>) -> String {
         last_tokens_stack.push(token.clone());
 
         match token {
+            // Procedure start keyword "proc"
+            // Must:
+            //  - add a newline and indents
+            //  - don't put a newline for the next identifier
+            Token::ProcStart => {
+                output = jmp_line!(output, indents);
+                output.push_str("proc");
+            }
+
+            // Block start keyword "do"
+            // Must:
+            //  - remove the last newline
+            //  - add a newline at the end
+            //  - increase the indentation level
             Token::BlockStart => {
                 output = rm_if_present!(output, "\n");
                 output = add_if_missing!(output, " ");
@@ -70,6 +84,10 @@ pub fn format(tokens: Vec<Token>) -> String {
                 output.push_str(&format(tokens_d1.clone()));
             }
 
+            // Block start keyword "end"
+            // Must:
+            //  - add a newline
+            //  - decrease the indentation level
             Token::BlockEnd => {
                 indents -= 1;
 
@@ -511,11 +529,6 @@ pub fn format(tokens: Vec<Token>) -> String {
             Token::Pop => {
                 output = jmp_line!(output, indents);
                 output.push_str("pop");
-            }
-
-            Token::ProcStart => {
-                output = jmp_line!(output, indents);
-                output.push_str("proc");
             }
 
             Token::Return => {
