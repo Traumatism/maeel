@@ -34,6 +34,18 @@ macro_rules! add_indents {
     };
 }
 
+macro_rules! rm_line {
+    ($string:expr) => {
+        add_if_missing!(rm_if_present!($string.clone(), "\n"), " ")
+    };
+}
+
+macro_rules! jmp_line {
+    ($string:expr, $indents:expr) => {
+        add_indents!(add_if_missing!($string.clone(), "\n"), $indents)
+    };
+}
+
 pub fn format(tokens: Vec<Token>) -> String {
     let mut output = String::new();
     let mut indents = 0;
@@ -293,30 +305,11 @@ pub fn format(tokens: Vec<Token>) -> String {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Integer(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Identifier(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Float(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Bool(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
+                        Token::Str(_) => output = rm_line!(output),
+                        Token::Integer(_) => output = rm_line!(output),
+                        Token::Identifier(_) => output = rm_line!(output),
+                        Token::Float(_) => output = rm_line!(output),
+                        Token::Bool(_) => output = rm_line!(output),
                         _ => {
                             output = add_if_missing!(output, "\n");
                             output = add_indents!(output, indents);
@@ -341,38 +334,17 @@ pub fn format(tokens: Vec<Token>) -> String {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Integer(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Identifier(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Float(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Bool(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
+                        Token::Str(_) => output = rm_line!(output),
+                        Token::Integer(_) => output = rm_line!(output),
+                        Token::Identifier(_) => output = rm_line!(output),
+                        Token::Float(_) => output = rm_line!(output),
+                        Token::Bool(_) => output = rm_line!(output),
                         _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
+                            output = jmp_line!(output, indents);
                         }
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
+                    output = jmp_line!(output, indents);
                 }
 
                 output.push('+');
@@ -389,38 +361,17 @@ pub fn format(tokens: Vec<Token>) -> String {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Integer(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Identifier(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Float(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Bool(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
+                        Token::Str(_) => output = rm_line!(output),
+                        Token::Integer(_) => output = rm_line!(output),
+                        Token::Identifier(_) => output = rm_line!(output),
+                        Token::Float(_) => output = rm_line!(output),
+                        Token::Bool(_) => output = rm_line!(output),
                         _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
+                            output = jmp_line!(output, indents);
                         }
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
+                    output = jmp_line!(output, indents);
                 }
 
                 output.push('*');
@@ -437,38 +388,17 @@ pub fn format(tokens: Vec<Token>) -> String {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Integer(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Identifier(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Float(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Bool(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
+                        Token::Str(_) => output = rm_line!(output),
+                        Token::Integer(_) => output = rm_line!(output),
+                        Token::Identifier(_) => output = rm_line!(output),
+                        Token::Float(_) => output = rm_line!(output),
+                        Token::Bool(_) => output = rm_line!(output),
                         _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
+                            output = jmp_line!(output, indents);
                         }
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
+                    output = jmp_line!(output, indents);
                 }
 
                 output.push('%');
@@ -485,38 +415,17 @@ pub fn format(tokens: Vec<Token>) -> String {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Integer(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Identifier(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Float(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Bool(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
+                        Token::Str(_) => output = rm_line!(output),
+                        Token::Integer(_) => output = rm_line!(output),
+                        Token::Identifier(_) => output = rm_line!(output),
+                        Token::Float(_) => output = rm_line!(output),
+                        Token::Bool(_) => output = rm_line!(output),
                         _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
+                            output = jmp_line!(output, indents);
                         }
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
+                    output = jmp_line!(output, indents);
                 }
 
                 output.push('/');
@@ -533,38 +442,17 @@ pub fn format(tokens: Vec<Token>) -> String {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Integer(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Identifier(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Float(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Bool(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
+                        Token::Str(_) => output = rm_line!(output),
+                        Token::Integer(_) => output = rm_line!(output),
+                        Token::Identifier(_) => output = rm_line!(output),
+                        Token::Float(_) => output = rm_line!(output),
+                        Token::Bool(_) => output = rm_line!(output),
                         _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
+                            output = jmp_line!(output, indents);
                         }
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
+                    output = jmp_line!(output, indents);
                 }
 
                 output.push('!');
@@ -581,38 +469,15 @@ pub fn format(tokens: Vec<Token>) -> String {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Integer(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Identifier(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Float(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Bool(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-                        _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
-                        }
+                        Token::Str(_) => output = rm_line!(output),
+                        Token::Integer(_) => output = rm_line!(output),
+                        Token::Identifier(_) => output = rm_line!(output),
+                        Token::Float(_) => output = rm_line!(output),
+                        Token::Bool(_) => output = rm_line!(output),
+                        _ => output = jmp_line!(output, indents),
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
+                    output = jmp_line!(output, indents)
                 }
 
                 output.push('=');
@@ -629,39 +494,15 @@ pub fn format(tokens: Vec<Token>) -> String {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Integer(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Identifier(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Float(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Bool(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
-                        }
+                        Token::Str(_) => output = rm_line!(output),
+                        Token::Integer(_) => output = rm_line!(output),
+                        Token::Identifier(_) => output = rm_line!(output),
+                        Token::Float(_) => output = rm_line!(output),
+                        Token::Bool(_) => output = rm_line!(output),
+                        _ => output = jmp_line!(output, indents),
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
+                    output = jmp_line!(output, indents);
                 }
 
                 output.push('>');
@@ -678,38 +519,17 @@ pub fn format(tokens: Vec<Token>) -> String {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Integer(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Identifier(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Float(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
-
-                        Token::Bool(_) => {
-                            output = rm_if_present!(output, "\n");
-                            output = add_if_missing!(output, " ");
-                        }
+                        Token::Str(_) => output = rm_line!(output),
+                        Token::Integer(_) => output = rm_line!(output),
+                        Token::Identifier(_) => output = rm_line!(output),
+                        Token::Float(_) => output = rm_line!(output),
+                        Token::Bool(_) => output = rm_line!(output),
                         _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
+                            output = jmp_line!(output, indents);
                         }
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
+                    output = jmp_line!(output, indents);
                 }
 
                 output.push('<');
@@ -717,65 +537,47 @@ pub fn format(tokens: Vec<Token>) -> String {
             }
 
             Token::Clear => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str("clear");
             }
 
             Token::Over => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str("over");
             }
 
             Token::Take => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str("take");
             }
 
             Token::Swap => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str("swap");
             }
 
             Token::Del => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str("del");
             }
 
             Token::Dup => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str("dup");
             }
 
             Token::Pop => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str("pop");
             }
 
             Token::ProcStart => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str("proc");
             }
 
             Token::Return => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str("return");
             }
         }

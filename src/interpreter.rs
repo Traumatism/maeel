@@ -10,7 +10,6 @@ use std::ops::{Add, Div, Mul, Not, Rem, Sub};
 ///
 /// The `Clone` and `Debug` traits are implemented, which allows
 /// the enum members to be easily copied, cloned, and printed.
-///
 #[derive(Debug, Clone)]
 pub enum VMType {
     Float(f64),
