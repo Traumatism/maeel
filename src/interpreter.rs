@@ -165,13 +165,12 @@ macro_rules! next {
 
     ($tokens:expr, "block") => {
         match $tokens.next() {
-            Some(Token::Block(block)) => block.clone(),
+            Some(Token::Block(block)) => block.to_vec(),
             token => panic!("Expected block, got {:?}", token),
         }
     };
 }
 
-#[macro_export]
 macro_rules! pop {
     ($self:ident) => {
         $self.data.pop().unwrap()
@@ -182,7 +181,6 @@ macro_rules! pop {
     };
 }
 
-#[macro_export]
 macro_rules! push {
     ($self:ident, $content:expr) => {
         $self.data.push($content)
@@ -250,7 +248,7 @@ impl Interpreter {
                     push!(self, first);
                 }
                 Token::Over => {
-                    push!(self, self.data[self.data.len() - 2].clone());
+                    push!(self, self.data[self.data.len() - 2].to_owned());
                 }
 
                 Token::Sub => binary_op!(self, -),
@@ -261,6 +259,7 @@ impl Interpreter {
                 Token::Gt => binary_op!(self, >, VMType::Bool),
                 Token::Lt => binary_op!(self, <, VMType::Bool),
                 Token::Eq => binary_op!(self, ==, VMType::Bool),
+                Token::Block(tokens) => run_block!(self, tokens),
 
                 Token::Del => {
                     self.vars.remove(&next!(tokens, "identifier"));
@@ -268,10 +267,6 @@ impl Interpreter {
 
                 Token::Pop => {
                     pop!(self);
-                }
-
-                Token::Block(tokens) => {
-                    run_block!(self, tokens);
                 }
 
                 Token::Not => {
@@ -296,9 +291,7 @@ impl Interpreter {
                     match identifier.as_str() {
                         "exit" => match pop!(self) {
                             VMType::Integer(status) => std::process::exit(status as i32),
-                            _ => {
-                                panic!()
-                            }
+                            _ => panic!(),
                         },
 
                         "println" => {
