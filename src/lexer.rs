@@ -149,7 +149,6 @@ macro_rules! lex_single_char {
 /// The lex_into_tokens function takes a string code as input, and
 /// returns a vector of Tokens representing the lexical tokens
 /// found in the input string.
-///
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut chars = code.chars().collect::<Vec<char>>();
     chars.reverse();
