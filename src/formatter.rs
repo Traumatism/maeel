@@ -98,8 +98,7 @@ pub fn format(tokens: Vec<Token>) -> String {
                         | Token::Eq
                         | Token::Gt
                         | Token::Lt => rm_line!(output),
-                        Token::BlockStart => jmp_line!(output, indents),
-                        _ => output,
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
                     jmp_line!(output, indents)
@@ -127,8 +126,7 @@ pub fn format(tokens: Vec<Token>) -> String {
                         | Token::Eq
                         | Token::Gt
                         | Token::Lt => rm_line!(output),
-                        Token::BlockStart => jmp_line!(output, indents),
-                        _ => output,
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
                     jmp_line!(output, indents)
@@ -156,8 +154,7 @@ pub fn format(tokens: Vec<Token>) -> String {
                         | Token::Eq
                         | Token::Gt
                         | Token::Lt => rm_line!(output),
-                        Token::BlockStart => jmp_line!(output, indents),
-                        _ => output,
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
                     jmp_line!(output, indents)
@@ -172,10 +169,10 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(let_token);
 
-                if let Some(token_d1) = token_before_let {
+                output = if let Some(token_d1) = token_before_let {
                     last_tokens_stack.push(token_d1.clone());
 
-                    output = match token_d1 {
+                    match token_d1 {
                         Token::Sub
                         | Token::Add
                         | Token::Mul
@@ -185,15 +182,11 @@ pub fn format(tokens: Vec<Token>) -> String {
                         | Token::Eq
                         | Token::Gt
                         | Token::Lt => rm_line!(output),
-                        Token::BlockStart => jmp_line!(output, indents),
-                        _ => {
-                            jmp_line!(output, indents)
-                        }
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push_str("let ");
 
@@ -220,17 +213,13 @@ pub fn format(tokens: Vec<Token>) -> String {
             }
 
             Token::Str(content) => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str(&format!("{:?}", content));
                 output.push('\n')
             }
 
             Token::Integer(content) => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str(&content.to_string());
                 output.push('\n')
             }
@@ -243,12 +232,9 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 if let Some(Token::ProcStart) = token_before_identifier {
                     last_tokens_stack.push(Token::ProcStart);
-
-                    output = rm_if_present!(output, "\n");
-                    output = add_if_missing!(output, " ");
+                    output = rm_line!(output)
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
+                    output = jmp_line!(output, indents);
                 }
 
                 output.push_str(&content);
@@ -256,17 +242,13 @@ pub fn format(tokens: Vec<Token>) -> String {
             }
 
             Token::Float(content) => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str(&content.to_string());
                 output.push('\n')
             }
 
             Token::Bool(content) => {
-                output = add_if_missing!(output, "\n");
-                output = add_indents!(output, indents);
-
+                output = jmp_line!(output, indents);
                 output.push_str(&content.to_string());
                 output.push('\n')
             }
@@ -277,24 +259,20 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 last_tokens_stack.push(operator_token);
 
-                if let Some(token_d1) = token_before_operator {
+                output = if let Some(token_d1) = token_before_operator {
                     last_tokens_stack.push(token_d1.clone());
 
                     match token_d1 {
-                        Token::Str(_) => output = rm_line!(output),
-                        Token::Integer(_) => output = rm_line!(output),
-                        Token::Identifier(_) => output = rm_line!(output),
-                        Token::Float(_) => output = rm_line!(output),
-                        Token::Bool(_) => output = rm_line!(output),
-                        _ => {
-                            output = add_if_missing!(output, "\n");
-                            output = add_indents!(output, indents);
-                        }
+                        Token::Str(_) => rm_line!(output),
+                        Token::Integer(_) => rm_line!(output),
+                        Token::Identifier(_) => rm_line!(output),
+                        Token::Float(_) => rm_line!(output),
+                        Token::Bool(_) => rm_line!(output),
+                        _ => jmp_line!(output, indents),
                     }
                 } else {
-                    output = add_if_missing!(output, "\n");
-                    output = add_indents!(output, indents);
-                }
+                    jmp_line!(output, indents)
+                };
 
                 output.push('-');
                 output = add_if_missing!(output, " ")
