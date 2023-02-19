@@ -2,6 +2,15 @@
 
 Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), **maeel** is a concatenative [stack oriented programming language](https://en.wikipedia.org/wiki/Stack-oriented_programming) built with ~1135 lines (lexer + interpreter + formatter) of Rust from scratch without any thirdparty library.
 
+## Examples
+
+- [abs(x)](./examples/maths/absolute_value.maeel)
+- [sqrt(x)](./examples/maths/square_root.maeel)
+- [x^n](./examples/maths/pow.maeel)
+- [fizz-buzz](./examples/fizz-buzz.maeel)
+- [3x+1](./examples/3x%2B1.maeel)
+- [fibonacci](./examples/fibonacci.maeel)
+
 ## Stack manipulation
 
 | Name   | Description
