@@ -1,0 +1,7 @@
+proc abs do
+    dup 0 < dup
+    if do swap! swap! end
+    if do swap end
+end
+
+(10 abs) (10! abs) = println

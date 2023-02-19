@@ -1,0 +1,17 @@
+let n 1
+
+true while do
+    n dup dup
+
+    3% 0= if do "Fizz" println pop end
+    5% 0= if do "Buzz" println pop end
+    15% 0= if do "FizzBuzz" println pop end
+
+    n dup dup dup
+
+    5% 0=! swap 3% 0=! * swap 15 % 0=! * if do
+        n println pop
+    end
+
+    1 + let n dup 100 <
+end
