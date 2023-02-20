@@ -49,9 +49,8 @@ macro_rules! jmp_line {
 macro_rules! one_arg_operator {
     ($operator:expr, $last_tokens_stack:expr, $output:expr, $indents:expr) => {{
         let operator_token = $last_tokens_stack.pop().unwrap();
-        let token_before_operator = $last_tokens_stack.pop();
 
-        $last_tokens_stack.push(operator_token);
+        let token_before_operator = $last_tokens_stack.pop();
 
         $output = if let Some(token_d1) = token_before_operator {
             $last_tokens_stack.push(token_d1.clone());
@@ -62,11 +61,19 @@ macro_rules! one_arg_operator {
                 Token::Identifier(_) => rm_line!($output),
                 Token::Float(_) => rm_line!($output),
                 Token::Bool(_) => rm_line!($output),
+                Token::Pop => rm_line!($output),
+                Token::Dup => rm_line!($output),
+                Token::Over => rm_line!($output),
+                Token::Take => rm_line!($output),
+                Token::Swap => rm_line!($output),
                 _ => jmp_line!($output, $indents),
             }
         } else {
             jmp_line!($output, $indents)
         };
+
+        $last_tokens_stack.push(operator_token);
+        $output = rm_if_present!($output, " ");
 
         $output.push($operator);
         $output = add_if_missing!($output, " ")
@@ -137,7 +144,7 @@ pub fn format(tokens: Vec<Token>) -> String {
             Token::BlockEnd => {
                 indents -= 1;
                 output = jmp_line!(output, indents);
-                output.push_str("end\n")
+                output.push_str("end")
             }
 
             Token::Pop => zero_arg_keyword!("pop", output, indents),
@@ -148,9 +155,19 @@ pub fn format(tokens: Vec<Token>) -> String {
             Token::Clear => zero_arg_keyword!("clear", output, indents),
             Token::Return => zero_arg_keyword!("return", output, indents),
 
-            Token::If => one_arg_keyword!("if", last_tokens_stack, output, indents),
-            Token::For => one_arg_keyword!("for", last_tokens_stack, output, indents),
-            Token::While => one_arg_keyword!("while", last_tokens_stack, output, indents),
+            Token::If => {
+                output = add_if_missing!(output, "\n\n");
+                one_arg_keyword!("if", last_tokens_stack, output, indents)
+            }
+
+            Token::For => {
+                output = add_if_missing!(output, "\n\n");
+                one_arg_keyword!("for", last_tokens_stack, output, indents)
+            }
+            Token::While => {
+                output = add_if_missing!(output, "\n\n");
+                one_arg_keyword!("while", last_tokens_stack, output, indents)
+            }
 
             Token::Eq => one_arg_operator!('=', last_tokens_stack, output, indents),
             Token::Gt => one_arg_operator!('>', last_tokens_stack, output, indents),
@@ -192,25 +209,21 @@ pub fn format(tokens: Vec<Token>) -> String {
             Token::Float(content) => {
                 output = jmp_line!(output, indents);
                 output.push_str(&content.to_string());
-                output.push('\n')
             }
 
             Token::Bool(content) => {
                 output = jmp_line!(output, indents);
                 output.push_str(&content.to_string());
-                output.push('\n')
             }
 
             Token::Str(content) => {
                 output = jmp_line!(output, indents);
                 output.push_str(&format!("{:?}", content));
-                output.push('\n')
             }
 
             Token::Integer(content) => {
                 output = jmp_line!(output, indents);
                 output.push_str(&content.to_string());
-                output.push('\n')
             }
 
             Token::Identifier(content) => {
@@ -227,7 +240,6 @@ pub fn format(tokens: Vec<Token>) -> String {
                 }
 
                 output.push_str(&content);
-                output.push('\n')
             }
         }
     }

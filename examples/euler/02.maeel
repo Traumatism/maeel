@@ -1,0 +1,17 @@
+let a   0
+let b   1
+let sum 0
+
+true while do
+    b dup
+    a b + let b pop
+    let a pop
+
+    dup 2% 0= if do
+        sum + let sum pop
+    end
+
+    b 4_000_000 <
+end
+
+sum println
