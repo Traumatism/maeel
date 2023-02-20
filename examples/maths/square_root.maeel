@@ -2,12 +2,11 @@ proc sqrt do
     let a dup
     2 / let y pop
 
-    0 0
-
-    true while do
+    0 0 true while do
         a y / y + 2 / let y pop
-        1 + dup
-        5 <
+        1 +
+
+        dup 5 <
     end
 
     y

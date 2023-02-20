@@ -1,9 +1,11 @@
 let sum 0
 
-0 true while do
-    1+ dup dup
+0
 
-    3% 0= swap 5% 0= + if do
+true while do
+    1+ dup
+
+    dup 3% 0= swap 5% 0= + if do
         dup sum + let sum pop
     end
 
