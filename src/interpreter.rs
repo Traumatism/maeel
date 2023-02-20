@@ -261,10 +261,6 @@ impl Interpreter {
                 Token::Eq => binary_op!(self, ==, VMType::Bool),
                 Token::Block(tokens) => run_block!(self, tokens),
 
-                Token::Del => {
-                    self.vars.remove(&next!(tokens, "identifier"));
-                }
-
                 Token::Pop => {
                     pop!(self);
                 }
