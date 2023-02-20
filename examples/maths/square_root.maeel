@@ -9,7 +9,8 @@ proc sqrt do
         dup 5 <
     end
 
+    pop pop
     y
 end
 
-2 sqrt println
+2 sqrt println pop
