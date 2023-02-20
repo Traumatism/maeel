@@ -1,0 +1,13 @@
+let sum 0
+
+0 true while do
+    1+ dup dup
+
+    3% 0= swap 5% 0= + if do
+        dup sum + let sum pop
+    end
+
+    dup 1000 <
+end
+
+sum println
