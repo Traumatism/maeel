@@ -141,7 +141,6 @@ pub fn format(tokens: Vec<Token>) -> String {
             }
 
             Token::Pop => zero_arg_keyword!("pop", output, indents),
-            Token::Del => zero_arg_keyword!("del", output, indents),
             Token::Dup => zero_arg_keyword!("dup", output, indents),
             Token::Over => zero_arg_keyword!("over", output, indents),
             Token::Take => zero_arg_keyword!("take", output, indents),
