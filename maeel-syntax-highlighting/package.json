@@ -1,0 +1,25 @@
+{
+  "name": "maeel-syntax-highlighting",
+  "displayName": "maeel-syntax-highlighting",
+  "description": "Add syntax highlighting support for maeel",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [{
+      "id": "maeel",
+      "aliases": ["maeel", "maeel"],
+      "extensions": [".maeel"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "maeel",
+      "scopeName": "source.maeel",
+      "path": "./syntaxes/maeel.tmLanguage.json"
+    }]
+  }
+}
