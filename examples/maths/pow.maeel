@@ -1,45 +1,34 @@
-proc abs do
-    (dup 0 <) dup
-    if do swap! swap! end
-    if do swap end
+proc _pow do
+    let exp  pop
+    let base pop
+
+    1 0
+    
+    dup exp < while do
+        swap base *
+        swap 1 +
+        dup exp <
+    end
+
+    pop
 end
 
 proc pow do
-    let exp   pop
-    let base  pop
-    let power 1
+    let exp  dup swap
+    let base pop
 
-    (exp abs) let abs_exp pop
-
-    1 1
-
-    ((abs_exp <) (over abs_exp =) +) while do
-        (power base *) let power pop
-        (1 +) dup
-        ((abs_exp <) (over abs_exp =) +)
-    end
-
-    (exp 0 <) dup
+    0 < dup
 
     if do
-        (1 power /) swap!
+        base exp! _pow 1 swap / swap
     end
 
-    if do
-        power
+    !if do
+        base exp _pow
     end
 end
 
-proc square do
-    (dup *)
-end
 
-proc cube do
-    (dup square) *
-end
 
-2 square println
-2 cube   println
-
-2 0  pow println
 2 10 pow println
+2 10! pow println
