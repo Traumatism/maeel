@@ -3,7 +3,7 @@ proc _pow do
     let base pop
 
     1 0
-    
+
     dup exp < while do
         swap base *
         swap 1 +
@@ -27,8 +27,6 @@ proc pow do
         base exp _pow
     end
 end
-
-
 
 2 10 pow println
 2 10! pow println

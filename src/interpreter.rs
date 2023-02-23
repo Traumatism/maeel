@@ -235,11 +235,24 @@ impl Interpreter {
                 Token::Return => self.stop_execution = true,
                 Token::Clear => self.data.clear(),
                 Token::BlockStart | Token::BlockEnd => panic!(),
+
                 Token::Str(content) => push!(self, content, VMType::Str),
                 Token::Bool(content) => push!(self, content, VMType::Bool),
                 Token::Float(content) => push!(self, content, VMType::Float),
                 Token::Integer(content) => push!(self, content, VMType::Integer),
+
                 Token::Dup => push!(self, self.data.last().cloned().unwrap()),
+
+                Token::Rot => {
+                    let third = pop!(self);
+                    let second = pop!(self);
+                    let first = pop!(self);
+
+                    push!(self, second);
+                    push!(self, third);
+                    push!(self, first);
+                }
+
                 Token::Swap => {
                     let second = pop!(self);
                     let first = pop!(self);
@@ -247,6 +260,7 @@ impl Interpreter {
                     push!(self, second);
                     push!(self, first);
                 }
+
                 Token::Over => {
                     push!(self, self.data[self.data.len() - 2].to_owned());
                 }
