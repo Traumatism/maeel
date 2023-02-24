@@ -51,6 +51,24 @@ proc <name> do
 end
 ```
 
+## Pointers
+
+```
+<variable> ptr
+```
+
+## Syscalls
+
+```
+"Hello, world" ptr
+let syscall_0      1
+let syscall_1      pop
+let syscall_2      5
+let syscall_number 4
+
+syscall
+```
+
 ## If conditions
 
 ```
@@ -153,4 +171,3 @@ Value can be a positive integer, a float, a string or a boolean.
 123 println
 123! println
 ```
-

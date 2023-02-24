@@ -1,13 +1,20 @@
+let pi               3.14159
+let e                2.71828
+let theodorus_const  1.73205
+let phi              1.61803
+let pythagoras_const 1.41421
+
+
 proc log do
     let number pop
     let base   pop
 
     0
 
-    (number base >) (number base =) + while do
+    number base > number base = + while do
         1+
-        (number base /) let number pop
-        (number base >) (number base =) +
+        number base / let number pop
+        number base > number base = +
     end
 end
 

@@ -51,7 +51,7 @@
 				},
 				{
 					"name": "entity.name.function.maeel",
-					"match": "\\b(pop|dup|over|swap|take|clear|return|rot|print|println)\\b"
+					"match": "\\b(pop|dup|over|swap|take|clear|return|rot|print|println|ptr)\\b"
 				}
 			]
 		},
