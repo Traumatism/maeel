@@ -219,9 +219,70 @@ macro_rules! run_block {
     };
 }
 
+#[cfg(all(target_family = "unix", target_arch = "x86_64"))]
 macro_rules! do_syscall {
     ($syscall_nr:expr, $arg_0:expr) => {
-        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
+        asm!(
+            "syscall",
+            in("rdi") $arg_0,
+            in("rax") $syscall_nr,
+        )
+    };
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr) => {
+        asm!(
+            "syscall",
+            in("rdi") $arg_0,
+            in("rsi") $arg_1,
+            in("rax") $syscall_nr,
+        )
+    };
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr) => {
+        asm!(
+            "syscall",
+            in("rdi") $arg_0,
+            in("rsi") $arg_1,
+            in("rdx") $arg_2,
+            in("rax") $syscall_nr,
+        )
+    };
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr) => {
+        asm!(
+            "syscall",
+            in("rdi") $arg_0,
+            in("rsi") $arg_1,
+            in("rdx") $arg_2,
+            in("r10") $arg_3,
+            in("rax") $syscall_nr,
+        )
+    };
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr) => {
+        asm!(
+            "syscall",
+            in("rdi") $arg_0,
+            in("rsi") $arg_1,
+            in("rdx") $arg_2,
+            in("r10") $arg_3,
+            in("r8") $arg_4,
+            in("rax") $syscall_nr,
+        )
+    };
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr, $arg_5:expr) => {
+        asm!(
+            "syscall",
+            in("rdi") $arg_0,
+            in("rsi") $arg_1,
+            in("rdx") $arg_2,
+            in("r10") $arg_3,
+            in("r8") $arg_4,
+            in("r9") $arg_5,
+            in("rax") $syscall_nr,
+        )
+    };
+}
+
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+macro_rules! do_syscall {
+    ($syscall_nr:expr, $arg_0:expr) => {
         asm!(
             "svc #0",
             in("x0") $arg_0,
@@ -229,7 +290,6 @@ macro_rules! do_syscall {
         )
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr) => {
-        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
         asm!(
             "svc #0",
             in("x0") $arg_0,
@@ -238,7 +298,6 @@ macro_rules! do_syscall {
         )
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr) => {
-        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
         asm!(
             "svc #0",
             in("x0") $arg_0,
@@ -248,7 +307,6 @@ macro_rules! do_syscall {
         )
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr) => {
-        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
         asm!(
             "svc #0",
             in("x0") $arg_0,
@@ -259,7 +317,6 @@ macro_rules! do_syscall {
         )
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr) => {
-        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
         asm!(
             "svc #0",
             in("x0") $arg_0,
@@ -271,7 +328,6 @@ macro_rules! do_syscall {
         )
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr, $arg_5:expr) => {
-        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
         asm!(
             "svc #0",
             in("x0") $arg_0,
@@ -490,7 +546,7 @@ impl Interpreter {
                                     in("x16") 4,
                                 );
 
-                                #[cfg(all(target_family = "unix", target_arch = "x86"))]
+                                #[cfg(all(target_family = "unix", target_arch = "x86_64"))]
                                 asm!(
                                     "syscall",
                                     in("rax") 1,
@@ -518,7 +574,7 @@ impl Interpreter {
                                     in("x16") 4,
                                 );
 
-                                #[cfg(all(target_family = "unix", target_arch = "x86"))]
+                                #[cfg(all(target_family = "unix", target_arch = "x86_64"))]
                                 asm!(
                                     "syscall",
                                     in("rax") 1,
