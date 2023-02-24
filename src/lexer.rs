@@ -33,6 +33,7 @@ pub enum Token {
     Return,
     BlockStart,
     BlockEnd,
+    Include,
     If,
     For,
     While,
@@ -124,6 +125,7 @@ macro_rules! lex_identifier {
             "proc" => Token::ProcStart,
             "true" => Token::Bool(true),
             "false" => Token::Bool(false),
+            "include" => Token::Include,
             _ => Token::Identifier(String::from($identifier)),
         }
     };

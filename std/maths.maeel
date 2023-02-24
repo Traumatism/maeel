@@ -1,0 +1,67 @@
+proc log do
+    let number pop
+    let base   pop
+
+    0
+
+    (number base >) (number base =) + while do
+        1+
+        (number base /) let number pop
+        (number base >) (number base =) +
+    end
+end
+
+
+proc abs do
+    dup 0 < dup
+    if do swap! swap! end
+    if do swap end
+end
+
+
+proc _pow do
+    let exp  pop
+    let base pop
+
+    1 0
+
+    dup exp < while do
+        swap base *
+        swap 1 +
+        dup exp <
+    end
+
+    pop
+end
+
+
+proc pow do
+    let exp  dup swap
+    let base pop
+
+    0 < dup
+
+    if do
+        base exp! _pow 1 swap / swap
+    end
+
+    !if do
+        base exp _pow
+    end
+end
+
+
+proc sqrt do
+    let a dup
+    2 / let y pop
+
+    0 0 true while do
+        a y / y + 2 / let y pop
+        1 +
+
+        dup 5 <
+    end
+
+    pop pop
+    y
+end

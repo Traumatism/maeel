@@ -47,11 +47,11 @@
 			"patterns": [
 				{
 					"name": "keyword.control.maeel",
-					"match": "\\b(if|while|for|let|proc|do|end)\\b"
+					"match": "\\b(if|while|for|let|proc|do|end|include)\\b"
 				},
 				{
 					"name": "entity.name.function.maeel",
-					"match": "\\b(pop|dup|over|swap|take|clear|return|print|println)\\b"
+					"match": "\\b(pop|dup|over|swap|take|clear|return|rot|print|println)\\b"
 				}
 			]
 		},

@@ -147,6 +147,7 @@ pub fn format(tokens: Vec<Token>) -> String {
                 output.push_str("end")
             }
 
+            Token::Include => zero_arg_keyword!("include", output, indents),
             Token::Pop => zero_arg_keyword!("pop", output, indents),
             Token::Dup => zero_arg_keyword!("dup", output, indents),
             Token::Over => zero_arg_keyword!("over", output, indents),

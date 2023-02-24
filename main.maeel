@@ -1,0 +1,14 @@
+include "std/maths.maeel"
+include "std/array.maeel"
+
+"√2: " print pop
+2 sqrt println pop
+
+"|10|: " print pop
+10 abs println pop
+
+"|-10|: " print pop
+10 abs println pop
+
+"4,294,967,296 = 2 ^ " print pop
+2 4_294_967_296 log println pop
