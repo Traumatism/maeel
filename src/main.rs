@@ -19,7 +19,6 @@ Maeel interpreter usage
 maeel run <file>    <> Execute a maeel program
 maeel fmt <file>    <> Format a maeel program
 maeel lex <file>    <> Turn file into tokens
-
             "#
         )
     };
