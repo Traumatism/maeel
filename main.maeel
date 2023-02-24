@@ -1,14 +1,14 @@
 include "std/maths.maeel"
-include "std/array.maeel"
+include "std/std.maeel"
 
-"√2: " print pop
+"sqrt(2): " 9 puts
 2 sqrt println pop
 
-"|10|: " print pop
+"|10|: " 6 puts
 10 abs println pop
 
-"|-10|: " print pop
+"|-10|: " 7 puts
 10 abs println pop
 
-"4,294,967,296 = 2 ^ " print pop
+"4,294,967,296 = 2 ^ "  20 puts
 2 4_294_967_296 log println pop
