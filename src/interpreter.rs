@@ -1,9 +1,10 @@
 use crate::lexer::{extract_instructions, Token};
 
 use std::collections::HashMap;
+use std::ops::{Add, Div, Mul, Not, Rem, Sub};
 use std::slice::Iter;
 
-use std::ops::{Add, Div, Mul, Not, Rem, Sub};
+use core::arch::asm;
 
 /// The `VMType` enum stores all data types that the
 /// interpreter can work with
@@ -307,13 +308,65 @@ impl Interpreter {
 
                         "println" => {
                             let element = pop!(self);
-                            println!("{}", element.to_string());
+
+                            let message = element.to_string() + "\n";
+                            let msg_ptr = message.as_ptr();
+                            let msg_len = message.chars().count();
+
+                            unsafe {
+                                #[cfg(target_os = "macos")]
+                                #[cfg(target_arch = "aarch64")]
+                                asm!(
+                                    "svc #0",
+                                    in("x0") 1,
+                                    in("x1") msg_ptr,
+                                    in("x2") msg_len,
+                                    in("x16") 4,
+                                );
+
+                                #[cfg(target_family = "unix")]
+                                #[cfg(target_arch = "x86")]
+                                asm!(
+                                    "syscall",
+                                    in("rax") 1,
+                                    in("rdi") 1,
+                                    in("rsi") msg_ptr,
+                                    in("rdx") msg_len,
+                                );
+                            }
+
                             push!(self, element);
                         }
 
                         "print" => {
                             let element = pop!(self);
-                            print!("{}", element.to_string());
+
+                            let message = element.to_string();
+                            let msg_ptr = message.as_ptr();
+                            let msg_len = message.chars().count();
+
+                            unsafe {
+                                #[cfg(target_os = "macos")]
+                                #[cfg(target_arch = "aarch64")]
+                                asm!(
+                                    "svc #0",
+                                    in("x0") 1,
+                                    in("x1") msg_ptr,
+                                    in("x2") msg_len,
+                                    in("x16") 4,
+                                );
+
+                                #[cfg(target_family = "unix")]
+                                #[cfg(target_arch = "x86")]
+                                asm!(
+                                    "syscall",
+                                    in("rax") 1,
+                                    in("rdi") 1,
+                                    in("rsi") msg_ptr,
+                                    in("rdx") msg_len,
+                                );
+                            }
+
                             push!(self, element);
                         }
 
