@@ -232,6 +232,7 @@ impl Interpreter {
             }
 
             match token.clone() {
+                Token::Include => panic!(),
                 Token::Return => self.stop_execution = true,
                 Token::Clear => self.data.clear(),
                 Token::BlockStart | Token::BlockEnd => panic!(),

@@ -1,0 +1,12 @@
+proc log do
+    let number pop
+    let base   pop
+
+    0
+
+    (number base >) (number base =) + while do
+        1+
+        (number base /) let number pop
+        (number base >) (number base =) +
+    end
+end
