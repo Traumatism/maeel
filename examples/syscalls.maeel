@@ -1,0 +1,19 @@
+proc exit do
+    let syscall_0      pop
+    let syscall_number 1
+
+    syscall
+end
+
+proc puts do
+    ptr
+    let syscall_1      pop
+    let syscall_0      1
+    let syscall_2      5
+    let syscall_number 4
+
+    syscall
+end
+
+"hello" puts
+1 exit

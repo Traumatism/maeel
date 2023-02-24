@@ -179,7 +179,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 while let Some(next) = chars.pop() {
                     match next {
-                        'a'..='z' | 'A'..='Z' | '_' => content.push(next),
+                        'a'..='z' | 'A'..='Z' | '_' | '0'..='9' => content.push(next),
                         _ => {
                             chars.push(next);
                             break;

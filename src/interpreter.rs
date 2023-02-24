@@ -15,7 +15,9 @@ use core::arch::asm;
 pub enum VMType {
     Float(f64),
     Integer(i64),
+    IntPointer(Box<i64>),
     Str(String),
+    StrPointer(String),
     Bool(bool),
     Array(Vec<VMType>),
 }
@@ -56,6 +58,7 @@ impl ToString for VMType {
             VMType::Str(a) => a.to_string(),
             VMType::Bool(a) => a.to_string(),
             VMType::Array(a) => format!("{a:?}"),
+            _ => panic!(),
         }
     }
 }
@@ -216,6 +219,98 @@ macro_rules! run_block {
     };
 }
 
+macro_rules! do_syscall {
+    ($syscall_nr:expr, $arg_0:expr) => {
+        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
+        asm!(
+            "svc #0",
+            in("x0") $arg_0,
+            in("x16") $syscall_nr,
+        )
+    };
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr) => {
+        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
+        asm!(
+            "svc #0",
+            in("x0") $arg_0,
+            in("x1") $arg_1,
+            in("x16") $syscall_nr,
+        )
+    };
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr) => {
+        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
+        asm!(
+            "svc #0",
+            in("x0") $arg_0,
+            in("x1") $arg_1,
+            in("x2") $arg_2,
+            in("x16") $syscall_nr,
+        )
+    };
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr) => {
+        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
+        asm!(
+            "svc #0",
+            in("x0") $arg_0,
+            in("x1") $arg_1,
+            in("x2") $arg_2,
+            in("x3") $arg_3,
+            in("x16") $syscall_nr,
+        )
+    };
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr) => {
+        #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
+        asm!(
+            "svc #0",
+            in("x0") $arg_0,
+            in("x1") $arg_1,
+            in("x2") $arg_2,
+            in("x3") $arg_3,
+            in("x4") $arg_4,
+            in("x16") $syscall_nr,
+        )
+    };
+}
+
+fn handle_syscall(syscall_nr: usize, args: &[VMType]) {
+    let mut arg_ptrs: [*const std::ffi::c_void; 5] = [std::ptr::null(); 5];
+
+    for (i, arg) in args.iter().enumerate() {
+        match arg {
+            VMType::Integer(value) => arg_ptrs[i] = *value as *const std::ffi::c_void,
+            // VMType::IntPointer(ptr) => arg_ptrs[i] = (*ptr) as *const std::ffi::c_void,
+            VMType::StrPointer(ptr) => arg_ptrs[i] = ptr.as_ptr() as *const std::ffi::c_void,
+            _ => panic!("invalid argument type"),
+        }
+    }
+
+    match args.len() {
+        1 => unsafe { do_syscall!(syscall_nr, arg_ptrs[0]) },
+        2 => unsafe { do_syscall!(syscall_nr, arg_ptrs[0], arg_ptrs[1]) },
+        3 => unsafe { do_syscall!(syscall_nr, arg_ptrs[0], arg_ptrs[1], arg_ptrs[2]) },
+        4 => unsafe {
+            do_syscall!(
+                syscall_nr,
+                arg_ptrs[0],
+                arg_ptrs[1],
+                arg_ptrs[2],
+                arg_ptrs[3]
+            )
+        },
+        5 => unsafe {
+            do_syscall!(
+                syscall_nr,
+                arg_ptrs[0],
+                arg_ptrs[1],
+                arg_ptrs[2],
+                arg_ptrs[3],
+                arg_ptrs[4]
+            )
+        },
+        _ => panic!("invalid number of arguments"),
+    }
+}
+
 /// Maeel interpreter
 #[derive(Default)]
 pub struct Interpreter {
@@ -301,25 +396,63 @@ impl Interpreter {
 
                 Token::Identifier(identifier) => {
                     match identifier.as_str() {
-                        "exit" => match pop!(self) {
-                            VMType::Integer(status) => std::process::exit(status as i32),
-                            _ => panic!(),
-                        },
+                        "ptr" => {
+                            let element = pop!(self);
+
+                            let new_element = match element {
+                                VMType::Str(content) => VMType::StrPointer(content),
+                                VMType::Integer(content) => VMType::IntPointer(Box::new(content)),
+                                _ => panic!(),
+                            };
+
+                            push!(self, new_element);
+                        }
+
+                        "syscall" => {
+                            let mut syscalls_args = Vec::new();
+
+                            let syscall_nr = match self.vars.get("syscall_number") {
+                                Some(VMType::Integer(number)) => *number as usize,
+                                _ => panic!(),
+                            };
+
+                            for name in self.vars.keys() {
+                                if !name.starts_with("syscall_") {
+                                    continue;
+                                }
+
+                                let name_cpy = name.clone();
+                                let number_e = name_cpy[8..name_cpy.len()].parse::<u8>();
+
+                                let number = if let Ok(n) = number_e {
+                                    n
+                                } else {
+                                    continue;
+                                };
+
+                                syscalls_args.push((number, self.vars[name].clone()));
+                            }
+
+                            syscalls_args.sort_by_key(|(n, _)| *n);
+
+                            let args: Vec<VMType> =
+                                syscalls_args.into_iter().map(|(_, arg)| arg).collect();
+
+                            handle_syscall(syscall_nr, &args);
+                        }
 
                         "println" => {
                             let element = pop!(self);
 
                             let message = element.to_string() + "\n";
-                            let msg_ptr = message.as_ptr();
-                            let msg_len = message.chars().count();
 
                             unsafe {
                                 #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
                                 asm!(
                                     "svc #0",
                                     in("x0") 1,
-                                    in("x1") msg_ptr,
-                                    in("x2") msg_len,
+                                    in("x1") message.as_ptr(),
+                                    in("x2") message.len(),
                                     in("x16") 4,
                                 );
 
@@ -328,8 +461,8 @@ impl Interpreter {
                                     "syscall",
                                     in("rax") 1,
                                     in("rdi") 1,
-                                    in("rsi") msg_ptr,
-                                    in("rdx") msg_len,
+                                    in("rsi") message.as_ptr(),
+                                    in("rdx") message.len(),
                                 );
                             }
 
@@ -339,29 +472,25 @@ impl Interpreter {
                         "print" => {
                             let element = pop!(self);
 
-                            let message = element.to_string();
-                            let msg_ptr = message.as_ptr();
-                            let msg_len = message.chars().count();
+                            let message = element.to_string() + "\n";
 
                             unsafe {
-                                #[cfg(target_os = "macos")]
-                                #[cfg(target_arch = "aarch64")]
+                                #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
                                 asm!(
                                     "svc #0",
                                     in("x0") 1,
-                                    in("x1") msg_ptr,
-                                    in("x2") msg_len,
+                                    in("x1") message.as_ptr(),
+                                    in("x2") message.len(),
                                     in("x16") 4,
                                 );
 
-                                #[cfg(target_family = "unix")]
-                                #[cfg(target_arch = "x86")]
+                                #[cfg(all(target_family = "unix", target_arch = "x86"))]
                                 asm!(
                                     "syscall",
                                     in("rax") 1,
                                     in("rdi") 1,
-                                    in("rsi") msg_ptr,
-                                    in("rdx") msg_len,
+                                    in("rsi") message.as_ptr(),
+                                    in("rdx") message.len(),
                                 );
                             }
 
