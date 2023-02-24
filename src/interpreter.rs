@@ -314,8 +314,7 @@ impl Interpreter {
                             let msg_len = message.chars().count();
 
                             unsafe {
-                                #[cfg(target_os = "macos")]
-                                #[cfg(target_arch = "aarch64")]
+                                #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
                                 asm!(
                                     "svc #0",
                                     in("x0") 1,
@@ -324,8 +323,7 @@ impl Interpreter {
                                     in("x16") 4,
                                 );
 
-                                #[cfg(target_family = "unix")]
-                                #[cfg(target_arch = "x86")]
+                                #[cfg(all(target_family = "unix", target_arch = "x86"))]
                                 asm!(
                                     "syscall",
                                     in("rax") 1,

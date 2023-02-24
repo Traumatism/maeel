@@ -174,12 +174,12 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 Some(Token::Str(content))
             }
 
-            'a'..='z' | '_' => {
+            'a'..='z' | 'A'..='Z' | '_' => {
                 let mut content = String::from(chr);
 
                 while let Some(next) = chars.pop() {
                     match next {
-                        'a'..='z' | '_' => content.push(next),
+                        'a'..='z' | 'A'..='Z' | '_' => content.push(next),
                         _ => {
                             chars.push(next);
                             break;
