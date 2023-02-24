@@ -1,6 +1,6 @@
 proc exit do
+    let syscall_0 pop
     let syscall_number 1
-    let syscall_0      pop
 
     syscall
 end
