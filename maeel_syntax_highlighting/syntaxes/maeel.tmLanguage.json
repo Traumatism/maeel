@@ -1,0 +1,76 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "maeel",
+	"patterns": [
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#booleans"
+		},
+		{
+			"include": "#numerics"
+		},
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#names"
+		},
+		{
+			"include": "#operators"
+		}
+	],
+	"repository": {
+		"strings": {
+			"name": "string.quoted.double.maeel",
+			"begin": "\"",
+			"end": "\""
+		},
+		"booleans": {
+			"patterns": [
+				{
+					"name": "constant.language.maeel",
+					"match": "\\b(true|false)\\b"
+				}
+			]
+		},
+		"numerics": {
+			"patterns": [
+				{
+					"name": "constant.numeric.maeel",
+					"match": "\\b([0-9\\._]+)\\b"
+				}
+			]
+		},
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control.maeel",
+					"match": "\\b(if|while|for|let|proc|do|end|include)\\b"
+				},
+				{
+					"name": "entity.name.function.maeel",
+					"match": "\\b(pop|dup|over|swap|take|clear|return|rot|print|println|ptr)\\b"
+				}
+			]
+		},
+		"names": {
+			"patterns": [
+				{
+					"name": "support.variable.maeel",
+					"match": "\\b([a-zA-Z0-9_]+)\\b"
+				}
+			]
+		},
+		"operators": {
+			"patterns": [
+				{
+					"name": "keyword.operator",
+					"match": "\\b(\\+|\\-|\\*|\\/|%|<|>|=|!)\\b"
+				}
+			]
+		}
+	},
+	"scopeName": "source.maeel"
+}
