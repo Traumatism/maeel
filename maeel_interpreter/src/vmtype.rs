@@ -94,6 +94,7 @@ impl Mul for VMType {
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a * b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 * b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a * b as f64),
+
             (VMType::Bool(false), VMType::Bool(_)) => VMType::Bool(false),
             (VMType::Bool(_), VMType::Bool(false)) => VMType::Bool(false),
             (VMType::Bool(true), VMType::Bool(true)) => VMType::Bool(true),
@@ -113,13 +114,16 @@ impl Add for VMType {
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a + b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 + b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a + b as f64),
+
             (VMType::Bool(true), VMType::Bool(_)) => VMType::Bool(true),
             (VMType::Bool(_), VMType::Bool(true)) => VMType::Bool(true),
             (VMType::Bool(false), VMType::Bool(false)) => VMType::Bool(false),
+
             (other, VMType::Array(mut array)) | (VMType::Array(mut array), other) => {
                 array.push(other);
                 VMType::Array(array)
             }
+
             (a, b) => panic!("can't add {a:?} and {b:?}"),
         }
     }
