@@ -6,4 +6,4 @@ install:
 
 vscode:
 	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && \
-	cp -r maeel-syntax-highlighting ~/.vscode/extensions/maeel-syntax-highlighting
+	cp -r maeel_syntax_highlighting ~/.vscode/extensions/maeel-syntax-highlighting
