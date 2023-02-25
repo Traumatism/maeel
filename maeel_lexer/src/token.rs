@@ -4,7 +4,7 @@
 /// The `Clone` trait is implemented, which allows
 /// the enum members to be easily copied and cloned.
 ///
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Block(Vec<Token>),
     Str(String),
