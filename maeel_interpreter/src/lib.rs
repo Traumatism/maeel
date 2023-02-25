@@ -75,7 +75,7 @@ macro_rules! run_block {
 #[derive(Default)]
 pub struct Interpreter {
     pub data: Vec<VMType>,
-    vars: HashMap<String, VMType>,
+    pub vars: HashMap<String, VMType>,
     procs: HashMap<String, Vec<Token>>,
     stop_execution: bool,
 }
