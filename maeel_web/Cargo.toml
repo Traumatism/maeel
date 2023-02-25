@@ -1,0 +1,11 @@
+[package]
+name = "maeel_web"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+yew = { version = "0.20.0", features = ["csr"] }
+maeel_lexer = { path = "../maeel_lexer" }
+maeel_interpreter = { path = "../maeel_interpreter" }
