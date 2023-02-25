@@ -1,9 +1,7 @@
-use maeel_lexer::Token;
-use maeel_lexer::{extract_blocks, lex_into_tokens};
-
 #[cfg(test)]
 mod maeel_lexer_tests {
-    use super::*;
+    use maeel_lexer::Token;
+    use maeel_lexer::{extract_blocks, lex_into_tokens};
 
     #[test]
     fn lex_blocks() {
