@@ -1,3 +1,5 @@
+// Absolutly taken from tauri.app
+
 use maeel_interpreter::Interpreter;
 use maeel_lexer::{extract_blocks, extract_instructions, lex_into_tokens, Token};
 use yew::prelude::*;
