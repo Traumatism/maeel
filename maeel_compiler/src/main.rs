@@ -1,15 +1,9 @@
-#![feature(stmt_expr_attributes)]
-
 use std::env::args;
 use std::fs::read_to_string;
 
-use crate::formatter::format;
-use crate::interpreter::Interpreter;
-use crate::lexer::{extract_blocks, extract_instructions, lex_into_tokens, Token};
-
-mod formatter;
-mod interpreter;
-mod lexer;
+use maeel_formatter::format;
+use maeel_interpreter::Interpreter;
+use maeel_lexer::{extract_blocks, extract_instructions, lex_into_tokens, Token};
 
 macro_rules! usage {
     () => {

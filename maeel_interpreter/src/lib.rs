@@ -1,4 +1,4 @@
-use crate::lexer::{extract_instructions, Token};
+use maeel_lexer::{extract_instructions, Token};
 
 use std::collections::HashMap;
 use std::ops::{Add, Div, Mul, Not, Rem, Sub};

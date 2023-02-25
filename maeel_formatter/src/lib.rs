@@ -1,4 +1,4 @@
-use crate::lexer::Token;
+use maeel_lexer::Token;
 
 const INDENT: &str = "    ";
 

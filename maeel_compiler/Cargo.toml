@@ -1,0 +1,10 @@
+[package]
+name = "maeel"
+version = "0.1.0"
+edition = "2021"
+default-run = "maeel"
+
+[dependencies]
+maeel_lexer = { path = "../maeel_lexer" }
+maeel_interpreter = { path = "../maeel_interpreter" }
+maeel_formatter = { path = "../maeel_formatter" }
