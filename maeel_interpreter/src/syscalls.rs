@@ -1,14 +1,31 @@
+#![allow(semicolon_in_expressions_from_macros)]
+
 use super::VMType;
 use core::arch::asm;
 
+#[cfg(not(any(
+    all(target_family = "unix", target_arch = "x86_64"),
+    all(target_os = "macos", target_arch = "aarch64")
+)))]
+#[macro_export]
+macro_rules! do_syscall {
+    ($syscall_nr:expr, $arg_0:expr) => {};
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr) => {};
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr) => {};
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr) => {};
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr) => {};
+    ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr, $arg_5:expr) => {};
+}
+
 #[cfg(all(target_family = "unix", target_arch = "x86_64"))]
+#[macro_export]
 macro_rules! do_syscall {
     ($syscall_nr:expr, $arg_0:expr) => {
         asm!(
             "syscall",
             in("rdi") $arg_0,
             in("rax") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr) => {
         asm!(
@@ -16,7 +33,7 @@ macro_rules! do_syscall {
             in("rdi") $arg_0,
             in("rsi") $arg_1,
             in("rax") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr) => {
         asm!(
@@ -25,7 +42,7 @@ macro_rules! do_syscall {
             in("rsi") $arg_1,
             in("rdx") $arg_2,
             in("rax") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr) => {
         asm!(
@@ -35,7 +52,7 @@ macro_rules! do_syscall {
             in("rdx") $arg_2,
             in("r10") $arg_3,
             in("rax") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr) => {
         asm!(
@@ -46,7 +63,7 @@ macro_rules! do_syscall {
             in("r10") $arg_3,
             in("r8") $arg_4,
             in("rax") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr, $arg_5:expr) => {
         asm!(
@@ -58,18 +75,19 @@ macro_rules! do_syscall {
             in("r8") $arg_4,
             in("r9") $arg_5,
             in("rax") $syscall_nr,
-        )
+        );
     };
 }
 
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+#[macro_export]
 macro_rules! do_syscall {
     ($syscall_nr:expr, $arg_0:expr) => {
         asm!(
             "svc #0",
             in("x0") $arg_0,
             in("x16") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr) => {
         asm!(
@@ -77,7 +95,7 @@ macro_rules! do_syscall {
             in("x0") $arg_0,
             in("x1") $arg_1,
             in("x16") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr) => {
         asm!(
@@ -86,7 +104,7 @@ macro_rules! do_syscall {
             in("x1") $arg_1,
             in("x2") $arg_2,
             in("x16") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr) => {
         asm!(
@@ -96,7 +114,7 @@ macro_rules! do_syscall {
             in("x2") $arg_2,
             in("x3") $arg_3,
             in("x16") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr) => {
         asm!(
@@ -107,7 +125,7 @@ macro_rules! do_syscall {
             in("x3") $arg_3,
             in("x4") $arg_4,
             in("x16") $syscall_nr,
-        )
+        );
     };
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr, $arg_5:expr) => {
         asm!(
@@ -119,7 +137,7 @@ macro_rules! do_syscall {
             in("x4") $arg_4,
             in("x5") $arg_5,
             in("x16") $syscall_nr,
-        )
+        );
     };
 }
 
@@ -138,11 +156,17 @@ pub fn handle_syscall(syscall_nr: usize, args: &[VMType]) {
     }
 
     match args.len() {
-        1 => unsafe { do_syscall!(syscall_nr, arg_ptrs[0]) },
+        1 => unsafe {
+            do_syscall!(syscall_nr, arg_ptrs[0]);
+        },
 
-        2 => unsafe { do_syscall!(syscall_nr, arg_ptrs[0], arg_ptrs[1]) },
+        2 => unsafe {
+            do_syscall!(syscall_nr, arg_ptrs[0], arg_ptrs[1]);
+        },
 
-        3 => unsafe { do_syscall!(syscall_nr, arg_ptrs[0], arg_ptrs[1], arg_ptrs[2]) },
+        3 => unsafe {
+            do_syscall!(syscall_nr, arg_ptrs[0], arg_ptrs[1], arg_ptrs[2]);
+        },
 
         4 => unsafe {
             do_syscall!(
@@ -151,7 +175,7 @@ pub fn handle_syscall(syscall_nr: usize, args: &[VMType]) {
                 arg_ptrs[1],
                 arg_ptrs[2],
                 arg_ptrs[3]
-            )
+            );
         },
 
         5 => unsafe {
@@ -162,7 +186,7 @@ pub fn handle_syscall(syscall_nr: usize, args: &[VMType]) {
                 arg_ptrs[2],
                 arg_ptrs[3],
                 arg_ptrs[4]
-            )
+            );
         },
 
         6 => unsafe {
@@ -174,7 +198,7 @@ pub fn handle_syscall(syscall_nr: usize, args: &[VMType]) {
                 arg_ptrs[3],
                 arg_ptrs[4],
                 arg_ptrs[5]
-            )
+            );
         },
         _ => panic!("invalid number of arguments"),
     }

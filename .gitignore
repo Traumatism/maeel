@@ -2,5 +2,5 @@
 .DS_Store
 maeel
 Cargo.lock
-compiler-tests
 *_out
+maeel_web/dist
