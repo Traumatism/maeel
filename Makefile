@@ -2,7 +2,7 @@ build:
 	cargo build -v --release && mv target/release/maeel .
 
 install:
-	cargo install --path . -v
+	cargo install --path maeel_compiler -v
 
 vscode:
 	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && \
