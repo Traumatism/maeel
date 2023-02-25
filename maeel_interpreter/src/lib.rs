@@ -209,6 +209,12 @@ impl Interpreter {
 
                             let message = element.to_string() + "\n";
 
+                            #[cfg(not(any(
+                                all(target_family = "unix", target_arch = "x86_64"),
+                                all(target_os = "macos", target_arch = "aarch64")
+                            )))]
+                            print!("{}", message);
+
                             unsafe {
                                 #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
                                 asm!(
@@ -235,7 +241,13 @@ impl Interpreter {
                         "print" => {
                             let element = pop!(self);
 
-                            let message = element.to_string() + "\n";
+                            let message = element.to_string();
+
+                            #[cfg(not(any(
+                                all(target_family = "unix", target_arch = "x86_64"),
+                                all(target_os = "macos", target_arch = "aarch64")
+                            )))]
+                            print!("{}", message);
 
                             unsafe {
                                 #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
