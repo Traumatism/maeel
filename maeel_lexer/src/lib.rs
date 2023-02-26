@@ -106,6 +106,7 @@ macro_rules! lex_single_char {
         }
     };
 }
+
 /// The lex_into_tokens function takes a string code as input, and
 /// returns a vector of Tokens representing the lexical tokens
 /// found in the input string.
@@ -118,7 +119,33 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             ' ' | '(' | ')' | '\n' => continue,
 
             '"' => {
-                let content = chars.by_ref().take_while(|&c| c != '"').collect::<String>();
+                let content_vec: Vec<char> = chars.by_ref().take_while(|&c| c != '"').collect();
+                let mut content = String::with_capacity(content_vec.len());
+
+                let mut i = 0;
+                while i < content_vec.len() {
+                    let c = content_vec[i];
+                    i += 1;
+
+                    content.push(if c == '\\' {
+                        if let Some(next_c) = content_vec.get(i) {
+                            i += 1;
+
+                            match next_c {
+                                'n' => '\n',
+                                'r' => '\r',
+                                't' => '\t',
+                                '\\' => '\\',
+                                '"' => '"',
+                                _ => panic!("Invalid escape sequence: \\{}", next_c),
+                            }
+                        } else {
+                            panic!("Incomplete escape sequence");
+                        }
+                    } else {
+                        c
+                    })
+                }
 
                 tokens.push(Token::Str(content));
             }
