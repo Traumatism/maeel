@@ -315,30 +315,30 @@ impl Interpreter {
                 Token::For => {
                     let for_block = next!(tokens, "block");
 
-                    let array = match pop!(self, 1) {
-                        Some(VMType::Array(array)) => array,
-                        _ => {
-                            panic!()
-                        }
-                    };
+                    match pop!(self, 1) {
+                        Some(VMType::Array(array)) => {
+                            for element in array {
+                                push!(self, element);
+                                run_block!(self, for_block);
 
-                    for element in array {
-                        push!(self, element);
-                        run_block!(self, for_block);
-
-                        if self.stop_execution {
-                            break;
+                                if self.stop_execution {
+                                    break;
+                                }
+                            }
                         }
+                        _ => panic!(),
                     }
                 }
 
                 Token::If => {
                     let if_block = next!(tokens, "block");
-                    if match pop!(self, 1) {
-                        Some(VMType::Bool(e)) => e,
-                        _ => panic!(),
-                    } {
-                        run_block!(self, if_block);
+
+                    if let Some(VMType::Bool(e)) = pop!(self, 1) {
+                        if e {
+                            run_block!(self, if_block);
+                        }
+                    } else {
+                        panic!();
                     }
                 }
             }
