@@ -64,18 +64,26 @@ A binary operator takes the two first elements of the stack, applies a function 
 ## Logic
 
 `true true   * println` will print `true` (true AND true)
+
 `true false  * println` will print `false` (true AND false)
+
 `false true  * println` will print `false` (false AND true)
+
 `false false * println` will print `false` (false AND false)
 
+
 `true true   + println` will print `true` (true OR true)
+
 `true false  + println` will print `true` (true OR false)
+
 `false true  + println` will print `true` (false OR true)
+
 `false false + println` will print `false` (false OR false)
 
 ## Other operators
 
 `false! println` will print `true` (NOT false)
+
 `true! println` will print `false` (NOT true)
 
 `<obj> <obj> = println` has the equivalent in Python: `print(<obj> == <obj>)`
@@ -132,7 +140,9 @@ You can also use stack functions:
 An array is defined using the `take` keyword:
 
 `<element 1> <element 2> ... <element n> n take let array pop`,
+
 `(1 2 3 4) 4 take let array pop`,
+
 `"foo" (2.1 "bar" 4) 3 take let array pop`
 
 For loop take each array element, push it on the stack and then execute the next code block for each element:
