@@ -2,17 +2,16 @@ mod token;
 pub use token::Token;
 
 pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
-    let mut instructions = Vec::default();
-    let mut current_instruction = Vec::default();
+    let mut instructions = vec![];
+    let mut current_instruction = vec![];
 
     for token in tokens {
-        match token.clone() {
+        match token {
             Token::BlockEnd => {
                 current_instruction.push(Token::BlockEnd);
-                instructions.push(current_instruction);
-                current_instruction = Vec::default()
+                instructions.push(std::mem::take(&mut current_instruction));
             }
-            _ => current_instruction.push(token.clone()),
+            _ => current_instruction.push(token),
         }
     }
 
@@ -21,19 +20,17 @@ pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
 }
 
 pub fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<Token>, bool) {
-    let mut block_tokens = Vec::new();
+    let mut block_tokens = vec![];
     let mut recurse = false;
     let mut n = 0;
 
     for token in tokens_iter.by_ref() {
         match token {
-            Token::BlockEnd => match n {
-                0 => break,
-                _ => {
-                    n -= 1;
-                    block_tokens.push(token.clone());
-                }
-            },
+            Token::BlockEnd if n == 0 => break,
+            Token::BlockEnd => {
+                n -= 1;
+                block_tokens.push(token.clone());
+            }
             Token::BlockStart => {
                 n += 1;
                 recurse = true;
@@ -47,7 +44,7 @@ pub fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<T
 }
 
 pub fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
-    let mut output = Vec::new();
+    let mut output = vec![];
     let mut tokens_iter = tokens.iter();
 
     while let Some(token) = tokens_iter.next() {
@@ -109,85 +106,60 @@ macro_rules! lex_single_char {
         }
     };
 }
-
 /// The lex_into_tokens function takes a string code as input, and
 /// returns a vector of Tokens representing the lexical tokens
 /// found in the input string.
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
-    let mut chars = code.chars().collect::<Vec<char>>();
-    chars.reverse();
-
+    let mut chars = code.chars().peekable();
     let mut tokens = Vec::new();
 
-    while let Some(chr) = chars.pop() {
-        let token = match chr {
-            ' ' | '(' | ')' | '\n' => None,
+    while let Some(chr) = chars.next() {
+        match chr {
+            ' ' | '(' | ')' | '\n' => continue,
 
             '"' => {
-                let mut content = String::new();
+                let content = chars.by_ref().take_while(|&c| c != '"').collect::<String>();
 
-                while let Some(next) = chars.pop() {
-                    match next {
-                        '"' => break,
-                        _ => content.push(next),
-                    }
-                }
-
-                Some(Token::Str(content))
+                tokens.push(Token::Str(content));
             }
 
             'a'..='z' | 'A'..='Z' | '_' => {
-                let mut content = String::from(chr);
+                let content = std::iter::once(chr)
+                    .chain(
+                        chars
+                            .by_ref()
+                            .take_while(|&c| c.is_alphanumeric() || c == '_'),
+                    )
+                    .collect::<String>();
 
-                while let Some(next) = chars.pop() {
-                    match next {
-                        'a'..='z' | 'A'..='Z' | '_' | '0'..='9' => content.push(next),
-                        _ => {
-                            chars.push(next);
-                            break;
-                        }
-                    }
-                }
-
-                Some(lex_identifier!(&content))
+                tokens.push(lex_identifier!(&content));
             }
 
             '0'..='9' => {
-                let mut content = String::from(chr);
-                let mut float = false;
+                let content = std::iter::once(chr)
+                    .chain(
+                        chars
+                            .by_ref()
+                            .take_while(|&c| c.is_digit(10) || c == '.' || c == '_'),
+                    )
+                    .collect::<String>();
 
-                while let Some(next) = chars.pop() {
-                    match next {
-                        '0'..='9' => content.push(next),
-
-                        '.' if float => {
-                            panic!()
-                        }
-
-                        '.' => {
-                            float = true;
-                            content.push('.')
-                        }
-
-                        '_' => (),
-
-                        _ => {
-                            chars.push(next);
-                            break;
-                        }
-                    }
+                if content.matches('.').count() > 1 {
+                    panic!("Invalid float: {}", content);
                 }
 
-                Some(match float {
-                    true => Token::Float(content.parse::<f64>().unwrap()),
-                    false => Token::Integer(content.parse::<i64>().unwrap()),
-                })
-            }
-            _ => Some(lex_single_char!(chr)),
-        };
+                let token = if content.contains('.') {
+                    Token::Float(content.parse().unwrap())
+                } else {
+                    Token::Integer(content.parse().unwrap())
+                };
 
-        if let Some(token) = token {
-            tokens.push(token)
+                tokens.push(token);
+            }
+
+            _ => {
+                tokens.push(lex_single_char!(chr));
+            }
         }
     }
 
