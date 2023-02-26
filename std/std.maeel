@@ -2,7 +2,6 @@
 let apple_m1    true
 let unix_x86_64 false
 
-
 proc exit do
     let syscall_0 pop
     let syscall_number 1
