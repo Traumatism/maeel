@@ -4,7 +4,6 @@ use std::fs::read_to_string;
 use maeel_formatter::format;
 use maeel_interpreter::Interpreter;
 use maeel_lexer::{extract_blocks, extract_instructions, lex_into_tokens, Token};
-use maeel_typing::analyze;
 
 macro_rules! usage {
     () => {
@@ -16,7 +15,6 @@ Maeel interpreter usage
 maeel run <file>        <> Execute a maeel program
 maeel fmt <file>        <> Format a maeel program
 maeel lex <file>        <> Turn file into tokens
-maeel analyze <file>    <> Perform type checking
             "#
         )
     };
@@ -80,13 +78,6 @@ fn main() {
                 let tokens = lex_into_tokens(&content);
 
                 println!("{}", format(tokens));
-            }
-
-            "analyze" => {
-                let content = read_to_string(args.get(2).unwrap()).expect("Failed to open file");
-                let tokens = lex_into_tokens(&content);
-
-                analyze(tokens);
             }
 
             _ => usage!(),

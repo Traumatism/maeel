@@ -8,4 +8,3 @@ default-run = "maeel"
 maeel_lexer = { path = "../maeel_lexer" }
 maeel_interpreter = { path = "../maeel_interpreter" }
 maeel_formatter = { path = "../maeel_formatter" }
-maeel_typing = { path = "../maeel_typing" }
