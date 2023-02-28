@@ -1,13 +1,14 @@
-// pub struct TokenData {
-//     pub token: Token,
-//     pub line: u16,
-// }
+#[derive(Clone, Debug, PartialEq)]
+pub struct TokenData {
+    pub token: Token,
+    pub line: u16,
+}
 
-// impl TokenData {
-//     pub fn new(token: Token, line: u16) -> Self {
-//         Self { token, line }
-//     }
-// }
+impl TokenData {
+    pub fn new(token: Token, line: u16) -> Self {
+        Self { token, line }
+    }
+}
 
 /// The `Token` enum stores all tokens that the
 /// lexer can identify
@@ -17,7 +18,7 @@
 ///
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
-    Block(Vec<Token>),
+    Block(Vec<TokenData>),
     Str(String),
     Integer(i64),
     Identifier(String),
@@ -48,5 +49,4 @@ pub enum Token {
     If,
     For,
     While,
-    Newline,
 }

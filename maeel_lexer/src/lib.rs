@@ -1,17 +1,19 @@
 mod token;
-pub use token::Token;
+pub use token::{Token, TokenData};
 
-pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
+pub fn extract_instructions(tokens: Vec<TokenData>) -> Vec<Vec<TokenData>> {
     let mut instructions = vec![];
     let mut current_instruction = vec![];
 
-    for token in tokens {
+    for token_data in tokens {
+        let token = token_data.token.clone();
+
         match token {
             Token::BlockEnd => {
-                current_instruction.push(Token::BlockEnd);
+                current_instruction.push(TokenData::new(Token::BlockEnd, token_data.line));
                 instructions.push(std::mem::take(&mut current_instruction));
             }
-            _ => current_instruction.push(token),
+            _ => current_instruction.push(token_data),
         }
     }
 
@@ -19,44 +21,55 @@ pub fn extract_instructions(tokens: Vec<Token>) -> Vec<Vec<Token>> {
     instructions
 }
 
-pub fn extract_block_tokens(tokens_iter: &mut std::slice::Iter<Token>) -> (Vec<Token>, bool) {
+pub fn extract_block_tokens(
+    tokens_iter: &mut std::slice::Iter<TokenData>,
+) -> (Vec<TokenData>, bool) {
     let mut block_tokens = vec![];
     let mut recurse = false;
     let mut n = 0;
 
-    for token in tokens_iter.by_ref() {
+    for token_data in tokens_iter.by_ref() {
+        let token = token_data.token.clone();
+
         match token {
             Token::BlockEnd if n == 0 => break,
             Token::BlockEnd => {
                 n -= 1;
-                block_tokens.push(token.clone());
+                block_tokens.push(token_data.clone());
             }
             Token::BlockStart => {
                 n += 1;
                 recurse = true;
-                block_tokens.push(token.clone());
+                block_tokens.push(token_data.clone());
             }
-            _ => block_tokens.push(token.clone()),
+            _ => block_tokens.push(token_data.clone()),
         }
     }
 
     (block_tokens, recurse)
 }
 
-pub fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
+pub fn extract_blocks(tokens: &[TokenData]) -> Vec<TokenData> {
     let mut output = vec![];
     let mut tokens_iter = tokens.iter();
 
-    while let Some(token) = tokens_iter.next() {
-        output.push(match token {
-            Token::BlockStart => {
-                let (block_tokens, recurse) = extract_block_tokens(&mut tokens_iter);
-                match recurse {
-                    true => Token::Block(extract_blocks(&block_tokens)),
-                    false => Token::Block(block_tokens),
+    while let Some(token_data) = tokens_iter.next() {
+        output.push({
+            let token = token_data.token.clone();
+
+            match token {
+                Token::BlockStart => {
+                    let (block_tokens, recurse) = extract_block_tokens(&mut tokens_iter);
+                    match recurse {
+                        true => TokenData::new(
+                            Token::Block(extract_blocks(&block_tokens)),
+                            token_data.line,
+                        ),
+                        false => TokenData::new(Token::Block(block_tokens), token_data.line),
+                    }
                 }
+                _ => token_data.clone(),
             }
-            _ => token.clone(),
         })
     }
 
@@ -110,13 +123,16 @@ macro_rules! lex_single_char {
 /// The lex_into_tokens function takes a string code as input, and
 /// returns a vector of Tokens representing the lexical tokens
 /// found in the input string.
-pub fn lex_into_tokens(code: &str) -> Vec<Token> {
+pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
     let mut chars = code.chars().peekable();
     let mut tokens = Vec::new();
+    let mut line = 1;
 
     while let Some(chr) = chars.next() {
         match chr {
             ' ' | '(' | ')' => continue,
+
+            '\n' => line += 1,
 
             '"' => {
                 let content_vec: Vec<char> = chars.by_ref().take_while(|&c| c != '"').collect();
@@ -147,7 +163,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     })
                 }
 
-                tokens.push(Token::Str(content));
+                tokens.push(TokenData::new(Token::Str(content), line));
             }
 
             'a'..='z' | 'A'..='Z' | '_' => {
@@ -159,7 +175,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     )
                     .collect::<String>();
 
-                tokens.push(lex_identifier!(&content));
+                tokens.push(TokenData::new(lex_identifier!(&content), line));
             }
 
             '0'..='9' => {
@@ -181,11 +197,11 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     Token::Integer(content.parse().unwrap())
                 };
 
-                tokens.push(token);
+                tokens.push(TokenData::new(token, line));
             }
 
             _ => {
-                tokens.push(lex_single_char!(chr));
+                tokens.push(TokenData::new(lex_single_char!(chr), line));
             }
         }
     }

@@ -1,4 +1,4 @@
-use maeel_lexer::{extract_instructions, Token};
+use maeel_lexer::{extract_instructions, Token, TokenData};
 
 use std::collections::HashMap;
 use std::slice::Iter;
@@ -12,19 +12,23 @@ mod syscalls;
 use syscalls::handle_syscall;
 
 macro_rules! next {
-    ($tokens:expr, "identifier") => {
-        match $tokens.next() {
-            Some(Token::Identifier(value)) => value.clone(),
+    ($tokens:expr, "identifier") => {{
+        let next = $tokens.next().unwrap();
+
+        match &next.token {
+            Token::Identifier(value) => value.clone(),
             token => panic!("Expected identifier, got {:?}", token),
         }
-    };
+    }};
 
-    ($tokens:expr, "block") => {
-        match $tokens.next() {
-            Some(Token::Block(block)) => block.to_vec(),
+    ($tokens:expr, "block") => {{
+        let next = $tokens.next().unwrap();
+
+        match &next.token {
+            Token::Block(block) => block.to_vec(),
             token => panic!("Expected block, got {:?}", token),
         }
-    };
+    }};
 }
 
 macro_rules! pop {
@@ -76,20 +80,20 @@ macro_rules! run_block {
 pub struct Interpreter {
     pub data: Vec<VMType>,
     pub vars: HashMap<String, VMType>,
-    procs: HashMap<String, Vec<Token>>,
+    procs: HashMap<String, Vec<TokenData>>,
     stop_execution: bool,
-    current_line: u16,
 }
 
 impl Interpreter {
-    pub fn handle_instruction(&mut self, tokens: &mut Iter<Token>) {
-        while let Some(token) = tokens.next() {
+    pub fn handle_instruction(&mut self, tokens: &mut Iter<TokenData>) {
+        while let Some(token_data) = tokens.next() {
             if self.stop_execution {
                 return;
             }
 
+            let token = token_data.token.clone();
+
             match token.clone() {
-                Token::Newline => self.current_line += 1,
                 Token::Include => panic!(),
                 Token::Return => self.stop_execution = true,
                 Token::Clear => self.data.clear(),
@@ -287,15 +291,16 @@ impl Interpreter {
 
                 Token::Let => {
                     let name = next!(tokens, "identifier");
+                    let next = tokens.next().unwrap();
 
-                    let value = match tokens.next() {
-                        Some(Token::Str(content)) => VMType::Str(content.clone()),
-                        Some(Token::Integer(n)) => VMType::Integer(*n),
-                        Some(Token::Float(x)) => VMType::Float(*x),
-                        Some(Token::Bool(p)) => VMType::Bool(*p),
-                        Some(Token::Over) => self.data[self.data.len() - 2].clone(),
-                        Some(Token::Dup) => self.data.last().cloned().unwrap(),
-                        Some(Token::Pop) => pop!(self),
+                    let value = match &next.token {
+                        Token::Str(content) => VMType::Str(content.clone()),
+                        Token::Float(x) => VMType::Float(*x),
+                        Token::Bool(p) => VMType::Bool(*p),
+                        Token::Integer(n) => VMType::Integer(*n),
+                        Token::Over => self.data[self.data.len() - 2].clone(),
+                        Token::Dup => self.data.last().cloned().unwrap(),
+                        Token::Pop => pop!(self),
                         _ => panic!(),
                     };
 

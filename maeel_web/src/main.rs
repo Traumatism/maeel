@@ -28,7 +28,7 @@ pub fn app() -> Html {
                 let content = name.to_string();
                 let tokens = lex_into_tokens(&content);
 
-                if !tokens.iter().any(|e| matches!(e, Token::Include)) {
+                if !tokens.iter().any(|e| matches!(e.token, Token::Include)) {
                     extract_instructions(extract_blocks(&lex_into_tokens(&content)))
                         .iter()
                         .for_each(|instruction| {
