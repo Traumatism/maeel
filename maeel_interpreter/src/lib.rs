@@ -6,7 +6,7 @@ use std::slice::Iter;
 use core::arch::asm;
 
 mod vmtype;
-use vmtype::VMType;
+pub use vmtype::VMType;
 
 mod syscalls;
 use syscalls::handle_syscall;

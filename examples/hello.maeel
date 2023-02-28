@@ -1,1 +1,3 @@
+pop
 "hello world" println
+1 "hello" +

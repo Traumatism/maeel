@@ -1,3 +1,14 @@
+// pub struct TokenData {
+//     pub token: Token,
+//     pub line: u16,
+// }
+
+// impl TokenData {
+//     pub fn new(token: Token, line: u16) -> Self {
+//         Self { token, line }
+//     }
+// }
+
 /// The `Token` enum stores all tokens that the
 /// lexer can identify
 ///

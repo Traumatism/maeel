@@ -6,5 +6,5 @@ members = [
     "maeel_lexer",
     "maeel_tests",
     "maeel_web",
-    "maeel_transpiler",
+    "maeel_typing",
 ]
