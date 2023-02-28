@@ -48,4 +48,5 @@ pub enum Token {
     If,
     For,
     While,
+    Newline,
 }

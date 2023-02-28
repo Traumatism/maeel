@@ -116,7 +116,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
     while let Some(chr) = chars.next() {
         match chr {
-            ' ' | '(' | ')' | '\n' => continue,
+            ' ' | '(' | ')' => continue,
 
             '"' => {
                 let content_vec: Vec<char> = chars.by_ref().take_while(|&c| c != '"').collect();

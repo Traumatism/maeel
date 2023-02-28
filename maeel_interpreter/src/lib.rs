@@ -78,6 +78,7 @@ pub struct Interpreter {
     pub vars: HashMap<String, VMType>,
     procs: HashMap<String, Vec<Token>>,
     stop_execution: bool,
+    current_line: u16,
 }
 
 impl Interpreter {
@@ -88,6 +89,7 @@ impl Interpreter {
             }
 
             match token.clone() {
+                Token::Newline => self.current_line += 1,
                 Token::Include => panic!(),
                 Token::Return => self.stop_execution = true,
                 Token::Clear => self.data.clear(),

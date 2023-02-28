@@ -128,6 +128,7 @@ pub fn format(tokens: Vec<Token>) -> String {
         last_tokens_stack.push(token.clone());
 
         match token {
+            Token::Newline => output.push('\n'),
             Token::ProcStart => {
                 output = jmp_line!(output, indents);
                 output.push_str("proc");
