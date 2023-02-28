@@ -10,13 +10,12 @@ pub fn app() -> Html {
     let mut interpreter = Interpreter::default();
 
     let name = use_state(String::new);
-    let maeel_stack_output = use_state(String::new);
-    let maeel_var_output = use_state(String::new);
+    let maeel_var_output = use_state(Vec::new);
+    let maeel_stack_output = use_state(Vec::new);
 
     {
-        let maeel_stack_output = maeel_stack_output.clone();
         let maeel_var_output = maeel_var_output.clone();
-
+        let maeel_stack_output = maeel_stack_output.clone();
         let name = name.clone();
         let name2 = name.clone();
 
@@ -37,8 +36,14 @@ pub fn app() -> Html {
                         });
                 }
 
-                maeel_var_output.set(format!("{:?}", interpreter.vars));
-                maeel_stack_output.set(format!("{:?}", interpreter.data));
+                maeel_var_output.set(
+                    interpreter
+                        .vars
+                        .iter()
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect(),
+                );
+                maeel_stack_output.set(interpreter.data.iter().map(|v| v.clone()).collect());
             },
             name2,
         );
@@ -59,6 +64,47 @@ pub fn app() -> Html {
         })
     };
 
+    let var_table = {
+        let maeel_var_output = maeel_var_output.clone();
+        html! {
+            <table>
+                <thead>
+                    <tr><th>{"Name"}</th><th>{"Value"}</th></tr>
+                </thead>
+                <tbody>
+                    {for maeel_var_output.iter().map(|(k, v)| {
+                        html! {
+                            <tr>
+                                <td>{ k }</td>
+                                <td>{ format!("{:?}", v) }</td>
+                            </tr>
+                        }
+                    })}
+                </tbody>
+            </table>
+        }
+    };
+
+    let stack_table = {
+        let maeel_stack_output = maeel_stack_output.clone();
+        html! {
+            <table>
+                <thead>
+                    <tr><th>{"Value"}</th></tr>
+                </thead>
+                <tbody>
+                    {for maeel_stack_output.iter().map(|v| {
+                        html! {
+                            <tr>
+                                <td>{ format!("{:?}", v) }</td>
+                            </tr>
+                        }
+                    })}
+                </tbody>
+            </table>
+        }
+    };
+
     html! {
         <main class="container">
 
@@ -67,8 +113,17 @@ pub fn app() -> Html {
                 <button type="submit">{"Execute"}</button>
             </form>
 
-            <p>{"Vars:"} <b>{ &*maeel_var_output }</b></p>
-            <p>{"Stack:"} <b>{ &*maeel_stack_output }</b></p>
+            <div>
+                <h3>{"Vars:"}</h3>
+                { var_table }
+            </div>
+
+
+            <div>
+                <h3>{"Stack:"}</h3>
+                { stack_table }
+            </div>
+
         </main>
     }
 }

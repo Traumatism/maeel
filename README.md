@@ -4,6 +4,20 @@
 
 Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), **maeel** is a concatenative [stack oriented programming language](https://en.wikipedia.org/wiki/Stack-oriented_programming) built with ~2000 lines of Rust.
 
+## Project roadmap
+
+- [ok] Lexer
+- [ok] Interpreter
+- [ok] Formatter
+- [~] Syntax highlighter
+    - [ok] Visual Studio Code
+    - [tbd] Vim
+- [ok] Web assembly interface (Yew)
+- [tbd] Transpiler
+- [tbd] Type checking
+- [tbd] LSP implementation
+
+
 ## Examples
 
 - [abs(x)](./examples/maths/absolute_value.maeel)
