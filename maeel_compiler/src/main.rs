@@ -33,7 +33,7 @@ fn main() {
 
                 let mut interpreter = Interpreter::default();
 
-                if !tokens.iter().any(|e| matches!(e, Token::Include)) {
+                if !tokens.iter().any(|e| matches!(e.token, Token::Include)) {
                     extract_instructions(extract_blocks(&lex_into_tokens(&content)))
                         .iter()
                         .for_each(|instruction| {
@@ -43,20 +43,22 @@ fn main() {
                     let mut tokens_backup = Vec::new();
                     let mut tokens_iter = tokens.iter();
 
-                    while let Some(token) = tokens_iter.next() {
+                    while let Some(token_data) = tokens_iter.next() {
+                        let token = token_data.token.clone();
+
                         match token {
                             Token::Include => {
-                                let next_token = tokens_iter.next();
+                                let next_token = tokens_iter.next().unwrap();
 
-                                let path = match next_token {
-                                    Some(Token::Str(path)) => path,
+                                let path = match &next_token.token {
+                                    Token::Str(path) => path,
                                     _ => panic!(),
                                 };
 
                                 let include_content = read_to_string(path).unwrap();
                                 tokens_backup.append(&mut lex_into_tokens(&include_content))
                             }
-                            value => tokens_backup.push(value.clone()),
+                            _ => tokens_backup.push(token_data.clone()),
                         }
                     }
                     extract_instructions(extract_blocks(&tokens_backup))

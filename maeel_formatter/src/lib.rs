@@ -1,4 +1,4 @@
-use maeel_lexer::Token;
+use maeel_lexer::{Token, TokenData};
 
 const INDENT: &str = "    ";
 
@@ -117,18 +117,19 @@ macro_rules! one_arg_keyword {
     }};
 }
 
-pub fn format(tokens: Vec<Token>) -> String {
+pub fn format(tokens: Vec<TokenData>) -> String {
     let mut output = String::new();
     let mut indents = 0;
 
-    let mut tokens_stack = tokens.into_iter().rev().collect::<Vec<Token>>();
+    let mut tokens_stack = tokens.into_iter().rev().collect::<Vec<TokenData>>();
     let mut last_tokens_stack = Vec::new();
 
-    while let Some(token) = tokens_stack.pop() {
+    while let Some(token_data) = tokens_stack.pop() {
+        let token = token_data.token;
+
         last_tokens_stack.push(token.clone());
 
         match token {
-            Token::Newline => output.push('\n'),
             Token::ProcStart => {
                 output = jmp_line!(output, indents);
                 output.push_str("proc");
@@ -187,14 +188,14 @@ pub fn format(tokens: Vec<Token>) -> String {
 
                 output.push(' ');
 
-                match tokens_stack.pop().unwrap() {
+                match tokens_stack.pop().unwrap().token {
                     Token::Identifier(content) => output.push_str(&content),
                     _ => panic!(),
                 }
 
                 output.push(' ');
 
-                match tokens_stack.pop().unwrap() {
+                match tokens_stack.pop().unwrap().token {
                     Token::Dup => output.push_str("dup"),
                     Token::Over => output.push_str("over"),
                     Token::Pop => output.push_str("pop"),
