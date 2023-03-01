@@ -2,7 +2,7 @@ let a 0
 let b 1
 
 true while do
-    b dup println
+    b dup print "\n" print pop
     a + let b pop
     let a pop
     b 0 >

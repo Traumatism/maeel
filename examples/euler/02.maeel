@@ -14,4 +14,6 @@ true while do
     b 4_000_000 <
 end
 
-sum println
+sum print
+"\n" print
+

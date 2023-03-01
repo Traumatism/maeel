@@ -1,28 +1,35 @@
-use maeel_common::tokens::TokenData;
-
 use maeel_common::tokens::Token;
+use maeel_common::tokens::TokenData;
 use maeel_common::types::Type;
 use maeel_lexer::extract_instructions;
 
 use std::collections::HashMap;
+use std::process::exit;
 use std::slice::Iter;
 
+macro_rules! emit_error {
+    ($line:expr, $message:expr) => {{
+        println!("Error at line {}: {}", $line, $message);
+        exit(1);
+    }};
+}
+
 macro_rules! next {
-    ($tokens:expr, "identifier") => {{
+    ($tokens:expr, $line:expr, "identifier") => {{
         let next = $tokens.next().unwrap();
 
         match &next.token {
             Token::Identifier(value) => value.clone(),
-            token => panic!("Expected identifier, got {:?}", token),
+            token => emit_error!($line, format!("`identifier` expected, got {:?}", token)),
         }
     }};
 
-    ($tokens:expr, "block") => {{
+    ($tokens:expr, $line:expr, "block") => {{
         let next = $tokens.next().unwrap();
 
         match &next.token {
             Token::Block(block) => block.to_vec(),
-            token => panic!("Expected block, got {:?}", token),
+            token => emit_error!($line, format!("`block` expected, got {:?}", token)),
         }
     }};
 }
@@ -48,11 +55,17 @@ macro_rules! push {
 }
 
 macro_rules! binary_op {
-    ($self:ident, $operator:tt) => {{
+    ($self:ident, $line:expr, $operator:tt) => {{
         let a = pop!($self);
         let b = pop!($self);
 
-        push!($self, b $operator a);
+        let result = b $operator a;
+
+        match result {
+            Type::TypeError(message) => emit_error!($line, message),
+            _ => push!($self, result),
+        }
+
     }};
 }
 
@@ -79,9 +92,10 @@ impl TypingInterpreter {
                 return;
             }
 
-            let token = token_data.token.clone();
+            let token = &token_data.token;
+            let line = token_data.line;
 
-            match token.clone() {
+            match &token {
                 Token::Include => {}
                 Token::Return => self.stop_execution = true,
                 Token::Clear => self.data.clear(),
@@ -116,11 +130,11 @@ impl TypingInterpreter {
                     push!(self, self.data[self.data.len() - 2].to_owned());
                 }
 
-                Token::Sub => binary_op!(self, -),
-                Token::Add => binary_op!(self, +),
-                Token::Mul => binary_op!(self, *),
-                Token::Div => binary_op!(self, /),
-                Token::Mod => binary_op!(self, %),
+                Token::Sub => binary_op!(self, line, -),
+                Token::Add => binary_op!(self, line, +),
+                Token::Mul => binary_op!(self, line, *),
+                Token::Div => binary_op!(self, line, /),
+                Token::Mod => binary_op!(self, line, %),
 
                 Token::Gt => push!(self, Type::Bool),
                 Token::Lt => push!(self, Type::Bool),
@@ -138,8 +152,10 @@ impl TypingInterpreter {
                 }
 
                 Token::ProcStart => {
-                    self.procs
-                        .insert(next!(tokens, "identifier"), next!(tokens, "block"));
+                    self.procs.insert(
+                        next!(tokens, line, "identifier"),
+                        next!(tokens, line, "block"),
+                    );
                 }
 
                 Token::Take => match pop!(self, 1) {
@@ -179,7 +195,7 @@ impl TypingInterpreter {
                 }
 
                 Token::Let => {
-                    let name = next!(tokens, "identifier");
+                    let name = next!(tokens, line, "identifier");
                     let next = tokens.next().unwrap();
 
                     let value = match &next.token {
@@ -197,30 +213,30 @@ impl TypingInterpreter {
                 }
 
                 Token::While => {
-                    let block = next!(tokens, "block");
+                    let block = next!(tokens, line, "block");
 
                     let Some(Type::Bool) = pop!(self, 1) else {
-                        panic!()
+                        emit_error!(line, "Expected a boolean before `while`")
                     };
 
                     run_block!(self, block)
                 }
 
                 Token::For => {
-                    let block = next!(tokens, "block");
+                    let block = next!(tokens, line, "block");
 
                     let Some(Type::Array) = pop!(self, 1) else {
-                        panic!()
+                        emit_error!(line, "Expected an array before `for`")
                     };
 
                     run_block!(self, block);
                 }
 
                 Token::If => {
-                    let block = next!(tokens, "block");
+                    let block = next!(tokens, line, "block");
 
                     let Some(Type::Bool) = pop!(self, 1) else {
-                        panic!()
+                        emit_error!(line, "Expected a boolean before `if`")
                     };
 
                     run_block!(self, block);

@@ -12,4 +12,5 @@ true while do
     dup 1000 <
 end
 
-sum println
+sum print
+"\n" print

@@ -15,10 +15,10 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 
 ## Hello, world!
 
-Here we push the string `"Hello, world"` on the stack, then call the built-in `println` function and finally call the built-in stack function `pop` to clear the top stack element (which here is `"Hello, world"`)
+Here we push the string `"Hello, world"` on the stack, then call the built-in `print "\n" print pop` function and finally call the built-in stack function `pop` to clear the top stack element (which here is `"Hello, world"`)
 
 ```
-"Hello, world" println pop
+"Hello, world\n" print pop
 ```
 
 ## VMType
@@ -37,62 +37,62 @@ A `VMType` is a type that can be understood by the maeel interpreter. It can be 
 
 A binary operator takes the two first elements of the stack, applies a function on them and then push the function result on the stack.
 
-`2 3 + println` will print `5` (2 + 3)
+`2 3 + print` will print `5` (2 + 3)
 
-`2 3 * println` will print `6` (2 * 3)
+`2 3 * print` will print `6` (2 * 3)
 
-`3 2 - println` will print `1` (3 - 2)
+`3 2 - print` will print `1` (3 - 2)
 
-`3 2 / println` will print `1.5` (3 / 2)
+`3 2 / print` will print `1.5` (3 / 2)
 
-`10 3 % println` will print `1` (10 mod 2)
+`10 3 % print` will print `1` (10 mod 2)
 
 ## Logic
 
-`true true   * println` will print `true` (true AND true)
+`true true   * print "\n" print pop` will print `true` (true AND true)
 
-`true false  * println` will print `false` (true AND false)
+`true false  * print "\n" print pop` will print `false` (true AND false)
 
-`false true  * println` will print `false` (false AND true)
+`false true  * print "\n" print pop` will print `false` (false AND true)
 
-`false false * println` will print `false` (false AND false)
+`false false * print "\n" print pop` will print `false` (false AND false)
 
 
-`true true   + println` will print `true` (true OR true)
+`true true   + print "\n" print pop` will print `true` (true OR true)
 
-`true false  + println` will print `true` (true OR false)
+`true false  + print "\n" print pop` will print `true` (true OR false)
 
-`false true  + println` will print `true` (false OR true)
+`false true  + print "\n" print pop` will print `true` (false OR true)
 
-`false false + println` will print `false` (false OR false)
+`false false + print "\n" print pop` will print `false` (false OR false)
 
 ## Other operators
 
-`false! println` will print `true` (NOT false)
+`false! print "\n" print pop` will print `true` (NOT false)
 
-`true! println` will print `false` (NOT true)
+`true! print "\n" print pop` will print `false` (NOT true)
 
-`<obj> <obj> = println` has the equivalent in Python: `print(<obj> == <obj>)`
+`<obj> <obj> = print "\n" print pop` has the equivalent in Python: `print(<obj> == <obj>)`
 
 There is also `<`, `>`, but no `<=` and `>=`, which you need to implement yourself using `OR` operator:
 
-`5 10 < 5 10 = + println` has the equivalent in Python: `print(5 <= 10)`
+`5 10 < 5 10 = + print "\n" print pop` has the equivalent in Python: `print(5 <= 10)`
 
 Note you can use optional (they are removed at tokenization) parenthesis for better code comprehension:
 
-`5 10 < 5 10 = + println` has the equivalent: `(5 10 <) (5 10 =) + println`
+`5 10 < 5 10 = + print "\n" print pop` has the equivalent: `(5 10 <) (5 10 =) + print "\n" print pop`
 
 ## Code block
 
 A code block is all the code contained between a `do` and a `end` keyword.
-For example `do "Hello" println pop end`.
+For example `do "Hello" print "\n" print pop pop end`.
 Note that you can use nested code blocks, for example:
 
 ```
 do
-    1+1 println
+    1+1 print "\n" print pop
     do
-        "hello" println
+        "hello\n" print pop
     end
 end
 ```
@@ -106,7 +106,7 @@ It's followed by a code block which determine which instructions will be execute
 
 ```
 true if do
-    "Condition met!" println
+    "Condition met!\n" print pop
 end
 ```
 
@@ -143,6 +143,6 @@ end
 (1 2 3) 3 take let array pop
 
 array for do
-    println
+    print "\n" print pop
 end
 ```
