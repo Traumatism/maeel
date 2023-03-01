@@ -1,17 +1,20 @@
 let n 1
 
+
 true while do
-    n dup dup
 
-    3 % 0 = if do "Fizz\n" print pop end
-    5 % 0 = if do "Buzz\n" print pop end
-    15 % 0 = if do "FizzBuzz\n" print pop end
-
-    n dup dup dup
-
-    5% 0=! swap 3% 0=! * swap 15 % 0=! * if do
-        n print "\n" print pop
+    n 3 % 0 = if do
+        "Fizz\n" print pop
     end
 
-    1 + let n dup 100 <
+    n 5 % 0 = if do
+        "Buzz\n" print pop
+    end
+
+    n 15 % 0 = if do
+        "FizzBuzz\n" print pop
+    end
+
+    n 1 + let n dup 100 <
 end
+

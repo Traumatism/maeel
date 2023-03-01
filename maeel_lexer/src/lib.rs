@@ -71,7 +71,6 @@ macro_rules! lex_identifier {
             "clear" => Token::Clear,
             "while" => Token::While,
             "end" => Token::BlockEnd,
-            "return" => Token::Return,
             "do" => Token::BlockStart,
             "proc" => Token::ProcStart,
             "true" => Token::Bool(true),
