@@ -1,49 +1,58 @@
 use maeel_common::tokens::{Token, TokenData};
 
+use std::iter::once;
+use std::mem::take;
+use std::slice::Iter;
+
 pub fn extract_instructions(tokens: Vec<TokenData>) -> Vec<Vec<TokenData>> {
-    let mut instructions = vec![];
-    let mut current_instruction = vec![];
+    let (acc, current) =
+        tokens
+            .into_iter()
+            .fold((vec![], vec![]), |(mut acc, mut current), token_data| {
+                match token_data.token {
+                    Token::BlockEnd => {
+                        current.push(TokenData::new(Token::BlockEnd, token_data.line));
+                        acc.push(take(&mut current));
+                    }
+                    _ => current.push(token_data),
+                }
+                (acc, current)
+            });
 
-    for token_data in tokens {
-        let token = token_data.token.clone();
+    let mut instructions = acc;
 
-        match token {
-            Token::BlockEnd => {
-                current_instruction.push(TokenData::new(Token::BlockEnd, token_data.line));
-                instructions.push(std::mem::take(&mut current_instruction));
-            }
-            _ => current_instruction.push(token_data),
-        }
+    if !current.is_empty() {
+        instructions.push(current);
     }
 
-    instructions.push(current_instruction);
     instructions
 }
 
-pub fn extract_block_tokens(
-    tokens_iter: &mut std::slice::Iter<TokenData>,
-) -> (Vec<TokenData>, bool) {
+pub fn extract_block_tokens(tokens_iter: &mut Iter<TokenData>) -> (Vec<TokenData>, bool) {
     let mut n = 0;
-    let mut recurse = false;
-    let mut block_tokens = vec![];
 
-    for token_data in tokens_iter.by_ref() {
-        match &token_data.token {
-            Token::BlockEnd if n == 0 => break,
-
+    let (block_tokens, recurse) = tokens_iter
+        .by_ref()
+        .take_while(|token_data| match &token_data.token {
+            Token::BlockEnd if n == 0 => false,
             Token::BlockEnd => {
                 n -= 1;
-                block_tokens.push(token_data.clone());
+                true
             }
             Token::BlockStart => {
                 n += 1;
-                recurse = true;
-                block_tokens.push(token_data.clone());
+                true
             }
-            _ => block_tokens.push(token_data.clone()),
-        }
-    }
-
+            _ => true,
+        })
+        .cloned()
+        .fold((vec![], false), |(mut acc, recurse), token_data| {
+            match token_data.token {
+                Token::BlockStart | Token::BlockEnd => (),
+                _ => acc.push(token_data.clone()),
+            }
+            (acc, recurse || token_data.token == Token::BlockStart)
+        });
     (block_tokens, recurse)
 }
 
@@ -165,7 +174,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
             }
 
             'a'..='z' | 'A'..='Z' | '_' => {
-                let content = std::iter::once(chr)
+                let content = once(chr)
                     .chain(
                         chars
                             .by_ref()
@@ -177,7 +186,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
             }
 
             '0'..='9' => {
-                let content = std::iter::once(chr)
+                let content = once(chr)
                     .chain(
                         chars
                             .by_ref()

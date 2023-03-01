@@ -94,13 +94,19 @@ impl Interpreter {
 
             match token.clone() {
                 Token::Include => panic!(),
+
                 Token::Return => self.stop_execution = true,
+
                 Token::Clear => self.data.clear(),
+
                 Token::BlockStart | Token::BlockEnd => panic!(),
 
                 Token::Str(content) => push!(self, content, VMType::Str),
+
                 Token::Bool(content) => push!(self, content, VMType::Bool),
+
                 Token::Float(content) => push!(self, content, VMType::Float),
+
                 Token::Integer(content) => push!(self, content, VMType::Integer),
 
                 Token::Dup => push!(self, self.data.last().cloned().unwrap()),
@@ -128,13 +134,21 @@ impl Interpreter {
                 }
 
                 Token::Sub => binary_op!(self, -),
+
                 Token::Add => binary_op!(self, +),
+
                 Token::Mul => binary_op!(self, *),
+
                 Token::Div => binary_op!(self, /),
+
                 Token::Mod => binary_op!(self, %),
+
                 Token::Gt => binary_op!(self, >, VMType::Bool),
+
                 Token::Lt => binary_op!(self, <, VMType::Bool),
+
                 Token::Eq => binary_op!(self, ==, VMType::Bool),
+
                 Token::Block(tokens) => run_block!(self, tokens),
 
                 Token::Pop => {
@@ -209,49 +223,15 @@ impl Interpreter {
                             );
                         }
 
-                        "println" => {
-                            let element = pop!(self);
-
-                            let message = element.to_string() + "\n";
-
-                            #[cfg(not(any(
-                                all(target_family = "unix", target_arch = "x86_64"),
-                                all(target_os = "macos", target_arch = "aarch64")
-                            )))]
-                            print!("{}", message);
-
-                            unsafe {
-                                #[cfg(all(target_os = "macos", target_arch = "aarch64",))]
-                                asm!(
-                                    "svc #0",
-                                    in("x0") 1,
-                                    in("x1") message.as_ptr(),
-                                    in("x2") message.len(),
-                                    in("x16") 4,
-                                );
-
-                                #[cfg(all(target_family = "unix", target_arch = "x86_64"))]
-                                asm!(
-                                    "syscall",
-                                    in("rax") 1,
-                                    in("rdi") 1,
-                                    in("rsi") message.as_ptr(),
-                                    in("rdx") message.len(),
-                                );
-                            }
-
-                            push!(self, element);
-                        }
-
                         "print" => {
                             let element = pop!(self);
-
                             let message = element.to_string();
 
                             #[cfg(not(any(
                                 all(target_family = "unix", target_arch = "x86_64"),
                                 all(target_os = "macos", target_arch = "aarch64")
                             )))]
+
                             print!("{}", message);
 
                             unsafe {
