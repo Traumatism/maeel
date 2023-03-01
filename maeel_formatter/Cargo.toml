@@ -1,7 +1,0 @@
-[package]
-name = "maeel_formatter"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-maeel_lexer = { path = "../maeel_lexer" }

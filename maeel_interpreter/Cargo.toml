@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 maeel_lexer = { path = "../maeel_lexer" }
+maeel_common = { path = "../maeel_common" }

@@ -1,5 +1,4 @@
-mod token;
-pub use token::{Token, TokenData};
+use maeel_common::tokens::{Token, TokenData};
 
 pub fn extract_instructions(tokens: Vec<TokenData>) -> Vec<Vec<TokenData>> {
     let mut instructions = vec![];
@@ -24,15 +23,14 @@ pub fn extract_instructions(tokens: Vec<TokenData>) -> Vec<Vec<TokenData>> {
 pub fn extract_block_tokens(
     tokens_iter: &mut std::slice::Iter<TokenData>,
 ) -> (Vec<TokenData>, bool) {
-    let mut block_tokens = vec![];
-    let mut recurse = false;
     let mut n = 0;
+    let mut recurse = false;
+    let mut block_tokens = vec![];
 
     for token_data in tokens_iter.by_ref() {
-        let token = token_data.token.clone();
-
-        match token {
+        match &token_data.token {
             Token::BlockEnd if n == 0 => break,
+
             Token::BlockEnd => {
                 n -= 1;
                 block_tokens.push(token_data.clone());
@@ -55,16 +53,16 @@ pub fn extract_blocks(tokens: &[TokenData]) -> Vec<TokenData> {
 
     while let Some(token_data) = tokens_iter.next() {
         output.push({
-            let token = token_data.token.clone();
-
-            match token {
+            match &token_data.token {
                 Token::BlockStart => {
                     let (block_tokens, recurse) = extract_block_tokens(&mut tokens_iter);
+
                     match recurse {
                         true => TokenData::new(
                             Token::Block(extract_blocks(&block_tokens)),
                             token_data.line,
                         ),
+
                         false => TokenData::new(Token::Block(block_tokens), token_data.line),
                     }
                 }
@@ -98,7 +96,7 @@ macro_rules! lex_identifier {
             "true" => Token::Bool(true),
             "false" => Token::Bool(false),
             "include" => Token::Include,
-            _ => Token::Identifier(String::from($identifier)),
+            _ => Token::Identifier($identifier.into()),
         }
     };
 }

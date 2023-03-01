@@ -1,12 +1,11 @@
-use maeel_lexer::{extract_instructions, Token, TokenData};
+use maeel_common::tokens::{Token, TokenData};
+use maeel_common::vmtypes::VMType;
+use maeel_lexer::extract_instructions;
 
 use std::collections::HashMap;
 use std::slice::Iter;
 
 use core::arch::asm;
-
-mod vmtype;
-pub use vmtype::VMType;
 
 mod syscalls;
 use syscalls::handle_syscall;
