@@ -2,7 +2,7 @@
 
 use maeel_common::tokens::Token;
 use maeel_interpreter::Interpreter;
-use maeel_lexer::{extract_blocks, extract_instructions, lex_into_tokens};
+use maeel_lexer::{extract_blocks, lex_into_tokens};
 
 use yew::prelude::*;
 
@@ -31,11 +31,8 @@ pub fn app() -> Html {
                 let tokens = lex_into_tokens(&content);
 
                 if !tokens.iter().any(|e| matches!(e.token, Token::Include)) {
-                    extract_instructions(extract_blocks(&lex_into_tokens(&content)))
-                        .iter()
-                        .for_each(|instruction| {
-                            interpreter.handle_instruction(&mut instruction.iter())
-                        });
+                    interpreter
+                        .handle_instruction(&mut extract_blocks(&lex_into_tokens(&content)).iter());
                 }
 
                 maeel_var_output.set(

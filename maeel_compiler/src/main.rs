@@ -3,8 +3,7 @@ use std::fs::read_to_string;
 
 use maeel_common::tokens::Token;
 use maeel_interpreter::Interpreter;
-use maeel_lexer::{extract_blocks, extract_instructions, lex_into_tokens};
-use maeel_typing::check;
+use maeel_lexer::{extract_blocks, lex_into_tokens};
 
 macro_rules! usage {
     () => {
@@ -35,11 +34,8 @@ fn main() {
                 let mut interpreter = Interpreter::default();
 
                 if !tokens.iter().any(|e| matches!(e.token, Token::Include)) {
-                    extract_instructions(extract_blocks(&lex_into_tokens(&content)))
-                        .iter()
-                        .for_each(|instruction| {
-                            interpreter.handle_instruction(&mut instruction.iter())
-                        });
+                    interpreter
+                        .handle_instruction(&mut extract_blocks(&lex_into_tokens(&content)).iter());
                 } else {
                     let mut tokens_backup = Vec::new();
                     let mut tokens_iter = tokens.iter();
@@ -62,26 +58,17 @@ fn main() {
                             _ => tokens_backup.push(token_data.clone()),
                         }
                     }
-                    extract_instructions(extract_blocks(&tokens_backup))
-                        .iter()
-                        .for_each(|instruction| {
-                            interpreter.handle_instruction(&mut instruction.iter())
-                        });
+
+                    interpreter
+                        .handle_instruction(&mut extract_blocks(&lex_into_tokens(&content)).iter());
                 }
             }
 
             "lex" => {
                 let content = read_to_string(args.get(2).unwrap()).expect("Failed to open file");
-
-                println!("{:#?}", lex_into_tokens(&content));
-            }
-
-            "check" => {
-                let content = read_to_string(args.get(2).unwrap()).expect("Failed to open file");
-
-                check(extract_instructions(extract_blocks(&lex_into_tokens(
-                    &content,
-                ))));
+                extract_blocks(&lex_into_tokens(&content))
+                    .iter()
+                    .for_each(|instruction| println!("{:?}\n\n", instruction));
             }
 
             _ => usage!(),

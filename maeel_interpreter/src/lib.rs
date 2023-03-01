@@ -1,7 +1,5 @@
 use maeel_common::tokens::{Token, TokenData};
 use maeel_common::vmtypes::VMType;
-use maeel_lexer::extract_instructions;
-
 use std::collections::HashMap;
 use std::slice::Iter;
 
@@ -10,8 +8,20 @@ use core::arch::asm;
 mod syscalls;
 use syscalls::handle_syscall;
 
+const DEBUG: bool = false;
+
+macro_rules! debug {
+    ($message:expr) => {
+        if DEBUG {
+            println!("{}", $message)
+        }
+    };
+}
+
 macro_rules! next {
     ($tokens:expr, "identifier") => {{
+        debug!("Expecting an identifier...");
+
         let next = $tokens.next().unwrap();
 
         match &next.token {
@@ -21,6 +31,8 @@ macro_rules! next {
     }};
 
     ($tokens:expr, "block") => {{
+        debug!("Expecting an block...");
+
         let next = $tokens.next().unwrap();
 
         match &next.token {
@@ -55,6 +67,8 @@ macro_rules! binary_op {
         let a = pop!($self);
         let b = pop!($self);
 
+        debug!(format!("Binary OP: {:?} {} {:?}", &a, stringify!($operator), &b));
+
         push!($self, b $operator a);
     }};
 
@@ -62,16 +76,10 @@ macro_rules! binary_op {
         let a = pop!($self);
         let b = pop!($self);
 
+        debug!(format!("Binary OP: {:?} {} {:?}", &a, stringify!($operator), &b));
+
         push!($self, b $operator a, $vmtype)
     }};
-}
-
-macro_rules! run_block {
-    ($self:ident, $block:ident) => {
-        for instruction in extract_instructions($block.clone()) {
-            $self.handle_instruction(&mut instruction.iter())
-        }
-    };
 }
 
 /// Maeel interpreter
@@ -91,6 +99,7 @@ impl Interpreter {
             }
 
             let token = token_data.token.clone();
+            let line = token_data.line;
 
             match token.clone() {
                 Token::Include => panic!(),
@@ -149,7 +158,7 @@ impl Interpreter {
 
                 Token::Eq => binary_op!(self, ==, VMType::Bool),
 
-                Token::Block(tokens) => run_block!(self, tokens),
+                Token::Block(tokens) => self.handle_instruction(&mut tokens.iter()),
 
                 Token::Pop => {
                     pop!(self);
@@ -261,8 +270,8 @@ impl Interpreter {
                             if let Some(value) = self.vars.get(identifier) {
                                 push!(self, value.clone());
                             } else {
-                                let proc_tokens = self.procs.get(identifier).unwrap().clone();
-                                run_block!(self, proc_tokens);
+                                let tokens = self.procs.get(identifier).unwrap().clone();
+                                self.handle_instruction(&mut tokens.iter());
                             }
                         }
                     };
@@ -287,10 +296,12 @@ impl Interpreter {
                 }
 
                 Token::While => {
-                    let while_block = next!(tokens, "block");
+                    let tokens = next!(tokens, "block");
+
+                    debug!(format!("While block: {:?}", tokens));
 
                     while let VMType::Bool(true) = pop!(self) {
-                        run_block!(self, while_block);
+                        self.handle_instruction(&mut tokens.iter());
 
                         if self.stop_execution {
                             break;
@@ -299,13 +310,15 @@ impl Interpreter {
                 }
 
                 Token::For => {
-                    let for_block = next!(tokens, "block");
+                    let tokens = next!(tokens, "block");
+
+                    debug!(format!("For block: {:?}", tokens));
 
                     match pop!(self, 1) {
                         Some(VMType::Array(array)) => {
                             for element in array {
                                 push!(self, element);
-                                run_block!(self, for_block);
+                                self.handle_instruction(&mut tokens.iter());
 
                                 if self.stop_execution {
                                     break;
@@ -317,14 +330,16 @@ impl Interpreter {
                 }
 
                 Token::If => {
-                    let if_block = next!(tokens, "block");
+                    let tokens = next!(tokens, "block");
+
+                    debug!(format!("If block: {:?}", tokens));
 
                     if let Some(VMType::Bool(e)) = pop!(self, 1) {
                         if e {
-                            run_block!(self, if_block);
+                            self.handle_instruction(&mut tokens.iter())
                         }
                     } else {
-                        panic!();
+                        panic!("{line}");
                     }
                 }
             }
