@@ -4,20 +4,6 @@
 
 Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), **maeel** is a concatenative [stack oriented programming language](https://en.wikipedia.org/wiki/Stack-oriented_programming) built with ~2000 lines of Rust.
 
-## Project roadmap
-
-- [ok] Lexer
-- [ok] Interpreter
-- [ok] Formatter
-- [~] Syntax highlighter
-    - [ok] Visual Studio Code
-    - [tbd] Vim
-- [ok] Web assembly interface (Yew)
-- [tbd] Transpiler
-- [tbd] Type checking
-- [tbd] LSP implementation
-
-
 ## Examples
 
 - [abs(x)](./examples/maths/absolute_value.maeel)
@@ -26,20 +12,6 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 - [fizz-buzz](./examples/fizz-buzz.maeel)
 - [3x+1](./examples/3x%2B1.maeel)
 - [fibonacci](./examples/fibonacci.maeel)
-
-## Structure
-```python
-.
-├── examples  # quick programs made with maeel
-├── maeel_compiler  # run maeel programs files
-├── maeel_formatter  # format maeel programs
-├── maeel_interpreter  # maeel virtual machine
-├── maeel_lexer  # convert maeel program into tokens
-├── maeel_syntax_highlighting  # VSCode extension
-├── maeel_tests  # verify everything works
-├── maeel_web  # maeel in the web browser!
-└── std  # maeel standard lib
-```
 
 ## Hello, world!
 

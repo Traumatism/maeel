@@ -1,9 +1,10 @@
 use std::env::args;
 use std::fs::read_to_string;
 
-use maeel_formatter::format;
+use maeel_common::tokens::Token;
 use maeel_interpreter::Interpreter;
-use maeel_lexer::{extract_blocks, extract_instructions, lex_into_tokens, Token};
+use maeel_lexer::{extract_blocks, extract_instructions, lex_into_tokens};
+use maeel_typing::check;
 
 macro_rules! usage {
     () => {
@@ -13,9 +14,9 @@ Maeel interpreter usage
 =======================
 
 maeel run <file>        <> Execute a maeel program
-maeel fmt <file>        <> Format a maeel program
 maeel lex <file>        <> Turn file into tokens
-            "#
+maeel check <file>      <> Check program for typing errors
+"#
         )
     };
 }
@@ -75,11 +76,12 @@ fn main() {
                 println!("{:#?}", lex_into_tokens(&content));
             }
 
-            "fmt" => {
+            "check" => {
                 let content = read_to_string(args.get(2).unwrap()).expect("Failed to open file");
-                let tokens = lex_into_tokens(&content);
 
-                println!("{}", format(tokens));
+                check(extract_instructions(extract_blocks(&lex_into_tokens(
+                    &content,
+                ))));
             }
 
             _ => usage!(),
