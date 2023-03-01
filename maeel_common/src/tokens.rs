@@ -36,7 +36,6 @@ pub enum Token {
     Pop,
     Let,
     ProcStart,
-    Return,
     BlockStart,
     BlockEnd,
     Include,

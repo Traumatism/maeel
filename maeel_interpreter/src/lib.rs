@@ -88,23 +88,16 @@ pub struct Interpreter {
     pub data: Vec<VMType>,
     pub vars: HashMap<String, VMType>,
     procs: HashMap<String, Vec<TokenData>>,
-    stop_execution: bool,
 }
 
 impl Interpreter {
     pub fn handle_instruction(&mut self, tokens: &mut Iter<TokenData>) {
         while let Some(token_data) = tokens.next() {
-            if self.stop_execution {
-                return;
-            }
-
             let token = token_data.token.clone();
             let line = token_data.line;
 
             match token.clone() {
                 Token::Include => panic!(),
-
-                Token::Return => self.stop_execution = true,
 
                 Token::Clear => self.data.clear(),
 
@@ -302,10 +295,6 @@ impl Interpreter {
 
                     while let VMType::Bool(true) = pop!(self) {
                         self.handle_instruction(&mut tokens.iter());
-
-                        if self.stop_execution {
-                            break;
-                        }
                     }
                 }
 
@@ -319,10 +308,6 @@ impl Interpreter {
                             for element in array {
                                 push!(self, element);
                                 self.handle_instruction(&mut tokens.iter());
-
-                                if self.stop_execution {
-                                    break;
-                                }
                             }
                         }
                         _ => panic!(),
