@@ -43,8 +43,13 @@ pub fn extract_blocks(tokens: &[TokenData]) -> Vec<TokenData> {
                         true => TokenData::new(
                             Token::Block(extract_blocks(&block_tokens)),
                             token_data.line,
+                            token_data.pos,
                         ),
-                        false => TokenData::new(Token::Block(block_tokens), token_data.line),
+                        false => TokenData::new(
+                            Token::Block(block_tokens),
+                            token_data.line,
+                            token_data.pos,
+                        ),
                     }
                 }
                 _ => token_data.clone(),
@@ -105,8 +110,11 @@ pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
     let mut chars = code.chars().peekable();
     let mut tokens = Vec::new();
     let mut line = 1;
+    let mut pos = 0;
 
     while let Some(chr) = chars.next() {
+        pos += 1;
+
         match chr {
             ' ' | '(' | ')' => continue,
 
@@ -141,7 +149,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
                     })
                 }
 
-                tokens.push(TokenData::new(Token::Str(content), line));
+                tokens.push(TokenData::new(Token::Str(content), line, pos));
             }
 
             'a'..='z' | 'A'..='Z' | '_' => {
@@ -153,7 +161,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
                     )
                     .collect::<String>();
 
-                tokens.push(TokenData::new(lex_identifier!(&content), line));
+                tokens.push(TokenData::new(lex_identifier!(&content), line, pos));
             }
 
             '0'..='9' => {
@@ -175,11 +183,11 @@ pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
                     Token::Integer(content.parse().unwrap())
                 };
 
-                tokens.push(TokenData::new(token, line));
+                tokens.push(TokenData::new(token, line, pos));
             }
 
             _ => {
-                tokens.push(TokenData::new(lex_single_char!(chr), line));
+                tokens.push(TokenData::new(lex_single_char!(chr), line, pos));
             }
         }
     }
