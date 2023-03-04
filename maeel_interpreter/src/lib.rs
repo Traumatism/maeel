@@ -1,3 +1,7 @@
+#![deny(missing_docs)]
+
+//! This crate stores the main Maeel VM
+
 use maeel_common::tokens::{Token, TokenData};
 use maeel_common::vmtypes::VMType;
 use std::collections::HashMap;
@@ -8,20 +12,8 @@ use core::arch::asm;
 mod syscalls;
 use syscalls::handle_syscall;
 
-const DEBUG: bool = false;
-
-macro_rules! debug {
-    ($message:expr) => {
-        if DEBUG {
-            println!("{}", $message)
-        }
-    };
-}
-
 macro_rules! next {
     ($tokens:expr, "identifier") => {{
-        debug!("Expecting an identifier...");
-
         let next = $tokens.next().unwrap();
 
         match &next.token {
@@ -31,8 +23,6 @@ macro_rules! next {
     }};
 
     ($tokens:expr, "block") => {{
-        debug!("Expecting an block...");
-
         let next = $tokens.next().unwrap();
 
         match &next.token {
@@ -67,16 +57,12 @@ macro_rules! binary_op {
         let a = pop!($self);
         let b = pop!($self);
 
-        debug!(format!("Binary OP: {:?} {} {:?}", &a, stringify!($operator), &b));
-
         push!($self, b $operator a);
     }};
 
     ($self:ident, $operator:tt, $vmtype:expr) => {{
         let a = pop!($self);
         let b = pop!($self);
-
-        debug!(format!("Binary OP: {:?} {} {:?}", &a, stringify!($operator), &b));
 
         push!($self, b $operator a, $vmtype)
     }};
@@ -85,12 +71,15 @@ macro_rules! binary_op {
 /// Maeel interpreter
 #[derive(Default)]
 pub struct Interpreter {
+    /// Interpreter stack
     pub data: Vec<VMType>,
+    /// Interpreter variables map
     pub vars: HashMap<String, VMType>,
     procs: HashMap<String, Vec<TokenData>>,
 }
 
 impl Interpreter {
+    /// Handle a bunch of tokens
     pub fn handle_instruction(&mut self, tokens: &mut Iter<TokenData>) {
         while let Some(token_data) = tokens.next() {
             let token = token_data.token.clone();
@@ -291,8 +280,6 @@ impl Interpreter {
                 Token::While => {
                     let tokens = next!(tokens, "block");
 
-                    debug!(format!("While block: {:?}", tokens));
-
                     while let VMType::Bool(true) = pop!(self) {
                         self.handle_instruction(&mut tokens.iter());
                     }
@@ -300,8 +287,6 @@ impl Interpreter {
 
                 Token::For => {
                     let tokens = next!(tokens, "block");
-
-                    debug!(format!("For block: {:?}", tokens));
 
                     match pop!(self, 1) {
                         Some(VMType::Array(array)) => {
@@ -316,8 +301,6 @@ impl Interpreter {
 
                 Token::If => {
                     let tokens = next!(tokens, "block");
-
-                    debug!(format!("If block: {:?}", tokens));
 
                     if let Some(VMType::Bool(e)) = pop!(self, 1) {
                         if e {

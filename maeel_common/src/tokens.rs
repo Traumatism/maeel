@@ -2,11 +2,12 @@
 pub struct TokenData {
     pub token: Token,
     pub line: u16,
+    pub pos: u16,
 }
 
 impl TokenData {
-    pub fn new(token: Token, line: u16) -> Self {
-        Self { token, line }
+    pub fn new(token: Token, line: u16, pos: u16) -> Self {
+        Self { token, line, pos }
     }
 }
 

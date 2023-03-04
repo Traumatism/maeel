@@ -17,6 +17,7 @@ macro_rules! do_syscall {
     ($syscall_nr:expr, $arg_0:expr, $arg_1:expr, $arg_2:expr, $arg_3:expr, $arg_4:expr, $arg_5:expr) => {};
 }
 
+/// Perform syscalls on Unix x86_64
 #[cfg(all(target_family = "unix", target_arch = "x86_64"))]
 #[macro_export]
 macro_rules! do_syscall {
@@ -79,6 +80,7 @@ macro_rules! do_syscall {
     };
 }
 
+/// Perform syscalls on apple M1
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 #[macro_export]
 macro_rules! do_syscall {
@@ -141,6 +143,7 @@ macro_rules! do_syscall {
     };
 }
 
+/// Handle a syscall
 pub fn handle_syscall(syscall_nr: usize, args: &[VMType]) {
     let mut arg_ptrs: [*const std::ffi::c_void; 6] = [std::ptr::null(); 6];
 

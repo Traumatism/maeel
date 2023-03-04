@@ -1,0 +1,12 @@
+proc assert do
+    swap dup
+
+    if do
+        swap pop
+    end
+
+    !if do
+        print 
+    end
+
+end
