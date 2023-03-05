@@ -33,6 +33,7 @@ fn main() {
 
                 if !tokens.iter().any(|e| matches!(e.token, Token::Include)) {
                     process_tokens(
+                        args.get(2).unwrap(),
                         &mut extract_blocks(&lex_into_tokens(&content)).iter(),
                         Vec::new().as_mut(),
                         &mut HashMap::new(),
@@ -62,6 +63,7 @@ fn main() {
                     }
 
                     process_tokens(
+                        args.get(2).unwrap(),
                         &mut extract_blocks(&lex_into_tokens(&content)).iter(),
                         Vec::new().as_mut(),
                         &mut HashMap::new(),
