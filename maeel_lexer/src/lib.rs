@@ -71,6 +71,7 @@ macro_rules! lex_identifier {
             "pop" => Token::Pop,
             "over" => Token::Over,
             "take" => Token::Take,
+            "get" => Token::Get,
             "swap" => Token::Swap,
             "rot" => Token::Rot,
             "clear" => Token::Clear,

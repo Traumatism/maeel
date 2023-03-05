@@ -1,8 +1,8 @@
-use std::env::args;
 use std::fs::read_to_string;
+use std::{collections::HashMap, env::args};
 
 use maeel_common::tokens::Token;
-use maeel_interpreter::Interpreter;
+use maeel_interpreter::process_tokens;
 use maeel_lexer::{extract_blocks, lex_into_tokens};
 
 macro_rules! usage {
@@ -31,11 +31,13 @@ fn main() {
                 let content = read_to_string(args.get(2).unwrap()).expect("Failed to open file");
                 let tokens = lex_into_tokens(&content);
 
-                let mut interpreter = Interpreter::default();
-
                 if !tokens.iter().any(|e| matches!(e.token, Token::Include)) {
-                    interpreter
-                        .handle_instruction(&mut extract_blocks(&lex_into_tokens(&content)).iter());
+                    process_tokens(
+                        &mut extract_blocks(&lex_into_tokens(&content)).iter(),
+                        Vec::new().as_mut(),
+                        &mut HashMap::new(),
+                        &mut HashMap::new(),
+                    );
                 } else {
                     let mut tokens_backup = Vec::new();
                     let mut tokens_iter = tokens.iter();
@@ -59,8 +61,12 @@ fn main() {
                         }
                     }
 
-                    interpreter
-                        .handle_instruction(&mut extract_blocks(&lex_into_tokens(&content)).iter());
+                    process_tokens(
+                        &mut extract_blocks(&lex_into_tokens(&content)).iter(),
+                        Vec::new().as_mut(),
+                        &mut HashMap::new(),
+                        &mut HashMap::new(),
+                    );
                 }
             }
 
