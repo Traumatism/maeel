@@ -31,6 +31,7 @@ pub enum Token {
     Clear,
     Over,
     Take,
+    Get,
     Swap,
     Rot,
     Dup,

@@ -3,7 +3,6 @@ members = [
     "maeel_compiler",
     "maeel_interpreter",
     "maeel_lexer",
-    "maeel_web",
     "maeel_tests",
     "maeel_common",
 ]
