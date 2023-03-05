@@ -57,8 +57,8 @@ pub fn process_tokens(
         let pos = token_data.pos;
 
         match token.clone() {
-            Token::BlockStart | Token::BlockEnd | Token::Include => panic!(),
-
+            Token::BlockStart | Token::BlockEnd => panic!(),
+            Token::Include => {}
             Token::Block(tokens) => {
                 process_tokens(file_name, &mut tokens.iter(), data, vars, procs)
             }
