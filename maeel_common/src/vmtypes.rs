@@ -78,8 +78,7 @@ impl Not for VMType {
         match self {
             VMType::Float(a) => VMType::Float(a * -1.),
             VMType::Integer(a) => VMType::Integer(-a),
-            VMType::Bool(true) => VMType::Bool(false),
-            VMType::Bool(false) => VMType::Bool(true),
+            VMType::Bool(a) => VMType::Bool(a.not()),
             a => panic!("can't invert {a:?}"),
         }
     }

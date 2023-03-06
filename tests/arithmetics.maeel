@@ -1,0 +1,26 @@
+proc assert do
+    let msg pop
+    let cond pop
+
+    msg print pop
+    ": " print pop
+
+    cond if do
+        "OK\n" print pop
+    end
+
+    cond !if do
+        "FAIL\n" print pop
+    end
+end
+
+
+2 2 + 4 = "SUM (int)" assert
+2 3 * 6 = "PRODUCT (int)" assert
+6 2 / 3 = "DIVISION (int)" assert
+9 3 - 6 = "DIFF (int)" assert
+
+2.5  2.1   + 4.6    = "SUM (float)" assert
+2.25 3.41  * 7.6725 = "PRODUCT (float)" assert
+6.25 2     / 3.125  = "DIVISION (float)" assert
+9.5  3.5   - 6.0    = "DIFF (float)" assert

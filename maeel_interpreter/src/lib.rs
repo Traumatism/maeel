@@ -2,6 +2,7 @@ use maeel_common::tokens::{Token, TokenData};
 use maeel_common::vmtypes::VMType;
 
 use std::collections::HashMap;
+use std::ops::Not;
 use std::process::exit;
 use std::slice::Iter;
 
@@ -16,6 +17,7 @@ macro_rules! next {
             token => panic!("Expected identifier, got {:?}", token),
         }
     }};
+
     ($tokens:expr, "block") => {{
         let next = $tokens.next().unwrap();
         match &next.token {
@@ -44,12 +46,16 @@ macro_rules! emit_error {
 }
 
 /// Handle a bunch of tokens
-pub fn process_tokens(
-    file_name: &str,
-    tokens: &mut Iter<TokenData>,
-    data: &mut Vec<VMType>,
-    vars: &mut HashMap<String, VMType>,
-    procs: &mut HashMap<String, Vec<TokenData>>,
+pub fn process_tokens<'a>(
+    file_name: &'a str,
+    tokens: &'a mut Iter<TokenData>,
+    data: &'a mut Vec<VMType>,
+    vars: &'a mut HashMap<String, VMType>,
+    procs: &'a mut HashMap<String, Vec<TokenData>>,
+) -> (
+    &'a mut Vec<VMType>,
+    &'a mut HashMap<String, VMType>,
+    &'a mut HashMap<String, Vec<TokenData>>,
 ) {
     while let Some(token_data) = tokens.next() {
         let token = token_data.token.clone();
@@ -60,7 +66,7 @@ pub fn process_tokens(
             Token::BlockStart | Token::BlockEnd => panic!(),
             Token::Include => {}
             Token::Block(tokens) => {
-                process_tokens(file_name, &mut tokens.iter(), data, vars, procs)
+                process_tokens(file_name, &mut tokens.iter(), data, vars, procs);
             }
             Token::Str(content) => data.push(VMType::Str(content)),
             Token::Bool(content) => data.push(VMType::Bool(content)),
@@ -146,7 +152,7 @@ pub fn process_tokens(
                 }
 
                 let p = data.pop().unwrap();
-                data.push(!p)
+                data.push(p.not())
             }
             Token::Get => match (data.pop(), data.pop()) {
                 (Some(VMType::Integer(n)), Some(VMType::Array(array))) => {
@@ -323,11 +329,13 @@ pub fn process_tokens(
                         data,
                         vars,
                         procs,
-                    )
+                    );
                 } else {
                     tokens.next().unwrap();
                 }
             }
         }
     }
+
+    (data, vars, procs)
 }
