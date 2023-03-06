@@ -1,5 +1,6 @@
 use maeel_common::tokens::{Token, TokenData};
 
+/// Extract blocks from tokens
 pub fn extract_block_tokens(
     tokens_iter: &mut std::slice::Iter<TokenData>,
 ) -> (Vec<TokenData>, bool) {
