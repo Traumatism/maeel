@@ -1,22 +1,25 @@
-use maeel_common::tokens::{Token, TokenData};
+use maeel_common::tokens::*;
 
 /// Extract blocks from tokens
 pub fn extract_block_tokens(
     tokens_iter: &mut std::slice::Iter<TokenData>,
 ) -> (Vec<TokenData>, bool) {
     let mut block_tokens = vec![];
-    let mut recurse = false;
     let mut n = 0;
+    let mut recurse = false;
 
     for token_data in tokens_iter.by_ref() {
         let token = token_data.token.clone();
 
         match token {
+            // end of the top block
             Token::BlockEnd if n == 0 => break,
+            // end of a block embeded in the top block
             Token::BlockEnd => {
                 n -= 1;
                 block_tokens.push(token_data.clone());
             }
+            // begining of a new block
             Token::BlockStart => {
                 n += 1;
                 recurse = true;

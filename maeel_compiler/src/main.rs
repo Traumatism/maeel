@@ -4,6 +4,7 @@ use std::{collections::HashMap, env::args};
 use maeel_common::tokens::Token;
 use maeel_interpreter::process_tokens;
 use maeel_lexer::{extract_blocks, lex_into_tokens};
+use maeel_parser::parse_tokens;
 
 macro_rules! usage {
     () => {
@@ -14,6 +15,7 @@ Maeel interpreter usage
 
 maeel run <file>        <> Execute a maeel program
 maeel lex <file>        <> Turn file into tokens
+maeel parse <file>      <> Turn file into instructions
 maeel check <file>      <> Check program for typing errors
 "#
         )
@@ -76,7 +78,16 @@ fn main() {
                 let content = read_to_string(args.get(2).unwrap()).expect("Failed to open file");
                 extract_blocks(&lex_into_tokens(&content))
                     .iter()
-                    .for_each(|instruction| println!("{:?}\n\n", instruction));
+                    .for_each(|token| println!("{:?}\n\n", token));
+            }
+
+            "parse" => {
+                let content = read_to_string(args.get(2).unwrap()).expect("Failed to open file");
+                let tokens = extract_blocks(&lex_into_tokens(&content));
+
+                parse_tokens(&mut tokens.iter())
+                    .iter()
+                    .for_each(|instruction| println!("{:?}", instruction))
             }
 
             _ => usage!(),
