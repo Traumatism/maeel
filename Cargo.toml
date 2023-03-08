@@ -4,4 +4,5 @@ members = [
     "maeel_interpreter",
     "maeel_lexer",
     "maeel_common",
+    "maeel_parser",
 ]
