@@ -1,36 +1,63 @@
 use super::InstructionData;
 
 pub trait InstructionsProcessor {
-    fn handle_push(&self, i: InstructionData);
-    fn handle_identifier(&self, i: InstructionData);
-    fn handle_vardef(&self, i: InstructionData);
-    fn handle_procdef(&self, i: InstructionData);
-    fn handle_if(&self, i: InstructionData);
-    fn handle_while(&self, i: InstructionData);
-    fn handle_for(&self, i: InstructionData);
-    fn handle_syscall(&self, i: InstructionData);
-    fn handle_print(&self, i: InstructionData);
-    fn handle_clear(&self, i: InstructionData);
-    fn handle_take(&self, i: InstructionData);
-    fn handle_argv(&self, i: InstructionData);
-    fn handle_get(&self, i: InstructionData);
-    fn handle_ptr(&self, i: InstructionData);
-    fn handle_pop(&self, i: InstructionData);
-    fn handle_rot(&self, i: InstructionData);
-    fn handle_dup(&self, i: InstructionData);
-    fn handle_swap(&self, i: InstructionData);
-    fn handle_over(&self, i: InstructionData);
-    fn handle_sub(&self, i: InstructionData);
-    fn handle_add(&self, i: InstructionData);
-    fn handle_mul(&self, i: InstructionData);
-    fn handle_div(&self, i: InstructionData);
-    fn handle_mod(&self, i: InstructionData);
-    fn handle_not(&self, i: InstructionData);
-    fn handle_eq(&self, i: InstructionData);
-    fn handle_gt(&self, i: InstructionData);
-    fn handle_lt(&self, i: InstructionData);
+    fn handle_push(&mut self, i: InstructionData);
 
-    fn handle_instructions(&self, instructions: Vec<InstructionData>) {
+    fn handle_identifier(&mut self, i: InstructionData);
+
+    fn handle_vardef(&mut self, i: InstructionData);
+
+    fn handle_procdef(&mut self, i: InstructionData);
+
+    fn handle_if(&mut self, i: InstructionData);
+
+    fn handle_while(&mut self, i: InstructionData);
+
+    fn handle_for(&mut self, i: InstructionData);
+
+    fn handle_syscall(&mut self, i: InstructionData);
+
+    fn handle_print(&mut self, i: InstructionData);
+
+    fn handle_clear(&mut self, i: InstructionData);
+
+    fn handle_take(&mut self, i: InstructionData);
+
+    fn handle_argv(&mut self, i: InstructionData);
+
+    fn handle_get(&mut self, i: InstructionData);
+
+    fn handle_ptr(&mut self, i: InstructionData);
+
+    fn handle_pop(&mut self, i: InstructionData);
+
+    fn handle_rot(&mut self, i: InstructionData);
+
+    fn handle_dup(&mut self, i: InstructionData);
+
+    fn handle_swap(&mut self, i: InstructionData);
+
+    fn handle_over(&mut self, i: InstructionData);
+
+    fn handle_sub(&mut self, i: InstructionData);
+
+    fn handle_add(&mut self, i: InstructionData);
+
+    fn handle_mul(&mut self, i: InstructionData);
+
+    fn handle_div(&mut self, i: InstructionData);
+
+    fn handle_mod(&mut self, i: InstructionData);
+
+    fn handle_not(&mut self, i: InstructionData);
+
+    fn handle_eq(&mut self, i: InstructionData);
+
+    fn handle_gt(&mut self, i: InstructionData);
+
+    fn handle_lt(&mut self, i: InstructionData);
+
+    fn handle_instructions(&mut self, instructions: Vec<InstructionData>) {
         for instruction_data in instructions {
             let instruction = instruction_data.instruction.clone();
 

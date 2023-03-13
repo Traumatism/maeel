@@ -1,6 +1,8 @@
 use std::fs::read_to_string;
 use std::{collections::HashMap, env::args};
 
+use serde_json::to_string;
+
 use maeel_common::tokens::Token;
 use maeel_interpreter::process_tokens;
 use maeel_lexer::{extract_blocks, lex_into_tokens};
@@ -17,7 +19,7 @@ maeel run <file>        <> Execute a maeel program
 maeel lex <file>        <> Turn file into tokens
 maeel parse <file>      <> Turn file into instructions
 maeel check <file>      <> Check program for typing errors
-"#
+            "#
         )
     };
 }
@@ -76,9 +78,7 @@ fn main() {
 
             "lex" => {
                 let content = read_to_string(args.get(2).unwrap()).expect("Failed to open file");
-                extract_blocks(&lex_into_tokens(&content))
-                    .iter()
-                    .for_each(|token| println!("{:?}\n\n", token));
+                println!("{}", to_string(&lex_into_tokens(&content)).unwrap())
             }
 
             "parse" => {
