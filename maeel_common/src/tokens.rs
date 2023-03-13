@@ -1,4 +1,6 @@
-#[derive(Clone, Debug)]
+use serde_derive::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct TokenData {
     pub token: Token,
     pub line: u16,
@@ -11,7 +13,7 @@ impl TokenData {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum Token {
     Block(Vec<TokenData>),
     Str(String),

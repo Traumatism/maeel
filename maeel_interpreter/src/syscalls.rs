@@ -1,7 +1,7 @@
-#![allow(semicolon_in_expressions_from_macros)]
-
 use super::VMType;
+
 use core::arch::asm;
+use core::ffi::c_void;
 
 #[cfg(not(any(
     all(target_family = "unix", target_arch = "x86_64"),
@@ -145,15 +145,13 @@ macro_rules! do_syscall {
 
 /// Handle a syscall
 pub fn handle_syscall(syscall_nr: usize, args: &[VMType]) {
-    let mut arg_ptrs: [*const std::ffi::c_void; 6] = [std::ptr::null(); 6];
+    let mut arg_ptrs: [*const c_void; 6] = [std::ptr::null(); 6];
 
     for (i, arg) in args.iter().enumerate() {
         match arg {
-            VMType::Integer(value) => arg_ptrs[i] = *value as *const std::ffi::c_void,
-            VMType::IntPointer(ptr) => {
-                arg_ptrs[i] = &**ptr as *const i64 as *const std::ffi::c_void
-            }
-            VMType::StrPointer(ptr) => arg_ptrs[i] = ptr.as_ptr() as *const std::ffi::c_void,
+            VMType::Integer(value) => arg_ptrs[i] = *value as *const c_void,
+            VMType::IntPointer(ptr) => arg_ptrs[i] = &**ptr as *const i64 as *const c_void,
+            VMType::StrPointer(ptr) => arg_ptrs[i] = ptr.as_ptr() as *const c_void,
             _ => panic!("invalid argument type"),
         }
     }

@@ -1,5 +1,3 @@
-mod instruction;
+pub mod instruction;
 pub use instruction::*;
-
-mod processor;
-pub use processor::*;
+pub mod processor;
