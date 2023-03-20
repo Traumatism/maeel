@@ -1,0 +1,30 @@
+
+proc wilson_theorem do
+    let n pop
+    let fact 1
+
+    2 2 n < while do
+        dup
+        fact *
+        n %
+        let fact pop
+        1 +
+        dup n <
+    end
+
+    n 1 -
+    fact =
+end
+
+
+2 true while do
+    1 +
+
+    dup wilson_theorem if do
+        dup  print pop
+        "\n" print pop
+    end
+
+    true
+end
+
