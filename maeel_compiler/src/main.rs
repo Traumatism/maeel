@@ -18,7 +18,6 @@ Maeel interpreter usage
 maeel run <file>        <> Execute a maeel program
 maeel lex <file>        <> Turn file into tokens
 maeel parse <file>      <> Turn file into instructions
-maeel check <file>      <> Check program for typing errors
             "#
         )
     };
