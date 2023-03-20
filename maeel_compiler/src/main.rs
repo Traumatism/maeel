@@ -59,6 +59,7 @@ fn main() {
                                 };
 
                                 let include_content = read_to_string(path).unwrap();
+
                                 tokens_backup.append(&mut lex_into_tokens(&include_content))
                             }
                             _ => tokens_backup.push(token_data.clone()),

@@ -64,14 +64,21 @@ pub fn process_tokens<'a>(
 
         match token.clone() {
             Token::BlockStart | Token::BlockEnd => panic!(),
+
             Token::Include => {}
+
             Token::Block(tokens) => {
                 process_tokens(file_name, &mut tokens.iter(), data, vars, procs);
             }
+
             Token::Str(content) => data.push(VMType::Str(content)),
+
             Token::Bool(content) => data.push(VMType::Bool(content)),
+
             Token::Float(content) => data.push(VMType::Float(content)),
+
             Token::Integer(content) => data.push(VMType::Integer(content)),
+
             Token::Rot => {
                 if data.len() < 3 {
                     emit_error!(
@@ -92,6 +99,7 @@ pub fn process_tokens<'a>(
                 data.push(top);
                 data.push(over_1);
             }
+
             Token::Swap => {
                 if data.len() < 2 {
                     emit_error!(
@@ -115,6 +123,7 @@ pub fn process_tokens<'a>(
 
                 data.push(data.last().cloned().unwrap())
             }
+
             Token::Over => {
                 if data.len() < 2 {
                     emit_error!(
@@ -127,15 +136,25 @@ pub fn process_tokens<'a>(
 
                 data.push(data[data.len() - 2].to_owned())
             }
+
             Token::Clear => data.clear(),
+
             Token::Gt => binary_op!(data, >, VMType::Bool),
+
             Token::Lt => binary_op!(data, <, VMType::Bool),
+
             Token::Eq => binary_op!(data, ==, VMType::Bool),
+
             Token::Sub => binary_op!(data, -),
+
             Token::Add => binary_op!(data, +),
+
             Token::Mul => binary_op!(data, *),
+
             Token::Div => binary_op!(data, /),
+
             Token::Mod => binary_op!(data, %),
+
             Token::Pop => {
                 if data.len() < 1 {
                     emit_error!(file_name, line, pos, "`pop` requires 1 value on the stack!")
@@ -143,9 +162,11 @@ pub fn process_tokens<'a>(
 
                 data.pop();
             }
+
             Token::ProcStart => {
                 procs.insert(next!(tokens, "identifier"), next!(tokens, "block"));
             }
+
             Token::Not => {
                 if data.len() < 1 {
                     emit_error!(file_name, line, pos, "`not` requires 1 value on the stack!")
@@ -154,6 +175,7 @@ pub fn process_tokens<'a>(
                 let p = data.pop().unwrap();
                 data.push(p.not())
             }
+
             Token::Get => match (data.pop(), data.pop()) {
                 (Some(VMType::Integer(n)), Some(VMType::Array(array))) => {
                     data.push(array.get(n as usize).unwrap().clone());
@@ -165,6 +187,7 @@ pub fn process_tokens<'a>(
                     "`get` requires 1 integer and 1 array on the stack!"
                 ),
             },
+
             Token::Take => match data.pop() {
                 Some(VMType::Integer(n)) => {
                     let array = (0..n)
@@ -300,12 +323,14 @@ pub fn process_tokens<'a>(
 
                 vars.insert(name, value);
             }
+
             Token::While => {
                 let tokens = next!(tokens, "block");
                 while let VMType::Bool(true) = data.pop().unwrap() {
                     process_tokens(file_name, &mut tokens.iter(), data, vars, procs);
                 }
             }
+
             Token::For => {
                 let tokens = next!(tokens, "block");
                 match data.pop() {
@@ -321,6 +346,7 @@ pub fn process_tokens<'a>(
                     ),
                 }
             }
+
             Token::If => {
                 if let Some(VMType::Bool(true)) = data.pop() {
                     process_tokens(
