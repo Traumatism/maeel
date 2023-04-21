@@ -9,7 +9,7 @@ Fibonacci sequence:
 @ a 0
 @ b 1
 
-αω (
+α ω (
     b δ print "\n" print ρ
     a + @ b ρ @ a ρ b 0 >
 )
@@ -20,12 +20,10 @@ Fizz buzz:
 ```
 @ n 1
 
-true while (
-
+α ω (
     n 3 % 0  = ? ("Fizz\n" print ρ)
     n 5 % 0  = ? ("Buzz\n" print ρ)
     n 15 % 0 = ? ("FizzBuzz\n" print ρ)
-
     n 1 + @ n δ 100 <
 )
 ```
