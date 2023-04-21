@@ -1,20 +1,10 @@
-let n 1
+@ n 1
 
+true while (
 
-true while do
+    n 3 % 0  = ? ("Fizz\n" print ρ)
+    n 5 % 0  = ? ("Buzz\n" print ρ)
+    n 15 % 0 = ? ("FizzBuzz\n" print ρ)
 
-    n 3 % 0 = if do
-        "Fizz\n" print pop
-    end
-
-    n 5 % 0 = if do
-        "Buzz\n" print pop
-    end
-
-    n 15 % 0 = if do
-        "FizzBuzz\n" print pop
-    end
-
-    n 1 + let n dup 100 <
-end
-
+    n 1 + @ n δ 100 <
+)

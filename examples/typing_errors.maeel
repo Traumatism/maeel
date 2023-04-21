@@ -1,4 +1,0 @@
-include "std/maths.maeel" pop
-
-"Hello\n" print
-2 sqrt print
