@@ -1,7 +1,0 @@
-let name "Victor"
-let name_size 6
-let syscall_0 1
-"Hi, " name + "\n" + ptr let syscall_1 pop
-5 name_size + let syscall_2 pop
-let syscall_number 4
-syscall

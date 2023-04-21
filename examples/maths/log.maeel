@@ -1,12 +1,9 @@
-proc log do
-    let number pop
-    let base   pop
+λ log (
+    @ n ρ
+    @ b ρ
 
-    0
-
-    (number base >) (number base =) + while do
-        1+
-        (number base /) let number pop
-        (number base >) (number base =) +
-    end
-end
+    0 n b > n b = + ω (
+        1 + n b / @ n ρ
+        n b > n b = +
+    )
+)

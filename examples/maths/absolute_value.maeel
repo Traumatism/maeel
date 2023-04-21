@@ -1,8 +1,4 @@
-proc abs do
-    dup 0 < dup
-    if do swap! swap! end
-    if do swap end
-end
+λ abs (δ 0 < δ ? (σ! σ!) ? (σ))
 
 10 abs print
 10! abs print

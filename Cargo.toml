@@ -1,8 +1,5 @@
 [workspace]
 members = [
-    "maeel_compiler",
-    "maeel_interpreter",
-    "maeel_lexer",
+    "maeel_main",
     "maeel_common",
-    "maeel_parser",
 ]

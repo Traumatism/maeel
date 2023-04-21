@@ -1,30 +1,12 @@
+λ wilson_theorem (
+    @ n ρ @ fact 1
+    2 2 n < ω
+        (δ fact * n % @ fact ρ 1 + δ n <)
+    n 1 - fact =
+)
 
-proc wilson_theorem do
-    let n pop
-    let fact 1
-
-    2 2 n < while do
-        dup
-        fact *
-        n %
-        let fact pop
-        1 +
-        dup n <
-    end
-
-    n 1 -
-    fact =
-end
-
-
-2 true while do
-    1 +
-
-    dup wilson_theorem if do
-        dup  print pop
-        "\n" print pop
-    end
-
-    true
-end
-
+2 α ω (
+    1 + δ wilson_theorem ?
+        (δ print ρ "\n" print ρ)
+    α
+)

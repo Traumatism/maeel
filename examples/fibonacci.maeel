@@ -1,9 +1,7 @@
-let a 0
-let b 1
+@ a 0
+@ b 1
 
-true while do
-    b dup print "\n" print pop
-    a + let b pop
-    let a pop
-    b 0 >
-end
+αω (
+    b δ print "\n" print ρ
+    a + @ b ρ @ a ρ b 0 >
+)
