@@ -12,8 +12,8 @@
 
     0 < δ
 
-    ? (base exp! _pow 1 σ / σ)
-    !? (base exp _pow)
+    ⟹ (base exp! _pow 1 σ / σ)
+    ! ⟹ (base exp _pow)
 )
 
 2 10 pow println

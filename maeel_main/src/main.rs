@@ -10,36 +10,73 @@ use std::ops::Not;
 use std::process::exit;
 use std::slice::Iter;
 
-/// Extract tokens from a single block
-pub fn extract_block_tokens(
-    tokens_iter: &mut std::slice::Iter<TokenData>,
-) -> (Vec<TokenData>, bool) {
-    let mut block_tokens = vec![];
-    let mut n = 0;
-    let mut recurse = false;
-
-    for token_data in tokens_iter.by_ref() {
-        let token = token_data.token.clone();
-
-        match token {
-            // end of the top block
-            Token::BlockEnd if n == 0 => break,
-            // end of a block embeded in the top block
-            Token::BlockEnd => {
-                n -= 1;
-                block_tokens.push(token_data.clone());
-            }
-            // begining of a new block
-            Token::BlockStart => {
-                n += 1;
-                recurse = true;
-                block_tokens.push(token_data.clone());
-            }
-            _ => block_tokens.push(token_data.clone()),
+macro_rules! lex_identifier {
+    ($identifier:expr) => {
+        match $identifier.as_str() {
+            "not" => Token::Not,
+            "clear" => Token::Clear,
+            "include" => Token::Include,
+            _ => Token::Identifier(String::from($identifier)),
         }
-    }
+    };
+}
 
-    (block_tokens, recurse)
+macro_rules! lex_single_char {
+    ($chr:expr) => {
+        match $chr {
+            '=' => vec![Token::Eq],
+            '>' => vec![Token::Gt],
+            '<' => vec![Token::Lt],
+            '!' => vec![Token::Not],
+            '-' => vec![Token::Sub],
+            '+' => vec![Token::Add],
+            '*' => vec![Token::Mul],
+            '/' => vec![Token::Div],
+            '%' => vec![Token::Mod],
+            '@' => vec![Token::Let],
+            '(' => vec![Token::BlockStart],
+            ')' => vec![Token::BlockEnd],
+            'λ' => vec![Token::ProcStart],
+            'ρ' => vec![Token::Pop],
+            'δ' => vec![Token::Dup],
+            'θ' => vec![Token::Over],
+            'σ' => vec![Token::Swap],
+            'ψ' => vec![Token::Rot],
+            '⟹' => vec![Token::If],
+            'ω' => vec![Token::While],
+            'Σ' => vec![Token::For],
+            'τ' => vec![Token::Take],
+            'Γ' => vec![Token::Get],
+            'α' => vec![Token::Bool(true)],
+            'β' => vec![Token::Bool(false)],
+
+            '≠' => vec![Token::Eq, Token::Not],
+
+            '↓' => vec![Token::Integer(1), Token::Sub],
+            '↑' => vec![Token::Integer(1), Token::Add],
+
+            '≤' => vec![
+                Token::Over,
+                Token::Over,
+                Token::Lt,
+                Token::Rot,
+                Token::Rot,
+                Token::Eq,
+                Token::Add,
+            ],
+
+            '≥' => vec![
+                Token::Over,
+                Token::Over,
+                Token::Gt,
+                Token::Rot,
+                Token::Rot,
+                Token::Eq,
+                Token::Add,
+            ],
+            _ => panic!(),
+        }
+    };
 }
 
 /// Extract differents blocks from a list of tokens
@@ -103,50 +140,6 @@ pub fn extract_blocks(tokens: &[TokenData]) -> Vec<TokenData> {
     }
 
     output
-}
-
-macro_rules! lex_identifier {
-    ($identifier:expr) => {
-        match $identifier.as_str() {
-            "not" => Token::Not,
-            "clear" => Token::Clear,
-            "include" => Token::Include,
-            _ => Token::Identifier(String::from($identifier)),
-        }
-    };
-}
-
-macro_rules! lex_single_char {
-    ($chr:expr) => {
-        match $chr {
-            '=' => Token::Eq,
-            '>' => Token::Gt,
-            '<' => Token::Lt,
-            '!' => Token::Not,
-            '-' => Token::Sub,
-            '+' => Token::Add,
-            '*' => Token::Mul,
-            '/' => Token::Div,
-            '%' => Token::Mod,
-            '@' => Token::Let,
-            '(' => Token::BlockStart,
-            ')' => Token::BlockEnd,
-            'λ' => Token::ProcStart,
-            'ρ' => Token::Pop,
-            'δ' => Token::Dup,
-            'θ' => Token::Over,
-            'σ' => Token::Swap,
-            'ψ' => Token::Rot,
-            '?' => Token::If,
-            'ω' => Token::While,
-            'Σ' => Token::For,
-            'τ' => Token::Take,
-            'Γ' => Token::Get,
-            'α' => Token::Bool(true),
-            'β' => Token::Bool(false),
-            _ => panic!(),
-        }
-    };
 }
 
 /// The lex_into_tokens function takes a string code as input, and
@@ -233,7 +226,9 @@ pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
             }
 
             _ => {
-                tokens.push(TokenData::new(lex_single_char!(chr), line, pos));
+                for token in lex_single_char!(chr) {
+                    tokens.push(TokenData::new(token, line, pos))
+                }
             }
         }
     }
