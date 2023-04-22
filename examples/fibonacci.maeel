@@ -1,7 +1,5 @@
-@ a 0
-@ b 1
-
-αω (
-    b δ print "\n" print ρ
-    a + @ b ρ @ a ρ b 0 >
+λ fib (
+    @n ρ @a 0 @b 1 @i 1
+    i n ≤ ω (a b + @c ρ b @a ρ c @b ρ ↑ @i ρ i n ≤)
+    a
 )

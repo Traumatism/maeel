@@ -1,12 +1,7 @@
 λ wilson_theorem (
-    @ n ρ @ fact 1
-    2 2 n < ω
-        (δ fact * n % @ fact ρ 1 + δ n <)
-    n 1 - fact =
+    @ n ρ @ f 1
+    2 2 n < ω (δ f * n % @ f ρ ↑ δ n <)
+    n ↓ f =
 )
 
-2 α ω (
-    1 + δ wilson_theorem ?
-        (δ print ρ "\n" print ρ)
-    α
-)
+2 α ω (↑ δ wilson_theorem ⟹ (δ print ρ "\n" print ρ) α)

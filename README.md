@@ -3,60 +3,49 @@
 Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), **maeel** is a concatenative [stack oriented programming language](https://en.wikipedia.org/wiki/Stack-oriented_programming) built with ~1000 lines of Rust.
 
 
-Fibonacci sequence:
+### abs(x)
 
 ```
-@ a 0
-@ b 1
-
-α ω (
-    b δ print "\n" print ρ
-    a + @ b ρ @ a ρ b 0 >
-)
+λ abs (δ 0 < δ ⟹ (σ! σ!) ⟹ (σ))
 ```
 
-Fizz buzz:
-
-```
-@ n 1
-
-α ω (
-    n 3 % 0  = ? ("Fizz\n" print ρ)
-    n 5 % 0  = ? ("Buzz\n" print ρ)
-    n 15 % 0 = ? ("FizzBuzz\n" print ρ)
-    n 1 + @ n δ 100 <
-)
-```
-
-Logarithm:
-
-```
-λ log (
-    @ n ρ
-    @ b ρ
-
-    0 n b > n b = + ω (
-        1 + n b / @ n ρ
-        n b > n b = +
-    )
-)
-```
-
-Square root:
+### sqrt(x)
 
 ```
 λ sqrt (
-    @ a δ
-    2 / @ y ρ 0 0
-    α ω (
-        a y / y + 2 / @ y ρ 1 + δ 5 <
-    )
+    @ a δ 2 / @ y ρ 0 0
+    α ω (a y / y + 2 / @ y ρ ↑ δ 5 <)
     ρ ρ y
 )
 ```
 
-Absolute value:
+### factorial(n)
 
 ```
-λ abs (δ 0 < δ ? (σ! σ!) ? (σ))
+λ fact (@n ρ @f 1 n 0 > ω (f n * @f ρ n ↓ @n ρ n 0 >) f)
+```
+
+### Fibonacci sequence (Fn)
+
+```
+λ fib (
+    @n ρ @a 0 @b 1 @i 1
+    i n < i n = + ω (
+        a b + @c ρ b @a ρ c @b ρ
+        i 1 + @i ρ i n < i n = +
+    )
+    a
+)
+```
+
+### Get primes
+
+```
+λ wilson_theorem (
+    @ n ρ @ f 1
+    2 2 n < ω (δ f * n % @ f ρ ↑ δ n <)
+    n ↓ f =
+)
+
+2 α ω (↑ δ wilson_theorem ⟹ (δ print "\n" print ρ ρ) α)
 ```
