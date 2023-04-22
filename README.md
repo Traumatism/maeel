@@ -13,39 +13,49 @@ Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), *
 
 ```
 λ sqrt (
-    @ a δ 2 / @ y ρ 0 0
-    α ω (a y / y + 2 / @ y ρ ↑ δ 5 <)
+    δ → a 2 / → y 0 0
+    α ω (a y / y + 2 / → y ↑ δ 5 <)
     ρ ρ y
 )
+
+2 sqrt print
 ```
 
 ### factorial(n)
 
 ```
-λ fact (@n ρ @f 1 n 0 > ω (f n * @f ρ n ↓ @n ρ n 0 >) f)
+
+
+λ fact (
+    1 → f δ → n 0 > ω (f n * → f n ↓ δ → n 0 >) f
+)
+
+7 fact print
 ```
 
 ### Fibonacci sequence (Fn)
 
 ```
 λ fib (
-    @n ρ @a 0 @b 1 @i 1
-    i n < i n = + ω (
-        a b + @c ρ b @a ρ c @b ρ
-        i 1 + @i ρ i n < i n = +
-    )
+    0 1 1 → b → i → a → n
+    i n ≤ ω (a b + → c b → a c → b i ↑ → i i n ≤)
     a
 )
+
+7 fib print
 ```
 
 ### Get primes
 
 ```
 λ wilson_theorem (
-    @ n ρ @ f 1
-    2 2 n < ω (δ f * n % @ f ρ ↑ δ n <)
+    1 → f → n 2 2 n < ω
+    (δ f * n % → f ↑ δ n <)
     n ↓ f =
 )
 
-2 α ω (↑ δ wilson_theorem ⟹ (δ print "\n" print ρ ρ) α)
+2 α ω (
+    ↑ δ wilson_theorem ⟹ (δ print ρ "\n" print ρ)
+    α
+)
 ```

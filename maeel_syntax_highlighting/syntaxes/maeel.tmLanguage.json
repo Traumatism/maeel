@@ -31,7 +31,7 @@
 			"patterns": [
 				{
 					"name": "constant.language.maeel",
-					"match": "\\b(true|false)\\b"
+					"match": "\\b(α|β)\\b"
 				}
 			]
 		},
@@ -47,11 +47,11 @@
 			"patterns": [
 				{
 					"name": "keyword.control.maeel",
-					"match": "\\b(if|while|for|let|proc|do|end|include)\\b"
+					"match": "\\b(⟹|ω|Σ|@|λ|include|↑)\\b"
 				},
 				{
 					"name": "entity.name.function.maeel",
-					"match": "\\b(pop|dup|over|swap|take|clear|return|rot|print|println|ptr)\\b"
+					"match": "\\b(ρ|δ|θ|σ|τ|Γ|clear|ψ|print)\\b"
 				}
 			]
 		},

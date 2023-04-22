@@ -1,7 +1,10 @@
 λ wilson_theorem (
-    @ n ρ @ f 1
-    2 2 n < ω (δ f * n % @ f ρ ↑ δ n <)
+    1 → f → n 2 2 n < ω
+    (δ f * n % → f ↑ δ n <)
     n ↓ f =
 )
 
-2 α ω (↑ δ wilson_theorem ⟹ (δ print ρ "\n" print ρ) α)
+2 α ω (
+    ↑ δ wilson_theorem ⟹ (δ print ρ "\n" print ρ)
+    α
+)

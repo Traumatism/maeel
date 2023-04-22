@@ -2,6 +2,7 @@ use maeel_common::tokens::Token;
 use maeel_common::tokens::TokenData;
 use maeel_common::vmtypes::VMType;
 
+use core::panic;
 use std::collections::HashMap;
 use std::env::args;
 use std::fs::read_to_string;
@@ -33,6 +34,7 @@ macro_rules! lex_single_char {
             '*' => vec![Token::Mul],
             '/' => vec![Token::Div],
             '%' => vec![Token::Mod],
+            '→' => vec![Token::LetFast],
             '@' => vec![Token::Let],
             '(' => vec![Token::BlockStart],
             ')' => vec![Token::BlockEnd],
@@ -49,12 +51,11 @@ macro_rules! lex_single_char {
             'Γ' => vec![Token::Get],
             'α' => vec![Token::Bool(true)],
             'β' => vec![Token::Bool(false)],
-
+            '{' => vec![Token::SetStart],
+            '}' => vec![Token::SetEnd],
             '≠' => vec![Token::Eq, Token::Not],
-
             '↓' => vec![Token::Integer(1), Token::Sub],
             '↑' => vec![Token::Integer(1), Token::Add],
-
             '≤' => vec![
                 Token::Over,
                 Token::Over,
@@ -292,9 +293,28 @@ pub fn process_tokens<'a>(
         match token.clone() {
             Token::Include => {}
 
+            Token::SetStart => {
+                let mut array = Vec::new();
+
+                loop {
+                    let next_token = tokens.next().unwrap().clone().token;
+
+                    match next_token {
+                        Token::SetStart => panic!(),
+                        Token::SetEnd => break,
+                        Token::Str(value) => array.push(VMType::Str(value)),
+                        Token::Integer(value) => array.push(VMType::Integer(value)),
+                        Token::Float(value) => array.push(VMType::Float(value)),
+                        _ => panic!(),
+                    }
+                }
+
+                data.push(VMType::Array(array));
+            }
+
             // There shouldn't be BlockStart or BlockEnd since it should be removed
             // after the extraction of blocks
-            Token::BlockStart | Token::BlockEnd => panic!(),
+            Token::BlockStart | Token::BlockEnd | Token::SetEnd => panic!(),
 
             // If it's a new code block, handle it
             Token::Block(tokens) => {
@@ -492,9 +512,17 @@ pub fn process_tokens<'a>(
                 };
             }
 
+            Token::LetFast => {
+                let name = next!(tokens, "identifier");
+                let value = data.pop().unwrap();
+
+                vars.insert(name, value);
+            }
+
             Token::Let => {
                 let name = next!(tokens, "identifier");
                 let next = tokens.next().unwrap();
+
                 let value = match &next.token {
                     Token::Str(content) => VMType::Str(content.clone()),
                     Token::Bool(p) => VMType::Bool(*p),
