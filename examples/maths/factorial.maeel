@@ -1,4 +1,6 @@
 
-λ fact (@n ρ @f 1 n 0 > ω (f n * @f ρ n ↓ @n ρ n 0 >) f)
+λ fact (
+    1 → f δ → n 0 > ω (f n * → f n ↓ δ → n 0 >) f
+)
 
 7 fact print "\n" print

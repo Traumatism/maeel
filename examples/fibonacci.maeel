@@ -1,5 +1,7 @@
 λ fib (
-    @n ρ @a 0 @b 1 @i 1
-    i n ≤ ω (a b + @c ρ b @a ρ c @b ρ ↑ @i ρ i n ≤)
+    0 1 1 → b → i → a → n
+    i n ≤ ω (a b + → c b → a c → b i ↑ → i i n ≤)
     a
 )
+
+7 fib print
