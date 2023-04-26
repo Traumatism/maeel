@@ -1,0 +1,19 @@
+λ println ( print "\n" print ρ )
+
+"Enumeration (sum): "  print
+0 { 1 2 3 } Σ (+)      println
+
+"Append: "             print
+{ 1 2 3 } 4 + 5 + 6 +  println
+
+"Union: "              print
+{ 1 2 3 } { 4 5 6 } ∪  println
+
+"Cartesian product: "  print
+{ 1 2 3 } { 1 2 3 } *  println
+
+"Integer intervals: "  print
+[1 7]                  println
+
+"List comprehension: " print
+{ (2 * 1 +) ([1 10]) } println

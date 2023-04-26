@@ -1,3 +1,52 @@
-{ 1 2 3 } → x
+λ assert_eq (
+    λ p (print ρ) p ": " p = δ ⇒ ("OK\n" p) ¬ ⇒ ("FAIL\n" p)
+)
 
-0 x Σ ( + ) print
+α α ∨   α     "OR test 1 (1-1)"      assert_eq
+β β ∨   β     "OR test 2 (0-0)"      assert_eq
+α β ∨   α     "OR test 3 (1-0)"      assert_eq
+β α ∨   α     "OR test 4 (0-1)"      assert_eq
+β   ¬   α     "NOT test 1 (0)"       assert_eq
+α   ¬   β     "NOT test 2 (1)"       assert_eq
+α α ∧   α     "AND test 1 (1-1)"     assert_eq
+β β ∧   β     "AND test 2 (0-0)"     assert_eq
+α β ∧   β     "AND test 3 (1-0)"     assert_eq
+β α ∧   β     "AND test 4 (0-1)"     assert_eq
+α α ⊕   β     "XOR test 1 (1-1)"     assert_eq
+β β ⊕   β     "XOR test 2 (0-0)"     assert_eq
+α β ⊕   α     "XOR test 3 (1-0)"     assert_eq
+β α ⊕   α     "XOR test 4 (0-1)"     assert_eq
+α α ⊙   α     "XNOR test 1 (1-1)"    assert_eq
+β β ⊙   α     "XNOR test 2 (0-0)"    assert_eq
+α β ⊙   β     "XNOR test 3 (1-0)"    assert_eq
+β α ⊙   β     "XNOR test 4 (0-1)"    assert_eq
+α α ∧¬  β     "NAND test 1 (1-1)"    assert_eq
+β β ∧¬  α     "NAND test 2 (0-0)"    assert_eq
+α β ∧¬  α     "NAND test 3 (1-0)"    assert_eq
+β α ∧¬  α     "NAND test 4 (0-1)"    assert_eq
+α α ∨¬  β     "NOR test 1 (1-1)"     assert_eq
+β β ∨¬  α     "NOR test 2 (0-0)"     assert_eq
+α β ∨¬  β     "NOR test 3 (1-0)"     assert_eq
+β α ∨¬  β     "NOR test 4 (0-1)"     assert_eq
+
+λ log (→ n → b 0 n b ≥ ω (↑ n b / → n n b ≥))
+
+λ pow (λ P (δ 1 > ⇒ (θ σ↓ P*)) ↑P)
+
+λ abs (δ 0< δ ⇒ (σ¬ σ¬) ⇒ (σ))
+
+λ fact (δ 1 > ⇒ (δ↓ fact*))
+
+λ square  (δ*)
+
+λ cube    (δ square*)
+
+λ quartic (δ cube*)
+
+λ quintic (δ quartic*)
+
+
+2 65536 log 16 "65536 = 2**16 test: " assert_eq
+2 10 pow 1024 "2**10 = 1024 test: "   assert_eq
+10 abs 10! abs "|10| = |-10| test: "  assert_eq
+7 fact 5040 "7! = 5040 test: "        assert_eq
