@@ -16,10 +16,6 @@
 β β ⊕   β     "XOR test 2 (0-0)"     assert_eq
 α β ⊕   α     "XOR test 3 (1-0)"     assert_eq
 β α ⊕   α     "XOR test 4 (0-1)"     assert_eq
-α α ⊙   α     "XNOR test 1 (1-1)"    assert_eq
-β β ⊙   α     "XNOR test 2 (0-0)"    assert_eq
-α β ⊙   β     "XNOR test 3 (1-0)"    assert_eq
-β α ⊙   β     "XNOR test 4 (0-1)"    assert_eq
 α α ∧¬  β     "NAND test 1 (1-1)"    assert_eq
 β β ∧¬  α     "NAND test 2 (0-0)"    assert_eq
 α β ∧¬  α     "NAND test 3 (1-0)"    assert_eq

@@ -86,6 +86,7 @@ a 100 < ω (
 | `*`    | `x y -- (x * y)` | yes         |
 | `/`    | `x y -- (x / y)` | no          |
 | `%`    | `x y -- (x % y)` | no          |
+| `!`    | `x -- (-x)`      | n/a         |
 
 ## Logic
 
@@ -94,6 +95,7 @@ a 100 < ω (
 | `∧`    | `p q -- (p and q)` | yes         |
 | `∨`    | `p q -- (p or q)`  | yes         |
 | `⊕`    | `p q -- (p xor q)` | yes         |
+| `¬`    | `p -- (not p)`     | n/a         |
 
 ## Comparison
 

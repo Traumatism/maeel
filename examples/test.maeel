@@ -1,7 +1,7 @@
-λ println ( print "\n" print ρ )
+λ println ( print ρ "\n" print ρ )
 
 "Enumeration (sum): "  print
-0 { 1 2 3 } Σ (+)      println
+0 { 1 2 3 } Σ ()
 
 "Append: "             print
 { 1 2 3 } 4 + 5 + 6 +  println

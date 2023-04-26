@@ -36,11 +36,11 @@ macro_rules! lex_single_char {
             'β' => vec![Token::Bool(false)],
             'ε' => vec![Token::Str(String::new())],
             'π' => vec![Token::Float(3.14159265359)],
-            '∅' => vec![Token::SetStart, Token::SetEnd],
+            '∅' => vec![Token::ArrayStart, Token::ArrayEnd],
             '(' => vec![Token::BlockStart],
             ')' => vec![Token::BlockEnd],
-            '{' => vec![Token::SetStart],
-            '}' => vec![Token::SetEnd],
+            '{' => vec![Token::ArrayStart],
+            '}' => vec![Token::ArrayEnd],
             '[' => vec![Token::IStart],
             ']' => vec![Token::IEnd],
             'τ' => vec![Token::Take],
@@ -72,7 +72,7 @@ macro_rules! lex_single_char {
                 Token::Eq,
                 Token::Add,
             ],
-            _ => panic!(),
+            chr => panic!("{chr}"),
         }
     };
 }
@@ -184,7 +184,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     chars.next().unwrap();
                 });
 
-                tokens.push(Token::Str(content));
+                tokens.push(Token::Identifier(content));
             }
 
             '0'..='9' => {

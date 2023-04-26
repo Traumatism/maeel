@@ -10,9 +10,10 @@ use std::slice::Iter;
 macro_rules! next {
     ($tokens:expr, "identifier") => {{
         let next = $tokens.next().unwrap();
+
         match next {
             Token::Identifier(value) => value.clone(),
-            _ => panic!("Expected identifier"),
+            token => panic!("Expected identifier, got {token:?}"),
         }
     }};
 
@@ -51,6 +52,47 @@ pub fn process_tokens<'a>(
 )> {
     while let Some(token) = tokens.next() {
         match token {
+            // Push a new procedure
+            Token::ProcStart => {
+                procs.insert(next!(tokens, "identifier"), next!(tokens, "block"));
+            }
+
+            // While loop
+            Token::While => {
+                let tokens = next!(tokens, "block");
+
+                while let VMType::Bool(true) = data.pop().unwrap() {
+                    process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
+                }
+            }
+
+            // For loop
+            Token::For => {
+                let tokens = next!(tokens, "block");
+
+                if let Some(VMType::Array(array)) = data.pop() {
+                    for element in array {
+                        data.push(element);
+                        process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
+                    }
+                }
+            }
+
+            // Alias a name to a VM type
+            Token::Let => {
+                vars.insert(next!(tokens, "identifier"), data.pop().unwrap());
+            }
+
+            // If condition
+            Token::If => {
+                let tokens = next!(tokens, "block");
+
+                if let Some(VMType::Bool(true)) = data.pop() {
+                    process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
+                }
+            }
+
+            // Parse integer intervals
             Token::IStart => {
                 let (start, end) = match (tokens.next(), tokens.next()) {
                     (Some(Token::Integer(m)), Some(Token::Integer(n))) => (m, n),
@@ -66,16 +108,17 @@ pub fn process_tokens<'a>(
                 ));
             }
 
-            Token::SetStart => {
+            // Parse an array of elements
+            Token::ArrayStart => {
                 let mut array = Vec::new();
 
                 loop {
                     let next_token = tokens.next().unwrap().clone();
 
                     match next_token {
-                        Token::SetEnd => break,
+                        Token::ArrayEnd => break,
 
-                        Token::SetStart => panic!(),
+                        Token::ArrayStart => panic!(),
 
                         Token::Str(value) => array.push(VMType::Str(value)),
 
@@ -124,11 +167,10 @@ pub fn process_tokens<'a>(
                 data.push(VMType::Array(array))
             }
 
-            // There shouldn't be BlockStart or BlockEnd since it should be removed
-            // after the extraction of blocks
-            Token::BlockStart | Token::BlockEnd | Token::SetEnd | Token::IEnd => panic!(),
+            // These tokens shouldn't be alone here
+            Token::BlockStart | Token::BlockEnd | Token::ArrayEnd | Token::IEnd => panic!(),
 
-            // If it's a new code block, handle it
+            // Handle new code blocks
             Token::Block(tokens) => {
                 process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
             }
@@ -144,6 +186,11 @@ pub fn process_tokens<'a>(
 
             // Push an integer
             Token::Integer(content) => data.push(VMType::Integer(*content)),
+
+            // Pop from the stack
+            Token::Pop => {
+                data.pop();
+            }
 
             // Rotate the three top elements
             Token::Rot => {
@@ -166,12 +213,10 @@ pub fn process_tokens<'a>(
                 data.push(over)
             }
 
-            // Puhsh the elemnt on the stack top on the
-            // stack top
+            // Push the element on the stack top on the stack top
             Token::Dup => data.push(data.last().cloned().unwrap()),
 
-            // Push the element over the stack top on the
-            // stack top
+            // Push the element over the stack top on the stack top
             Token::Over => data.push(data[data.len() - 2].to_owned()),
 
             // Clear the stack
@@ -186,30 +231,15 @@ pub fn process_tokens<'a>(
             // (a = b)?
             Token::Eq => binary_op!(data, ==, VMType::Bool),
 
-            // a - b
             Token::Sub => binary_op!(data, -),
 
-            // a + b
             Token::Add => binary_op!(data, +),
 
-            // a * b
             Token::Mul => binary_op!(data, *),
 
-            // a / b
             Token::Div => binary_op!(data, /),
 
-            // a mod b
             Token::Mod => binary_op!(data, %),
-
-            // Pop from the stack
-            Token::Pop => {
-                data.pop();
-            }
-
-            // Push a new procedure
-            Token::ProcStart => {
-                procs.insert(next!(tokens, "identifier"), next!(tokens, "block"));
-            }
 
             // Invert the stack head
             Token::Not => {
@@ -251,38 +281,6 @@ pub fn process_tokens<'a>(
                         }
                     },
                 };
-            }
-
-            Token::Let => {
-                vars.insert(next!(tokens, "identifier"), data.pop().unwrap());
-            }
-
-            Token::While => {
-                let tokens = next!(tokens, "block");
-
-                while let VMType::Bool(true) = data.pop().unwrap() {
-                    process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
-                }
-            }
-
-            Token::For => {
-                let tokens = next!(tokens, "block");
-
-                match data.pop() {
-                    Some(VMType::Array(array)) => array.iter().for_each(|element| {
-                        data.push(element.clone());
-                        process_tokens(file_name, &mut tokens.iter(), data, vars, procs).unwrap();
-                    }),
-                    _ => panic!(),
-                }
-            }
-
-            Token::If => {
-                let tokens = next!(tokens, "block");
-
-                if let Some(VMType::Bool(true)) = data.pop() {
-                    process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
-                }
             }
         };
     }
