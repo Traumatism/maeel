@@ -1,0 +1,11 @@
+λ gcd_1 (
+    ≕ b ≕ a
+    b 0 ≠ ω (b ≕ t a b % ≕ b t ≕ a b 0 ≠)
+    a
+)
+
+λ gcd_2 (
+    ≕ b ≕ a
+    a b ≠ ω (a b > ± ⟹ (b a - ≕ b) ⟹ (a b - ≕ a) a b ≠)
+    a
+)

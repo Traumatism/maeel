@@ -1,8 +1,3 @@
-1 → n
-
-α ω (
-    n 3 % 0 = ⟹ ("Fizz\n" print ρ)
-    n 5 % 0 = ⟹ ("Buzz\n" print ρ)
-    n 15 % 0 = ⟹ ("FizzBuzz\n" print ρ)
-    n ↑ δ → n 100 <
+[0 100] Σ (
+    "" σ δ 3∣ ⇒ ("Fizz" σ) 5∣ ⇒ ("Buzz") print "\n" print
 )

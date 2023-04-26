@@ -1,4 +1,3 @@
 λ log (
-    @ n ρ @ b ρ
-    0 n b ≥ ω (↑ n b / @ n ρ n b ≥)
+    → n → b 0 n b ≥ ω (↑ n b / → n n b ≥)
 )

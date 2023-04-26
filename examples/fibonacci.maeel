@@ -1,7 +1,7 @@
 λ fib (
-    0 1 1 → b → i → a → n
-    i n ≤ ω (a b + → c b → a c → b i ↑ → i i n ≤)
-    a
+    0 1 1
+    →b →i →a →n
+    i n ≤ ω (a b+→c b→a c→b i↗i i n≤) a
 )
 
-7 fib print
+{ (fib) ([1 30]) } print

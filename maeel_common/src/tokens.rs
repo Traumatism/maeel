@@ -1,19 +1,6 @@
 #[derive(Clone, Debug)]
-pub struct TokenData {
-    pub token: Token,
-    pub line: u16,
-    pub pos: u16,
-}
-
-impl TokenData {
-    pub fn new(token: Token, line: u16, pos: u16) -> Self {
-        Self { token, line, pos }
-    }
-}
-
-#[derive(Clone, Debug)]
 pub enum Token {
-    Block(Vec<TokenData>),
+    Block(Vec<Token>),
     Str(String),
     Integer(i64),
     Identifier(String),
@@ -37,13 +24,13 @@ pub enum Token {
     Dup,
     Pop,
     Let,
-    LetFast,
     ProcStart,
     SetStart,
     SetEnd,
+    IStart,
+    IEnd,
     BlockStart,
     BlockEnd,
-    Include,
     If,
     For,
     While,

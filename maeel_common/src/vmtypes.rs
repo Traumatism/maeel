@@ -1,4 +1,8 @@
-use std::ops::{Add, Div, Mul, Not, Rem, Sub};
+use std::{
+    fmt::Display,
+    ops::{Add, Div, Mul, Not, Rem, Sub},
+    vec,
+};
 
 /// The `VMType` enum stores all data types that the
 /// interpreter can work with
@@ -9,11 +13,29 @@ use std::ops::{Add, Div, Mul, Not, Rem, Sub};
 pub enum VMType {
     Float(f64),
     Integer(i64),
-    IntPointer(Box<i64>),
     Str(String),
-    StrPointer(String),
     Bool(bool),
     Array(Vec<VMType>),
+}
+
+impl Display for VMType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VMType::Float(value) => write!(f, "{value}"),
+            VMType::Integer(value) => write!(f, "{value}"),
+            VMType::Str(value) => write!(f, "{value}"),
+            VMType::Bool(value) => write!(f, "{value}"),
+            VMType::Array(value) => {
+                write!(f, "{{ ").unwrap();
+
+                for element in value {
+                    write!(f, "{} ", element).unwrap()
+                }
+
+                write!(f, "}}")
+            }
+        }
+    }
 }
 
 impl PartialOrd for VMType {
@@ -40,19 +62,6 @@ impl PartialEq for VMType {
             (VMType::Float(a), VMType::Float(b)) => a == b,
             (VMType::Bool(a), VMType::Bool(b)) => a == b,
             _ => false,
-        }
-    }
-}
-
-impl ToString for VMType {
-    fn to_string(&self) -> String {
-        match self {
-            VMType::Float(a) => a.to_string(),
-            VMType::Integer(a) => a.to_string(),
-            VMType::Str(a) => a.to_string(),
-            VMType::Bool(a) => a.to_string(),
-            VMType::Array(a) => format!("{a:?}"),
-            _ => panic!(),
         }
     }
 }
@@ -93,11 +102,19 @@ impl Mul for VMType {
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a * b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 * b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a * b as f64),
-
             (VMType::Bool(false), VMType::Bool(_)) => VMType::Bool(false),
             (VMType::Bool(_), VMType::Bool(false)) => VMType::Bool(false),
             (VMType::Bool(true), VMType::Bool(true)) => VMType::Bool(true),
+            (VMType::Array(a), VMType::Array(b)) => {
+                let mut new_array = vec![];
+                for ea in &a {
+                    for eb in &b {
+                        new_array.push(VMType::Array(vec![ea.clone(), eb.clone()]))
+                    }
+                }
 
+                VMType::Array(new_array)
+            }
             (a, b) => panic!("can't mul {a:?} and {b:?}"),
         }
     }
@@ -117,6 +134,20 @@ impl Add for VMType {
             (VMType::Bool(true), VMType::Bool(_)) => VMType::Bool(true),
             (VMType::Bool(_), VMType::Bool(true)) => VMType::Bool(true),
             (VMType::Bool(false), VMType::Bool(false)) => VMType::Bool(false),
+
+            (VMType::Array(a), VMType::Array(b)) => {
+                let mut new = vec![];
+
+                for ea in a {
+                    new.push(ea)
+                }
+
+                for eb in b {
+                    new.push(eb)
+                }
+
+                VMType::Array(new)
+            }
 
             (other, VMType::Array(mut array)) | (VMType::Array(mut array), other) => {
                 array.push(other);

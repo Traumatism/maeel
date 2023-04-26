@@ -1,15 +1,3 @@
-λ _pow (
-    @ exp  ρ @ base ρ
-    1 0 δ exp < ω (σ base * σ 1 + δ exp <)
-    ρ
-)
+λ pow (↑ λ P (δ 1 > ⇒ (θ σ↓ P*)) P)
 
-λ pow (
-    @ exp  δ σ @ base ρ 0 < δ
-
-    ⟹ (base exp! _pow 1 σ / σ)
-    ! ⟹ (base exp _pow)
-)
-
-2 10 pow println
-2 10! pow print
+2 10 pow print

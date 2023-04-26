@@ -1,10 +1,12 @@
-λ wilson_theorem (
-    1 → f → n 2 2 n < ω
-    (δ f * n % → f ↑ δ n <)
-    n ↓ f =
+λ wilson_theorem(
+    1 → f → n 2 2 n < ω (δ f * n % → f ↑ δ n<)
+    n↓ f=
 )
 
-2 α ω (
-    ↑ δ wilson_theorem ⟹ (δ print ρ "\n" print ρ)
-    α
+∅ → primes
+
+[1 100] Σ (
+    δ wilson_theorem ⇒ (primes + → primes)
 )
+
+primes print

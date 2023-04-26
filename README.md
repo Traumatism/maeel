@@ -1,61 +1,125 @@
 # The maeel programming language
 
-Just like [Forth](https://en.wikipedia.org/wiki/Forth_(programming_language)), **maeel** is a concatenative [stack oriented programming language](https://en.wikipedia.org/wiki/Stack-oriented_programming) built with ~1000 lines of Rust.
+Maeel is a { concatenative, esotheric, stack-based, interpreted } programming language.
 
+Important concepts:
+    - https://en.wikipedia.org/wiki/Stack_machine
+    - https://en.wikipedia.org/wiki/Reverse_Polish_notation
+    - https://en.wikipedia.org/wiki/Stack-oriented_programming
 
-### abs(x)
+# Patterns
+
+## Variable definition
+
+`→ name` will set the "name" alias to the value on the top of the stack.
+
+Example:
 
 ```
-λ abs (δ 0 < δ ⟹ (σ! σ!) ⟹ (σ))
+3.14 → pi
+
+pi print
 ```
 
-### sqrt(x)
+## Function definition
+
+`λ name (code)` will set the "name" alias to the next code block.
+
+Example:
 
 ```
-λ sqrt (
-    δ → a 2 / → y 0 0
-    α ω (a y / y + 2 / → y ↑ δ 5 <)
-    ρ ρ y
+λ square (
+    → arg1
+    arg1 arg1 *
 )
 
-2 sqrt print
+2 square print
 ```
 
-### factorial(n)
+## If
+
+`⇒ (code)` will execute "code" if, and only if the stack top value is `true`
+
+Example:
+
+`a b = ⇒ ("a and b are equal!" print)`
+
+## While loop
+
+`ω (code)` will loop executing "code" while there is a `true` on the stack top. Note: the "code" needs to output a boolean at its end to define if it will continue looping or not.
+
+Example:
 
 ```
+1 → a
 
+a 100 < ω (
+    a print
+    a 1 + → a
 
-λ fact (
-    1 → f δ → n 0 > ω (f n * → f n ↓ δ → n 0 >) f
-)
-
-7 fact print
-```
-
-### Fibonacci sequence (Fn)
-
-```
-λ fib (
-    0 1 1 → b → i → a → n
-    i n ≤ ω (a b + → c b → a c → b i ↑ → i i n ≤)
-    a
-)
-
-7 fib print
-```
-
-### Get primes
-
-```
-λ wilson_theorem (
-    1 → f → n 2 2 n < ω
-    (δ f * n % → f ↑ δ n <)
-    n ↓ f =
-)
-
-2 α ω (
-    ↑ δ wilson_theorem ⟹ (δ print ρ "\n" print ρ)
-    α
+    a 100 <
 )
 ```
+
+## For loop
+
+`Σ (code)` will push(value) for all value element of stack top (stack top must be an array) and then execute the next code block
+
+# Operators
+
+## Stack functions
+
+| Symbol | Definition |
+|---     |---         |
+| `ρ`    | `a b c -- a b`     |
+| `σ`    | `a b c -- a c b`   |
+| `ψ`    | `a b c -- c a b`   |
+| `δ`    | `a b c -- a b c c` |
+| `θ`    | `a b c -- a b c b` |
+
+## Arithmetics
+
+| Symbol | Definition |
+|---     |---         |
+| `+`    | `x y -- (x + y)` |
+| `-`    | `x y -- (x - y)` |
+| `*`    | `x y -- (x * y)` |
+| `/`    | `x y -- (x / y)` |
+| `%`    | `x y -- (x % y)` |
+
+## Logic
+
+| Symbol | Definition         |
+|---     |---                 |
+| `∧`    | `p q -- (p and q)` |
+| `∨`    | `p q -- (p or q)`  |
+| `⊕`    | `p q -- (p xor q)` |
+
+## Comparison
+
+| Symbol | Definition          |
+|---     |---                  |
+| `=`    | `a b -- (a = b)`    |
+| `≠`    | `a b -- (¬(a = b))` |
+| `>`    | `a b -- (a > b)`    |
+| `<`    | `a b -- (a < b)`    |
+| `⩽`    | `a b -- (a ⩽ b)`    |
+| `⩾`    | `a b -- (a ⩾ b)`    |
+
+## Arrays
+
+| Symbol | Definition         |
+|---     |---                 |
+| `∪`    | `A B -- (A ∪ B)`   |
+| `+`    | `a A -- (A ∪ {a})` |
+| `*`    | `A B -- (A * B)`   |
+
+## Constants
+
+| Symbol | Type     | Value     |
+|---     |---       |---        |
+| `α`    | `bool`   | `true`    |
+| `β`    | `bool`   | `false`   |
+| `ε`    | `string` | `""`      |
+| `π`    | `float`  | `3.14...` |
+| `∅`    | `array`  | `{}`      |
