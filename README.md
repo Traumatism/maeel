@@ -69,8 +69,8 @@ a 100 < ω (
 
 ## Stack functions
 
-| Symbol | Definition |
-|---     |---         |
+| Symbol | Definition         |
+|---     |---                 |
 | `ρ`    | `a b c -- a b`     |
 | `σ`    | `a b c -- a c b`   |
 | `ψ`    | `a b c -- c a b`   |
@@ -79,40 +79,40 @@ a 100 < ω (
 
 ## Arithmetics
 
-| Symbol | Definition |
-|---     |---         |
-| `+`    | `x y -- (x + y)` |
-| `-`    | `x y -- (x - y)` |
-| `*`    | `x y -- (x * y)` |
-| `/`    | `x y -- (x / y)` |
-| `%`    | `x y -- (x % y)` |
+| Symbol | Definition       | Commutative |
+|---     |---               |---          |
+| `+`    | `x y -- (x + y)` | yes         |
+| `-`    | `x y -- (x - y)` | no          |
+| `*`    | `x y -- (x * y)` | yes         |
+| `/`    | `x y -- (x / y)` | no          |
+| `%`    | `x y -- (x % y)` | no          |
 
 ## Logic
 
-| Symbol | Definition         |
-|---     |---                 |
-| `∧`    | `p q -- (p and q)` |
-| `∨`    | `p q -- (p or q)`  |
-| `⊕`    | `p q -- (p xor q)` |
+| Symbol | Definition         | Commutative |
+|---     |---                 |---          |
+| `∧`    | `p q -- (p and q)` | yes         |
+| `∨`    | `p q -- (p or q)`  | yes         |
+| `⊕`    | `p q -- (p xor q)` | yes         |
 
 ## Comparison
 
-| Symbol | Definition          |
-|---     |---                  |
-| `=`    | `a b -- (a = b)`    |
-| `≠`    | `a b -- (¬(a = b))` |
-| `>`    | `a b -- (a > b)`    |
-| `<`    | `a b -- (a < b)`    |
-| `⩽`    | `a b -- (a ⩽ b)`    |
-| `⩾`    | `a b -- (a ⩾ b)`    |
+| Symbol | Definition          | Commutative |
+|---     |---                  |---          |
+| `=`    | `a b -- (a = b)`    | yes         |
+| `≠`    | `a b -- (¬(a = b))` | yes         |
+| `>`    | `a b -- (a > b)`    | no          |
+| `<`    | `a b -- (a < b)`    | no          |
+| `⩽`    | `a b -- (a ⩽ b)`    | no          |
+| `⩾`    | `a b -- (a ⩾ b)`    | no          |
 
 ## Arrays
 
-| Symbol | Definition         |
-|---     |---                 |
-| `∪`    | `A B -- (A ∪ B)`   |
-| `+`    | `a A -- (A ∪ {a})` |
-| `*`    | `A B -- (A * B)`   |
+| Symbol | Definition         | Commutative |
+|---     |---                 |---          |
+| `∪`    | `A B -- (A ∪ B)`   | yes         |
+| `+`    | `a A -- (A ∪ {a})` | yes         |
+| `*`    | `A B -- (A * B)`   | no          |
 
 ## Constants
 
