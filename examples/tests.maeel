@@ -25,6 +25,33 @@
 α β ∨¬  β     "NOR test 3 (1-0)"     assert_eq
 β α ∨¬  β     "NOR test 4 (0-1)"     assert_eq
 
+0 { 1 2 3 } Σ (+) 6                "For loop (sum)"           assert_eq
+
+{1 2 3 4 5} [1 6]                  "Int interval"             assert_eq
+{1 2 3} 3 + {1 2 3 3}              "List push"                assert_eq
+{1 2 3} {1 2 3} + {1 2 3 1 2 3}    "List union"               assert_eq
+{(2*) ({1 2 3})} {2 4 6}           "List comprehension"       assert_eq
+
+λ f1 (∧¬)
+λ f2 (¬σ¬∨)
+
+∅ ∅ → result_f1 → result_f2
+
+{ α β } δ * Σ (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
+{ α β } δ * Σ (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
+
+result_f1 result_f2 "not(a and b) <=> not(a) or not(b)" assert_eq
+
+λ f1 (∨¬)
+λ f2 (¬σ¬∧)
+
+∅ ∅ → result_f1 → result_f2
+
+{ α β } δ * Σ (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
+{ α β } δ * Σ (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
+
+result_f1 result_f2 "not(a or b) <=> not(a) and not(b)" assert_eq
+
 λ log (→ n → b 0 n b ≥ ω (↑ n b / → n n b ≥))
 
 λ pow (λ P (δ 1 > ⇒ (θ σ↓ P*)) ↑P)

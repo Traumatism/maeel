@@ -3,9 +3,9 @@
 Maeel is a { concatenative, esotheric, stack-based, interpreted } programming language.
 
 Important concepts:
-    - https://en.wikipedia.org/wiki/Stack_machine
-    - https://en.wikipedia.org/wiki/Reverse_Polish_notation
-    - https://en.wikipedia.org/wiki/Stack-oriented_programming
+- https://en.wikipedia.org/wiki/Stack_machine
+- https://en.wikipedia.org/wiki/Reverse_Polish_notation
+- https://en.wikipedia.org/wiki/Stack-oriented_programming
 
 # Patterns
 

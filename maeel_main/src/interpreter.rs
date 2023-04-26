@@ -40,7 +40,6 @@ macro_rules! binary_op {
 
 /// Handle a bunch of tokens
 pub fn process_tokens<'a>(
-    file_name: &'a str,
     tokens: &'a mut Iter<Token>,
     data: &'a mut Vec<VMType>,
     vars: &'a mut HashMap<String, VMType>,
@@ -52,6 +51,58 @@ pub fn process_tokens<'a>(
 )> {
     while let Some(token) = tokens.next() {
         match token {
+            // TODO: fix this performance disaster
+            Token::Equiv => {
+                let (mut tokens_f1, mut tokens_f2) = match (data.pop(), data.pop()) {
+                    (Some(VMType::Str(f1)), Some(VMType::Str(f2))) => (
+                        procs.get(&f1).unwrap().iter(),
+                        procs.get(&f2).unwrap().iter(),
+                    ),
+                    _ => panic!(),
+                };
+
+                let mut ok = true;
+
+                for mut tmp_data in [
+                    vec![VMType::Bool(false), VMType::Bool(false)],
+                    vec![VMType::Bool(true), VMType::Bool(false)],
+                    vec![VMType::Bool(false), VMType::Bool(true)],
+                    vec![VMType::Bool(true), VMType::Bool(true)],
+                ] {
+                    if ok == false {
+                        break;
+                    }
+
+                    let mut tmp_data_clone = tmp_data.clone();
+
+                    let mut procs_clone = HashMap::new();
+                    let mut vars_clone = HashMap::new();
+
+                    let (t1, _, _) = process_tokens(
+                        &mut tokens_f1,
+                        &mut tmp_data_clone,
+                        &mut vars_clone,
+                        &mut procs_clone,
+                    )?;
+
+                    let mut procs_clone = HashMap::new();
+                    let mut vars_clone = HashMap::new();
+
+                    let (t2, _, _) = process_tokens(
+                        &mut tokens_f2,
+                        &mut tmp_data,
+                        &mut vars_clone,
+                        &mut procs_clone,
+                    )?;
+
+                    if t1 != t2 {
+                        ok = false
+                    }
+                }
+
+                data.push(VMType::Bool(ok))
+            }
+
             // Push a new procedure
             Token::ProcStart => {
                 procs.insert(next!(tokens, "identifier"), next!(tokens, "block"));
@@ -62,7 +113,7 @@ pub fn process_tokens<'a>(
                 let tokens = next!(tokens, "block");
 
                 while let VMType::Bool(true) = data.pop().unwrap() {
-                    process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
+                    process_tokens(&mut tokens.iter(), data, vars, procs)?;
                 }
             }
 
@@ -73,7 +124,7 @@ pub fn process_tokens<'a>(
                 if let Some(VMType::Array(array)) = data.pop() {
                     for element in array {
                         data.push(element);
-                        process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
+                        process_tokens(&mut tokens.iter(), data, vars, procs)?;
                     }
                 }
             }
@@ -88,7 +139,7 @@ pub fn process_tokens<'a>(
                 let tokens = next!(tokens, "block");
 
                 if let Some(VMType::Bool(true)) = data.pop() {
-                    process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
+                    process_tokens(&mut tokens.iter(), data, vars, procs)?;
                 }
             }
 
@@ -126,6 +177,8 @@ pub fn process_tokens<'a>(
 
                         Token::Float(value) => array.push(VMType::Float(value)),
 
+                        Token::Bool(value) => array.push(VMType::Bool(value)),
+
                         Token::Block(expr) => {
                             let tokens = next!(tokens, "block");
 
@@ -133,7 +186,7 @@ pub fn process_tokens<'a>(
                                 let mut iterator = tokens.iter();
 
                                 let (tmp_data, _, _) =
-                                    process_tokens(file_name, &mut iterator, data, vars, procs)?;
+                                    process_tokens(&mut iterator, data, vars, procs)?;
 
                                 tmp_data.pop().unwrap()
                             };
@@ -145,7 +198,6 @@ pub fn process_tokens<'a>(
                                         let mut iterator = expr.iter();
 
                                         let (tmp_data, _, _) = process_tokens(
-                                            file_name,
                                             &mut iterator,
                                             &mut tmp_data,
                                             vars,
@@ -172,7 +224,7 @@ pub fn process_tokens<'a>(
 
             // Handle new code blocks
             Token::Block(tokens) => {
-                process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
+                process_tokens(&mut tokens.iter(), data, vars, procs)?;
             }
 
             // Push a string
@@ -277,7 +329,7 @@ pub fn process_tokens<'a>(
 
                         None => {
                             let tokens = procs.get(identifier).unwrap().clone();
-                            process_tokens(file_name, &mut tokens.iter(), data, vars, procs)?;
+                            process_tokens(&mut tokens.iter(), data, vars, procs)?;
                         }
                     },
                 };
