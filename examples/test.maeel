@@ -1,19 +1,9 @@
-λ println ( print ρ "\n" print ρ )
+λ f1 (∧¬)
+λ f2 (¬σ¬∨)
 
-"Enumeration (sum): "  print
-0 { 1 2 3 } Σ ()
+∅ ∅ → result_f1 → result_f2
 
-"Append: "             print
-{ 1 2 3 } 4 + 5 + 6 +  println
+{ α β } δ * Σ (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
+{ α β } δ * Σ (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
 
-"Union: "              print
-{ 1 2 3 } { 4 5 6 } ∪  println
-
-"Cartesian product: "  print
-{ 1 2 3 } { 1 2 3 } *  println
-
-"Integer intervals: "  print
-[1 7]                  println
-
-"List comprehension: " print
-{ (2 * 1 +) ([1 10]) } println
+result_f1 result_f2 = ⇒ ("not(a and b) <=> not(a) or not(b)\n" print)

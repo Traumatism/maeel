@@ -30,6 +30,7 @@ macro_rules! lex_single_char {
             'θ' => vec![Token::Over],
             'σ' => vec![Token::Swap],
             '⟹' | '⇒' => vec![Token::If],
+            '⟺' | '⇔' => vec![Token::Equiv],
             'ω' => vec![Token::While],
             'Σ' => vec![Token::For],
             'α' => vec![Token::Bool(true)],
