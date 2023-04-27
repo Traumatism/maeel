@@ -1,12 +1,16 @@
-λ wilson_theorem(
-    1 → f → n 2 2 n < ω (δ f * n % → f ↑ δ n<)
+λ wilson_theorem [n] (
+    2 1 → f
+    δ n <
+    ω (δ f* n% →f ↑ δ n<)
+
     n↓ f=
 )
 
 ∅ → primes
 
-[1 100] Σ (
-    δ wilson_theorem ⇒ (primes + → primes)
+
+[1 2000] Σ (
+    δ wilson_theorem ⇒ (primes +→ primes)
 )
 
 primes print

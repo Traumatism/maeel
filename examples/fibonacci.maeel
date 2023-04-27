@@ -1,6 +1,5 @@
-λ fib (
-    0 1 1
-    →b →i →a →n
+λ fib [n] (
+    0 1 1 →b →i →a
     i n ≤ ω (a b+→c b→a c→b i↗i i n≤) a
 )
 

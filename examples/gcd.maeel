@@ -1,11 +1,9 @@
-λ gcd_1 (
-    ≕ b ≕ a
-    b 0 ≠ ω (b ≕ t a b % ≕ b t ≕ a b 0 ≠)
-    a
+λ gcd_1 [a b] (
+    b 0 ≠ ω (b ≕ t a b % ≕ b t ≕ a b 0 ≠) a
 )
 
-λ gcd_2 (
-    ≕ b ≕ a
-    a b ≠ ω (a b > ± ⟹ (b a - ≕ b) ⟹ (a b - ≕ a) a b ≠)
-    a
+λ gcd_2 [a b] (
+    a b ≠ ω (a b > ± ⟹ (b a - ≕ b) ⟹ (a b - ≕ a) a b ≠) a
 )
+
+42 12 gcd_1 42 12 gcd_2 = print

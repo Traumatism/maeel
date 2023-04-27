@@ -47,11 +47,11 @@
 			"patterns": [
 				{
 					"name": "keyword.control.maeel",
-					"match": "\\b(⟹|ω|Σ|@|λ|include|↑)\\b"
+					"match": "\\b(⟹|ω|Ω|@|λ|include|↑)\\b"
 				},
 				{
 					"name": "entity.name.function.maeel",
-					"match": "\\b(ρ|δ|θ|σ|τ|Γ|clear|ψ|print)\\b"
+					"match": "\\b(ρ|δ|Σ|Π|θ|σ|τ|Γ|clear|ψ|print)\\b"
 				}
 			]
 		},

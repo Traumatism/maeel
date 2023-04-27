@@ -1,6 +1,5 @@
 use maeel_common::tokens::Token;
 
-#[macro_export]
 macro_rules! lex_single_char {
     ($chr:expr) => {
         match $chr {
@@ -30,9 +29,8 @@ macro_rules! lex_single_char {
             'θ' => vec![Token::Over],
             'σ' => vec![Token::Swap],
             '⟹' | '⇒' => vec![Token::If],
-            '⟺' | '⇔' => vec![Token::Equiv],
             'ω' => vec![Token::While],
-            'Σ' => vec![Token::For],
+            'Ω' => vec![Token::For],
             'α' => vec![Token::Bool(true)],
             'β' => vec![Token::Bool(false)],
             'ε' => vec![Token::Str(String::new())],
@@ -46,6 +44,24 @@ macro_rules! lex_single_char {
             ']' => vec![Token::IEnd],
             'τ' => vec![Token::Take],
             'Γ' => vec![Token::Get],
+            'Π' => vec![
+                Token::Integer(1),
+                Token::Swap,
+                Token::For,
+                Token::Block(vec![Token::Mul]),
+            ],
+            'Σ' => vec![
+                Token::Integer(0),
+                Token::Swap,
+                Token::For,
+                Token::Block(vec![Token::Add]),
+            ],
+            '#' => vec![
+                Token::Integer(0),
+                Token::Swap,
+                Token::For,
+                Token::Block(vec![Token::Pop, Token::Integer(1), Token::Add]),
+            ],
             '↓' => vec![Token::Integer(1), Token::Sub],
             '↘' => vec![Token::Integer(1), Token::Sub, Token::Let],
             '↑' => vec![Token::Integer(1), Token::Add],
