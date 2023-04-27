@@ -68,6 +68,7 @@ pub fn process_tokens<'a>(
 
             Token::While => {
                 let tokens = next!(tokens, "block");
+
                 while let VMType::Bool(true) = data.pop().unwrap() {
                     process_tokens(&mut tokens.iter(), data, vars, procs)?;
                 }
@@ -75,6 +76,7 @@ pub fn process_tokens<'a>(
 
             Token::For => {
                 let tokens = next!(tokens, "block");
+
                 if let Some(VMType::Array(array)) = data.pop() {
                     for element in array {
                         data.push(element);
@@ -95,10 +97,8 @@ pub fn process_tokens<'a>(
             }
 
             Token::IStart => {
-                let (start, end) = match (tokens.next(), tokens.next()) {
-                    (Some(Token::Integer(m)), Some(Token::Integer(n))) => (m, n),
-
-                    _ => panic!(),
+                let (Some(Token::Integer(start)), Some(Token::Integer(end))) = (tokens.next(), tokens.next()) else {
+                    panic!()
                 };
 
                 let Some(Token::IEnd) = tokens.next() else {
@@ -116,10 +116,15 @@ pub fn process_tokens<'a>(
                 loop {
                     match tokens.next().unwrap().clone() {
                         Token::ArrayEnd => break,
+
                         Token::ArrayStart => panic!(),
+
                         Token::Str(value) => array.push(VMType::Str(value)),
+
                         Token::Integer(value) => array.push(VMType::Integer(value)),
+
                         Token::Float(value) => array.push(VMType::Float(value)),
+
                         Token::Bool(value) => array.push(VMType::Bool(value)),
 
                         Token::Identifier(identifier) => match vars.get(&identifier) {
@@ -128,7 +133,7 @@ pub fn process_tokens<'a>(
                         },
 
                         Token::Block(expr) => {
-                            let gen_expr = process_tokens(
+                            let generator = process_tokens(
                                 &mut next!(tokens, "block").iter(),
                                 data,
                                 vars,
@@ -136,23 +141,18 @@ pub fn process_tokens<'a>(
                             )?
                             .pop();
 
-                            match gen_expr {
-                                Some(VMType::Array(a)) => {
-                                    for e in a {
-                                        let mut tmp_data = vec![e];
+                            let Some(VMType::Array(target)) = generator else {
+                                panic!()
+                            };
 
-                                        let output = process_tokens(
-                                            &mut expr.iter(),
-                                            &mut tmp_data,
-                                            vars,
-                                            procs,
-                                        )?
+                            for element in target {
+                                let mut tmp_data = vec![element];
+
+                                let output =
+                                    process_tokens(&mut expr.iter(), &mut tmp_data, vars, procs)?
                                         .pop();
 
-                                        array.push(output.unwrap());
-                                    }
-                                }
-                                _ => panic!(),
+                                array.push(output.unwrap());
                             }
                         }
                         _ => panic!(),
@@ -166,8 +166,11 @@ pub fn process_tokens<'a>(
             }
 
             Token::Str(content) => data.push(VMType::Str(content.clone())),
+
             Token::Bool(content) => data.push(VMType::Bool(*content)),
+
             Token::Float(content) => data.push(VMType::Float(*content)),
+
             Token::Integer(content) => data.push(VMType::Integer(*content)),
 
             Token::Pop => {
