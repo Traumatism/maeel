@@ -20,9 +20,9 @@ fn main() -> Result<()> {
 
     process_tokens(
         &mut extract_blocks(&lex_into_tokens(&content)).iter(),
-        &mut Vec::new(),
-        &mut HashMap::new(),
-        &mut HashMap::new(),
+        &mut Vec::default(),
+        &mut HashMap::default(),
+        &mut HashMap::default(),
     )?;
 
     Ok(())
