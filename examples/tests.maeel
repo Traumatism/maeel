@@ -1,5 +1,11 @@
-λ assert_eq (
-    λ p (print ρ) p ": " p = δ ⇒ ("OK\n" p) ¬ ⇒ ("FAIL\n" p)
+λ assert_eq [content should_be value] (
+
+    λ p [content] (content print ρ)
+
+    content p
+    ": " p
+
+    should_be value = δ ⇒ ("OK\n" p) ¬ ⇒ ("FAIL\n" p)
 )
 
 α α ∨   α     "OR test 1 (1-1)"      assert_eq
@@ -25,51 +31,63 @@
 α β ∨¬  β     "NOR test 3 (1-0)"     assert_eq
 β α ∨¬  β     "NOR test 4 (0-1)"     assert_eq
 
-0 { 1 2 3 } Σ (+) 6                "For loop (sum)"           assert_eq
+{ 1 2 3 } Σ 6                            "List sum"                 assert_eq
+{ 1 2 3 4 } Π 24                         "List product"             assert_eq
+0 { 1 2 3 } Ω (+) 6                      "For loop (sum)"           assert_eq
+{ 1 2 3 4 5 } [1 6]                      "Int interval"             assert_eq
+{ 1 2 3 } 3 + { 1 2 3 3 }                "List push"                assert_eq
+{ 1 2 3 } { 1 2 3 } + { 1 2 3 1 2 3 }    "List union"               assert_eq
+{ (2*) ({ 1 2 3 }) } { 2 4 6 }           "List comprehension"       assert_eq
 
-{1 2 3 4 5} [1 6]                  "Int interval"             assert_eq
-{1 2 3} 3 + {1 2 3 3}              "List push"                assert_eq
-{1 2 3} {1 2 3} + {1 2 3 1 2 3}    "List union"               assert_eq
-{(2*) ({1 2 3})} {2 4 6}           "List comprehension"       assert_eq
-
-λ f1 (∧¬)
-λ f2 (¬σ¬∨)
+λ f1 [] (∧¬)
+λ f2 [] (¬σ¬∨)
 
 ∅ ∅ → result_f1 → result_f2
 
-{ α β } δ * Σ (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
-{ α β } δ * Σ (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
+{ α β } δ * Ω (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
+{ α β } δ * Ω (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
 
 result_f1 result_f2 "not(a and b) <=> not(a) or not(b)" assert_eq
 
-λ f1 (∨¬)
-λ f2 (¬σ¬∧)
+λ f1 [] (∨¬)
+λ f2 [] (¬σ¬∧)
 
 ∅ ∅ → result_f1 → result_f2
 
-{ α β } δ * Σ (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
-{ α β } δ * Σ (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
+{ α β } δ * Ω (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
+{ α β } δ * Ω (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
 
 result_f1 result_f2 "not(a or b) <=> not(a) and not(b)" assert_eq
 
-λ log (→ n → b 0 n b ≥ ω (↑ n b / → n n b ≥))
+λ log [n b] (0 n b ≥ ω (↑ n b / → n n b ≥))
 
-λ pow (λ P (δ 1 > ⇒ (θ σ↓ P*)) ↑P)
+λ pow [] (λ P [] (δ 1 > ⇒ (θ σ↓ P*)) ↑P)
 
-λ abs (δ 0< δ ⇒ (σ¬ σ¬) ⇒ (σ))
+λ abs [x] (x 0 < δ ⇒ (x! σ) ¬ ⇒ (x))
 
-λ fact (δ 1 > ⇒ (δ↓ fact*))
+λ fact [] (δ 1 > ⇒ (δ↓ fact*))
 
-λ square  (δ*)
+λ square  [x] (x x *)
 
-λ cube    (δ square*)
+λ cube    [x] (x x square *)
 
-λ quartic (δ cube*)
+λ quartic [x] (x x cube *)
 
-λ quintic (δ quartic*)
+λ quintic [x] (x x quartic *)
 
+λ gcd_1 [a b] (
+    b 0 ≠ ω (b ≕ t a b % ≕ b t ≕ a b 0 ≠) a
+)
 
-2 65536 log 16 "65536 = 2**16 test: " assert_eq
-2 10 pow 1024 "2**10 = 1024 test: "   assert_eq
-10 abs 10! abs "|10| = |-10| test: "  assert_eq
-7 fact 5040 "7! = 5040 test: "        assert_eq
+λ gcd_2 [a b] (
+    a b ≠ ω (a b > ± ⟹ (b a - ≕ b) ⟹ (a b - ≕ a) a b ≠) a
+)
+
+42 12 gcd_1 6 "gcd1(42, 12) = 6" assert_eq
+42 12 gcd_2 6 "gcd2(42, 12) = 6" assert_eq
+3 square 9 "3^2 = 9"             assert_eq
+3 cube   27 "3^3 = 27"           assert_eq
+2 65536 log 16 "65536 = 2**16"   assert_eq
+2 10 pow 1024 "2**10 = 1024"     assert_eq
+10 abs 10! abs "|10| = |-10|"    assert_eq
+7 fact 5040 "7! = 5040"          assert_eq

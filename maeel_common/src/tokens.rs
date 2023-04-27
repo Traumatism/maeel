@@ -32,7 +32,6 @@ pub enum Token {
     BlockStart,
     BlockEnd,
     If,
-    Equiv,
     For,
     While,
 }

@@ -7,6 +7,8 @@ Important concepts:
 - https://en.wikipedia.org/wiki/Reverse_Polish_notation
 - https://en.wikipedia.org/wiki/Stack-oriented_programming
 
+The interpreter is < 300 LoC thank to recursion and simplicity of concatenative.
+
 # Patterns
 
 ## Variable definition
@@ -63,7 +65,7 @@ a 100 < ω (
 
 ## For loop
 
-`Σ (code)` will push(value) for all value element of stack top (stack top must be an array) and then execute the next code block
+`Ω (code)` will push(value) for all value element of stack top (stack top must be an array) and then execute the next code block
 
 # Operators
 
