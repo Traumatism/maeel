@@ -30,7 +30,6 @@ macro_rules! binary_op {
     }};
 }
 
-/// Handle a bunch of tokens
 pub fn process_tokens<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Vec<VMType>,
@@ -52,11 +51,14 @@ pub fn process_tokens<'a>(
 
                 loop {
                     let token = tokens.next();
+
                     match token {
                         Some(Token::Identifier(_)) => {
                             block.append(&mut vec![Token::Let, token.unwrap().clone()])
                         }
+
                         Some(Token::IEnd) => break,
+
                         _ => panic!(),
                     }
                 }
@@ -80,6 +82,7 @@ pub fn process_tokens<'a>(
                 if let Some(VMType::Array(array)) = data.pop() {
                     for element in array {
                         data.push(element);
+
                         process_tokens(&mut tokens.iter(), data, vars, procs)?;
                     }
                 }
@@ -91,6 +94,7 @@ pub fn process_tokens<'a>(
 
             Token::If => {
                 let tokens = next!(tokens, "block");
+
                 if let Some(VMType::Bool(true)) = data.pop() {
                     process_tokens(&mut tokens.iter(), data, vars, procs)?;
                 }
@@ -105,13 +109,11 @@ pub fn process_tokens<'a>(
                     panic!()
                 };
 
-                data.push(VMType::Array(
-                    (*start..*end).map(|i| VMType::Integer(i)).collect(),
-                ));
+                data.push(VMType::Array((*start..*end).map(VMType::Integer).collect()));
             }
 
             Token::ArrayStart => {
-                let mut array = Vec::new();
+                let mut array = Vec::default();
 
                 loop {
                     match tokens.next().unwrap().clone() {
@@ -129,6 +131,7 @@ pub fn process_tokens<'a>(
 
                         Token::Identifier(identifier) => match vars.get(&identifier) {
                             Some(value) => array.push(value.clone()),
+
                             None => panic!(),
                         },
 
@@ -155,9 +158,11 @@ pub fn process_tokens<'a>(
                                 array.push(output.unwrap());
                             }
                         }
+
                         _ => panic!(),
                     }
                 }
+
                 data.push(VMType::Array(array))
             }
 
@@ -197,6 +202,7 @@ pub fn process_tokens<'a>(
             }
 
             Token::Dup => data.push(data.last().cloned().unwrap()),
+
             Token::Over => data.push(data[data.len() - 2].to_owned()),
 
             Token::Clear => data.clear(),
@@ -226,6 +232,7 @@ pub fn process_tokens<'a>(
                 (Some(VMType::Integer(n)), Some(VMType::Array(array))) => {
                     data.push(array.get(n as usize).unwrap().clone());
                 }
+
                 _ => panic!(),
             },
 
@@ -234,6 +241,7 @@ pub fn process_tokens<'a>(
                     let array = (0..n).map(|_| data.pop().unwrap()).collect();
                     data.push(VMType::Array(array));
                 }
+
                 _ => panic!(),
             },
 
@@ -242,8 +250,10 @@ pub fn process_tokens<'a>(
                     "print" => {
                         print!("{}", data.last().unwrap());
                     }
+
                     identifier => match vars.get(identifier) {
                         Some(value) => data.push(value.clone()),
+
                         None => {
                             process_tokens(
                                 &mut procs.get(identifier).unwrap().clone().iter(),

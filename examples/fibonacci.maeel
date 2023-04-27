@@ -3,4 +3,4 @@
     i n ≤ ω (a b+→c b→a c→b i↗i i n≤) a
 )
 
-{ (fib) ([1 30]) } print
+{ (fib) ([1 10]) } print

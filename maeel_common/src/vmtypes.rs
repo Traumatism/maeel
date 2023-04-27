@@ -1,7 +1,6 @@
 use std::{
     fmt::Display,
     ops::{Add, Div, Mul, Not, Rem, Sub},
-    vec,
 };
 
 #[derive(Debug, Clone)]
@@ -23,9 +22,9 @@ impl Display for VMType {
             VMType::Array(value) => {
                 write!(f, "{{ ").unwrap();
 
-                for element in value {
-                    write!(f, "{} ", element).unwrap()
-                }
+                value
+                    .iter()
+                    .for_each(|element| write!(f, "{} ", element).unwrap());
 
                 write!(f, "}}")
             }
@@ -101,10 +100,11 @@ impl Mul for VMType {
             (VMType::Bool(_), VMType::Bool(false)) => VMType::Bool(false),
             (VMType::Bool(true), VMType::Bool(true)) => VMType::Bool(true),
             (VMType::Array(a), VMType::Array(b)) => {
-                let mut new_array = vec![];
+                let mut new_array = Vec::default();
+
                 for ea in &a {
                     for eb in &b {
-                        new_array.push(VMType::Array(vec![ea.clone(), eb.clone()]))
+                        new_array.push(VMType::Array(Vec::from([ea.clone(), eb.clone()])))
                     }
                 }
 
@@ -131,7 +131,7 @@ impl Add for VMType {
             (VMType::Bool(false), VMType::Bool(false)) => VMType::Bool(false),
 
             (VMType::Array(a), VMType::Array(b)) => {
-                let mut new = vec![];
+                let mut new = Vec::default();
 
                 for ea in a {
                     new.push(ea)
