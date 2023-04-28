@@ -25,14 +25,13 @@ pi print
 
 ## Function definition
 
-`λ name (code)` will set the "name" alias to the next code block.
+`λ name [argument] (code)` will set the "name" alias to the next code block.
 
 Example:
 
 ```
-λ square (
-    → arg1
-    arg1 arg1 *
+λ square [x] (
+    x x *
 )
 
 2 square print
