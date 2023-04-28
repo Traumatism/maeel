@@ -107,8 +107,10 @@ pub fn process_tokens<'a>(
             }
 
             Token::Let => {
+                // Variable name
                 let name = next!(tokens, "identifier");
 
+                // Variable privateness/publicness depends of the name
                 match name.chars().collect::<Vec<char>>().get(0) {
                     Some('_') => locals.insert(name, data.pop().unwrap()),
                     Some(_) => globals.insert(name, data.pop().unwrap()),
@@ -117,6 +119,7 @@ pub fn process_tokens<'a>(
             }
 
             Token::If => {
+                // Code block to execute if, and only if P(x) is true
                 let tokens = next!(tokens, "block");
 
                 if let Some(VMType::Bool(true)) = data.pop() {
