@@ -13,6 +13,7 @@ macro_rules! next {
             token => panic!("Expected identifier, got {token:?}"),
         }
     }};
+
     ($tokens:expr, "block") => {{
         match $tokens.next().unwrap() {
             Token::Block(block) => block.to_vec(),
@@ -23,30 +24,39 @@ macro_rules! next {
 
 macro_rules! binary_op {
     ($data:expr, $operator:tt) => {{
-        let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap()); $data.push(b $operator a);
+        let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap());
+        $data.push(b $operator a)
     }};
     ($data:expr, $operator:tt, $vmtype:expr) => {{
-        let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap()); $data.push($vmtype(b $operator a))
+        let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap());
+        $data.push($vmtype(b $operator a))
     }};
 }
 
 pub fn process_tokens<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Vec<VMType>,
-    vars: &'a mut HashMap<String, VMType>,
+    globals: &'a mut HashMap<String, VMType>,
     procs: &'a mut HashMap<String, Vec<Token>>,
 ) -> Result<&'a mut Vec<VMType>> {
+    // Specific to current code block (won't be given to the next/previous code block)
+    let mut locals = HashMap::new();
+
     while let Some(token) = tokens.next() {
         match token {
             Token::BlockStart | Token::BlockEnd | Token::ArrayEnd | Token::IEnd => panic!(),
 
+            // Parse a new procedure
             Token::ProcStart => {
+                // Procedure name
                 let name = next!(tokens, "identifier");
 
+                // We expect a list of names
                 let Some(Token::IStart) = tokens.next() else {
                     panic!()
                 };
 
+                // Procedure block
                 let mut block = Vec::default();
 
                 loop {
@@ -54,49 +64,63 @@ pub fn process_tokens<'a>(
 
                     match token {
                         Some(Token::Identifier(_)) => {
+                            // Append variable definition to procedure block
                             block.append(&mut vec![Token::Let, token.unwrap().clone()])
                         }
 
+                        // List
                         Some(Token::IEnd) => break,
 
+                        // We want only identifiers
                         _ => panic!(),
                     }
                 }
 
+                // Finally append real procedure tokens
                 block.append(&mut next!(tokens, "block"));
 
                 procs.insert(name, block);
             }
 
             Token::While => {
+                // Code block to execute while P(x) is true
                 let tokens = next!(tokens, "block");
 
+                // This is why we need to push P(x) at the end of the code block
                 while let VMType::Bool(true) = data.pop().unwrap() {
-                    process_tokens(&mut tokens.iter(), data, vars, procs)?;
+                    process_tokens(&mut tokens.iter(), data, globals, procs)?;
                 }
             }
 
             Token::For => {
+                // Code block to execute for each value of L
                 let tokens = next!(tokens, "block");
 
                 if let Some(VMType::Array(array)) = data.pop() {
                     for element in array {
                         data.push(element);
-
-                        process_tokens(&mut tokens.iter(), data, vars, procs)?;
+                        process_tokens(&mut tokens.iter(), data, globals, procs)?;
                     }
+                } else {
+                    panic!() // An array must be on the stack's top
                 }
             }
 
             Token::Let => {
-                vars.insert(next!(tokens, "identifier"), data.pop().unwrap());
+                let name = next!(tokens, "identifier");
+
+                match name.chars().collect::<Vec<char>>().get(0) {
+                    Some('_') => locals.insert(name, data.pop().unwrap()),
+                    Some(_) => globals.insert(name, data.pop().unwrap()),
+                    None => panic!(),
+                };
             }
 
             Token::If => {
                 let tokens = next!(tokens, "block");
 
                 if let Some(VMType::Bool(true)) = data.pop() {
-                    process_tokens(&mut tokens.iter(), data, vars, procs)?;
+                    process_tokens(&mut tokens.iter(), data, globals, procs)?;
                 }
             }
 
@@ -129,7 +153,7 @@ pub fn process_tokens<'a>(
 
                         Token::Bool(value) => array.push(VMType::Bool(value)),
 
-                        Token::Identifier(identifier) => match vars.get(&identifier) {
+                        Token::Identifier(identifier) => match globals.get(&identifier) {
                             Some(value) => array.push(value.clone()),
 
                             None => panic!(),
@@ -139,7 +163,7 @@ pub fn process_tokens<'a>(
                             let generator = process_tokens(
                                 &mut next!(tokens, "block").iter(),
                                 data,
-                                vars,
+                                globals,
                                 procs,
                             )?
                             .pop();
@@ -151,9 +175,13 @@ pub fn process_tokens<'a>(
                             for element in target {
                                 let mut tmp_data = vec![element];
 
-                                let output =
-                                    process_tokens(&mut expr.iter(), &mut tmp_data, vars, procs)?
-                                        .pop();
+                                let output = process_tokens(
+                                    &mut expr.iter(),
+                                    &mut tmp_data,
+                                    globals,
+                                    procs,
+                                )?
+                                .pop();
 
                                 array.push(output.unwrap());
                             }
@@ -167,7 +195,7 @@ pub fn process_tokens<'a>(
             }
 
             Token::Block(tokens) => {
-                process_tokens(&mut tokens.iter(), data, vars, procs)?;
+                process_tokens(&mut tokens.iter(), data, globals, procs)?;
             }
 
             Token::Str(content) => data.push(VMType::Str(content.clone())),
@@ -213,8 +241,6 @@ pub fn process_tokens<'a>(
 
             Token::Eq => binary_op!(data, ==, VMType::Bool),
 
-            Token::Sub => binary_op!(data, -),
-
             Token::Add => binary_op!(data, +),
 
             Token::Mul => binary_op!(data, *),
@@ -241,7 +267,6 @@ pub fn process_tokens<'a>(
                     let array = (0..n).map(|_| data.pop().unwrap()).collect();
                     data.push(VMType::Array(array));
                 }
-
                 _ => panic!(),
             },
 
@@ -251,17 +276,19 @@ pub fn process_tokens<'a>(
                         print!("{}", data.last().unwrap());
                     }
 
-                    identifier => match vars.get(identifier) {
+                    identifier => match globals.get(identifier) {
                         Some(value) => data.push(value.clone()),
-
-                        None => {
-                            process_tokens(
-                                &mut procs.get(identifier).unwrap().clone().iter(),
-                                data,
-                                vars,
-                                procs,
-                            )?;
-                        }
+                        None => match locals.get(identifier) {
+                            Some(value) => data.push(value.clone()),
+                            None => {
+                                process_tokens(
+                                    &mut procs.get(identifier).unwrap().clone().iter(),
+                                    data,
+                                    globals,
+                                    procs,
+                                )?;
+                            }
+                        },
                     },
                 };
             }
