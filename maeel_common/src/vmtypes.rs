@@ -15,17 +15,19 @@ pub enum VMType {
 impl Display for VMType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            VMType::Float(value) => write!(f, "{value}"),
-            VMType::Integer(value) => write!(f, "{value}"),
-            VMType::Str(value) => write!(f, "{value}"),
-            VMType::Bool(value) => write!(f, "{value}"),
-            VMType::Array(value) => {
-                write!(f, "{{ ").unwrap();
+            VMType::Float(x) => write!(f, "{}", x),
+            VMType::Integer(x) => write!(f, "{}", x),
+            VMType::Str(x) => write!(f, "{}", x),
+            VMType::Bool(x) => write!(f, "{}", x),
+            VMType::Array(xs) => {
+                write!(f, "{{")?;
+                for (i, x) in xs.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, " ")?;
+                    }
 
-                value
-                    .iter()
-                    .for_each(|element| write!(f, "{} ", element).unwrap());
-
+                    write!(f, "{}", x)?;
+                }
                 write!(f, "}}")
             }
         }

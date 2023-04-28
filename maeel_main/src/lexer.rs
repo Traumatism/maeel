@@ -1,18 +1,14 @@
-use std::f64::consts::PI;
-use std::iter::once;
-
 use maeel_common::tokens::Token;
+
+use std::f64::consts::PI;
 
 /// Transform a single character into a token
 macro_rules! lex_single_char {
     ($chr:expr) => {
         match $chr {
             '¬' | '!' => vec![Token::Not],
-
             '-' => vec![Token::Not, Token::Add],
-
             '∪' | '∨' | '+' => vec![Token::Add],
-
             '∧' | '*' => vec![Token::Mul],
 
             '⊕' | '⊻' => vec![
@@ -127,74 +123,94 @@ macro_rules! lex_single_char {
     };
 }
 
-pub fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
-    let mut output = Vec::default(); // Contains the output (blocks and other tokens)
-    let mut tokens_iter = tokens.iter(); // Iterate through tokens
+fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
+    let mut output = Vec::new();
+    let mut tokens_iter = tokens.iter();
 
     while let Some(token) = tokens_iter.next() {
-        output.push({
-            match token {
-                Token::BlockStart => {
-                    let (block_tokens, recurse) = {
-                        let mut n = 0; // Amount of nesting
-                        let mut recurse = false; // Parse blocks recursively in case of nested blocks
-                        let mut block_tokens = Vec::default(); // Contains current block tokens
+        output.push(match token {
+            Token::BlockStart => {
+                let mut block_tokens = Vec::new();
+                let mut n = 1_u8;
 
-                        while let Some(token) = tokens_iter.next() {
-                            match token {
-                                // End of the top block
-                                Token::BlockEnd if n == 0 => break,
+                while n > 0 {
+                    match tokens_iter.next() {
+                        None => break,
 
-                                // End of a block embedded in the top block
-                                Token::BlockEnd => {
-                                    n -= 1;
-                                    block_tokens.push(token.clone());
-                                }
-
-                                // Beginning of a new block
-                                Token::BlockStart => {
-                                    n += 1;
-                                    recurse = true;
-                                    block_tokens.push(token.clone());
-                                }
-
-                                // Other token
-                                _ => block_tokens.push(token.clone()),
-                            }
+                        Some(Token::BlockEnd) => {
+                            block_tokens.push(Token::BlockEnd);
+                            n -= 1
                         }
 
-                        (block_tokens, recurse)
-                    };
+                        Some(Token::BlockStart) => {
+                            block_tokens.push(Token::BlockStart);
+                            n += 1
+                        }
 
-                    // Recurse if, and only if, BlockStart is present in the current block
-                    match recurse {
-                        true => Token::Block(extract_blocks(&block_tokens)),
-                        false => Token::Block(block_tokens),
+                        Some(t) => block_tokens.push(t.clone()),
                     }
                 }
 
-                _ => token.clone(),
+                Token::Block(extract_blocks(&block_tokens))
             }
+
+            t => t.clone(),
         })
     }
 
     output
 }
 
+macro_rules! take_with_predicate {
+    ($chr:expr, $chars:expr, $p:expr) => {{
+        let content = std::iter::once($chr)
+            .chain($chars.clone().take_while($p))
+            .collect::<String>();
+
+        // Apply changes to the iterator
+        // (we cloned it previously)
+        (1..content.len()).for_each(|_| {
+            $chars.next().unwrap();
+        });
+
+        content
+    }};
+}
+
+/// The function lexes a given code string into a vector of tokens.
+///
+/// Arguments:
+///
+/// * `code`: The `code` parameter is a string slice containing the code to be lexed into tokens.
+///
+/// Returns:
+///
+/// A vector of `Token`s, which are the result of lexing the input `code` string.
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut chars = code.chars().peekable();
     let mut tokens = Vec::default();
+    let mut n = 0;
 
     while let Some(chr) = chars.next() {
         match chr {
             // Ignore white-spaces
             ' ' | '\n' => continue,
 
+            '(' => {
+                tokens.push(Token::BlockStart);
+                n += 1;
+            }
+
+            ')' => {
+                tokens.push(Token::BlockEnd);
+                n -= 1;
+            }
+
             // Lex strings
             '"' => {
                 let content_vec: Vec<char> = chars.by_ref().take_while(|&c| c != '"').collect();
-                let mut content = String::with_capacity(content_vec.len());
 
+                let mut content = String::with_capacity(content_vec.len());
                 let mut i = 0;
 
                 while i < content_vec.len() {
@@ -227,37 +243,16 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
             // Lex identifiers
             'a'..='z' | 'A'..='Z' | '_' => {
-                let content = once(chr)
-                    .chain(
-                        chars
-                            .clone()
-                            .take_while(|&c| c.is_alphanumeric() || c == '_'),
-                    )
-                    .collect::<String>();
-
-                // Apply changes to the iterator
-                // (we cloned it previously)
-                (1..content.len()).for_each(|_| {
-                    chars.next().unwrap();
-                });
+                let content =
+                    take_with_predicate!(chr, chars, |&c| c.is_alphanumeric() || c == '_');
 
                 tokens.push(Token::Identifier(content))
             }
 
             // Lex integers
             '0'..='9' => {
-                let content = once(chr)
-                    .chain(
-                        chars
-                            .clone()
-                            .take_while(|&c| c.is_ascii_digit() || c == '.' || c == '_'),
-                    )
-                    .collect::<String>();
-
-                // Apply changes to the iterator
-                // (we cloned it previously)
-                (1..content.len()).for_each(|_| {
-                    chars.next().unwrap();
+                let content = take_with_predicate!(chr, chars, |&c| {
+                    c.is_ascii_digit() || c == '.' || c == '_'
                 });
 
                 // Float should have an unique dot
@@ -279,5 +274,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
         }
     }
 
-    tokens
+    assert_eq!(n, 0);
+
+    extract_blocks(tokens.as_slice())
 }

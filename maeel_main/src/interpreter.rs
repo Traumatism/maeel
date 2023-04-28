@@ -22,17 +22,37 @@ macro_rules! next {
     }};
 }
 
+/// Perform a binary operation between two `VMType`s
 macro_rules! binary_op {
     ($data:expr, $operator:tt) => {{
         let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap());
         $data.push(b $operator a)
     }};
+
     ($data:expr, $operator:tt, $vmtype:expr) => {{
         let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap());
         $data.push($vmtype(b $operator a))
     }};
 }
 
+/// The `process_tokens` function processes a sequence of tokens and executes the corresponding
+/// operations on a stack of values, global variables, and procedures.
+///
+/// Arguments:
+///
+/// * `tokens`: A mutable reference to an iterator over Token objects. This iterator contains the tokens
+/// to be processed by the function.
+/// * `data`: A mutable reference to a vector of VMType, which represents the stack of the virtual
+/// machine. This vector will be modified as the code is executed.
+/// * `globals`: A mutable HashMap that contains global variables. These variables can be accessed and
+/// modified by any code block in the program.
+/// * `procs`: A mutable HashMap that contains procedure tokens. It maps procedure names (String) to a
+/// vector of Tokens that represent the procedure's code block. This HashMap is shared with all code
+/// blocks, so any code block can access any procedure defined in the program.
+///
+/// Returns:
+///
+/// a mutable reference to the Stack
 pub fn process_tokens<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Vec<VMType>,
@@ -44,8 +64,6 @@ pub fn process_tokens<'a>(
 
     while let Some(token) = tokens.next() {
         match token {
-            Token::BlockStart | Token::BlockEnd | Token::ArrayEnd | Token::IEnd => panic!(),
-
             // Parse a new procedure
             Token::ProcStart => {
                 // Procedure name
@@ -233,23 +251,17 @@ pub fn process_tokens<'a>(
             }
 
             Token::Dup => data.push(data.last().cloned().unwrap()),
-
             Token::Over => data.push(data[data.len() - 2].to_owned()),
 
             Token::Clear => data.clear(),
 
             Token::Gt => binary_op!(data, >, VMType::Bool),
-
             Token::Lt => binary_op!(data, <, VMType::Bool),
-
             Token::Eq => binary_op!(data, ==, VMType::Bool),
 
             Token::Add => binary_op!(data, +),
-
             Token::Mul => binary_op!(data, *),
-
             Token::Div => binary_op!(data, /),
-
             Token::Mod => binary_op!(data, %),
 
             Token::Not => {
@@ -273,28 +285,33 @@ pub fn process_tokens<'a>(
                 _ => panic!(),
             },
 
-            Token::Identifier(identifier) => {
-                match identifier.as_str() {
-                    "print" => {
-                        print!("{}", data.last().unwrap());
+            Token::Identifier(identifier) => match identifier.as_str() {
+                "print" => {
+                    print!("{}", data.last().unwrap());
+                }
+
+                identifier => {
+                    if let Some(value) = globals.get(identifier) {
+                        data.push(value.clone());
+                        continue;
                     }
 
-                    identifier => match globals.get(identifier) {
-                        Some(value) => data.push(value.clone()),
-                        None => match locals.get(identifier) {
-                            Some(value) => data.push(value.clone()),
-                            None => {
-                                process_tokens(
-                                    &mut procs.get(identifier).unwrap().clone().iter(),
-                                    data,
-                                    globals,
-                                    procs,
-                                )?;
-                            }
-                        },
-                    },
-                };
-            }
+                    if let Some(value) = locals.get(identifier) {
+                        data.push(value.clone());
+                        continue;
+                    }
+
+                    process_tokens(
+                        &mut procs.get(identifier).unwrap().clone().iter(),
+                        data,
+                        globals,
+                        procs,
+                    )?;
+                }
+            },
+
+            Token::BlockStart | Token::ArrayEnd | Token::IEnd => panic!(),
+            Token::BlockEnd => {}
         };
     }
 
