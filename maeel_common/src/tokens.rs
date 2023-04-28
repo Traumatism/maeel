@@ -6,30 +6,40 @@ pub enum Token {
     Identifier(String),
     Float(f64),
     Bool(bool),
+
     Add,
     Mul,
     Mod,
     Div,
+
     Not,
     Eq,
     Gt,
     Lt,
-    Clear,
-    Over,
+
     Take,
     Get,
+
+    Clear,
     Swap,
+    Over,
     Rot,
     Dup,
     Pop,
+
     Let,
+
     ProcStart,
+
     ArrayStart,
     ArrayEnd,
+
     IStart,
     IEnd,
+
     BlockStart,
     BlockEnd,
+
     If,
     For,
     While,

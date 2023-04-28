@@ -2,7 +2,7 @@ pub mod interpreter;
 pub mod lexer;
 
 use interpreter::process_tokens;
-use lexer::{extract_blocks, lex_into_tokens};
+use lexer::lex_into_tokens;
 
 use std::collections::HashMap;
 use std::env::args;
@@ -19,7 +19,7 @@ fn main() -> Result<()> {
     .expect("Failed to open file");
 
     process_tokens(
-        &mut extract_blocks(&lex_into_tokens(&content)).iter(),
+        &mut lex_into_tokens(&content).iter(),
         &mut Vec::default(),
         &mut HashMap::default(),
         &mut HashMap::default(),
