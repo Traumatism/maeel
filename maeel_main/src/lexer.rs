@@ -89,8 +89,8 @@ macro_rules! lex_single_char {
                 Token::Block(vec![Token::Pop, Token::Integer(1), Token::Add]),
             ],
 
-            '↓' => vec![Token::Integer(1), Token::Sub],
-            '↘' => vec![Token::Integer(1), Token::Sub, Token::Let],
+            '↓' => vec![Token::Integer(1), Token::Not, Token::Add],
+            '↘' => vec![Token::Integer(1), Token::Not, Token::Add, Token::Let],
 
             '↑' => vec![Token::Integer(1), Token::Add],
             '↗' => vec![Token::Integer(1), Token::Add, Token::Let],

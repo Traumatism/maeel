@@ -6,7 +6,6 @@ pub enum Token {
     Identifier(String),
     Float(f64),
     Bool(bool),
-    Sub,
     Add,
     Mul,
     Mod,
