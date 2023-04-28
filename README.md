@@ -1,13 +1,27 @@
 # The maeel programming language
 
-Maeel is a { concatenative, esotheric, stack-based, interpreted } programming language.
+Maeel is a { concatenative, esoteric, stack-based, interpreted } programming language.
 
+---
 Important concepts:
+
 - https://en.wikipedia.org/wiki/Stack_machine
 - https://en.wikipedia.org/wiki/Reverse_Polish_notation
 - https://en.wikipedia.org/wiki/Stack-oriented_programming
 
+- https://en.wikipedia.org/wiki/List_of_mathematical_symbols_by_subject
+- https://simple.wikipedia.org/wiki/Greek_alphabet
+
+---
 The interpreter is < 300 LoC thank to recursion and simplicity of concatenative.
+
+# Build / install maeel
+
+Build: `make build`
+
+Install: `make install`
+
+Execute `maeel [file.maeel]`
 
 # Patterns
 
