@@ -68,7 +68,7 @@ pub fn process_tokens<'a>(
                             block.append(&mut vec![Token::Let, token.unwrap().clone()])
                         }
 
-                        // List
+                        // List end
                         Some(Token::IEnd) => break,
 
                         // We want only identifiers
