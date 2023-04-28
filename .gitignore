@@ -1,6 +1,5 @@
 /target
 .DS_Store
+.vscode
 maeel
 Cargo.lock
-*_out
-maeel_web/dist
