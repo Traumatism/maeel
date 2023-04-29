@@ -113,21 +113,21 @@ a 100 < ω (
 
 | Symbol | Definition         |
 |---     |---                 |
-| `∧`    | $$\set{p,q}\mapsto\set{p\land q}$$
-| `∨`    | $$\set{p,q}\mapsto\set{p\lor q}$$
-| `⊕`    | $$\set{p,q}\mapsto\set{p\oplus q}$$
-| `¬`    | $$\set{p}\mapsto\set{\lnot p}$$
+| `∧`    | $$\set{p,q}\mapsto\set{p\land{q}}$$
+| `∨`    | $$\set{p,q}\mapsto\set{p\lor{q}}$$
+| `⊕`    | $$\set{p,q}\mapsto\set{p\oplus{q}}$$
+| `¬`    | $$\set{p}\mapsto\set{\lnot{p}}$$
 
 ## Comparison
 
 | Symbol | Definition          |
 |---     |---                  |
 | `=`    | $$\set{a,b}\mapsto\set{a=b}$$
-| `≠`    | $$\set{a,b}\mapsto\set{a\neq b}$$
-| `>`    | $$\set{a,b}\mapsto\set{a\gt b}$$
-| `<`    | $$\set{a,b}\mapsto\set{a\lt b}$$
-| `⩽`    | $$\set{a,b}\mapsto\set{a\geq b}$$
-| `⩾`    | $$\set{a,b}\mapsto\set{a\leq b}$$
+| `≠`    | $$\set{a,b}\mapsto\set{a\neq{b}}$$
+| `>`    | $$\set{a,b}\mapsto\set{a\gt{b}}$$
+| `<`    | $$\set{a,b}\mapsto\set{a\lt{b}}$$
+| `⩽`    | $$\set{a,b}\mapsto\set{a\geq{b}}$$
+| `⩾`    | $$\set{a,b}\mapsto\set{a\leq{b}}$$
 
 ## Arrays
 
