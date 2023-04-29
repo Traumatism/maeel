@@ -40,18 +40,18 @@ Execute `maeel [file.maeel]`
 
 ## Stack functions
 
-| Symbol | Definition         |
-|---     |---                 |
-| `ρ`    | $$\set{a,b,c}\rightarrow\set{a,b}$$ |
-| `σ`    | $$\set{a,b,c}\rightarrow\set{a,c,b}$$ |
-| `ψ`    | $$\set{a,b,c}\rightarrow\set{c,a,b}$$ |
-| `δ`    | $$\set{a,b,c}\rightarrow\set{a,b,c,c}$$ |
-| `θ`    | $$\set{a,b,c}\rightarrow\set{a,b,c,b}$$ |
+| Symbol | Definition
+|---     |---
+| `ρ`    | $$\set{a,b,c}\rightarrow\set{a,b}$$
+| `σ`    | $$\set{a,b,c}\rightarrow\set{a,c,b}$$
+| `ψ`    | $$\set{a,b,c}\rightarrow\set{c,a,b}$$
+| `δ`    | $$\set{a,b,c}\rightarrow\set{a,b,c,c}$$
+| `θ`    | $$\set{a,b,c}\rightarrow\set{a,b,c,b}$$
 
 ## Arithmetic
 
-| Symbol | Definition       |
-|---     |---               |
+| Symbol | Definition
+|---     |---
 | `+`    | $$\set{a,b}\rightarrow\set{a+b}$$
 | `-`    | $$\set{a,b}\rightarrow\set{a-b}$$
 | `*`    | $$\set{a,b}\rightarrow\set{a\times{b}}$$
@@ -63,8 +63,8 @@ Execute `maeel [file.maeel]`
 
 ## Logic
 
-| Symbol | Definition         |
-|---     |---                 |
+| Symbol | Definition
+|---     |---
 | `∧`    | $$\set{p,q}\rightarrow\set{p\land{q}}$$
 | `∨`    | $$\set{p,q}\rightarrow\set{p\lor{q}}$$
 | `⊕`    | $$\set{p,q}\rightarrow\set{p\oplus{q}}$$
@@ -72,8 +72,8 @@ Execute `maeel [file.maeel]`
 
 ## Comparison
 
-| Symbol | Definition          |
-|---     |---                  |
+| Symbol | Definition
+|---     |---
 | `=`    | $$\set{a,b}\rightarrow\set{a=b}$$
 | `≠`    | $$\set{a,b}\rightarrow\set{a\neq{b}}$$
 | `>`    | $$\set{a,b}\rightarrow\set{a\gt{b}}$$
@@ -83,24 +83,25 @@ Execute `maeel [file.maeel]`
 
 ## Arrays
 
-| Symbol | Definition         |
-|---     |---                 |
+| Symbol | Definition
+|---     |---
 | `∪`    | $$\set{\mathbb{A},\mathbb{B}}\rightarrow\set{\mathbb{A}\cup\mathbb{B}}$$
 | `+`    | $$\set{a,\mathbb{A}}\rightarrow\set{\set{a}\cup\mathbb{A}}$$
 | `*`    | $$\set{\mathbb{A},\mathbb{B}}\rightarrow\set{\mathbb{A}\times\mathbb{B}}$$
 | `Σ`    | $$\set{\mathbb{A}}\rightarrow\set{\sum_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
 | `Π`    | $$\set{\mathbb{A}}\rightarrow\set{\prod_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
 | `#`    | $$\set{\mathbb{A}}\rightarrow\set{\sum_{0}^{\vert\mathbb{A}\vert}1}$$
+| `Γ`    | $$\set{\mathbb{A},n}\rightarrow\set{\mathbb{A},\mathbb{A_n}}$$
 
 ## Constants
 
-| Symbol | Type     | Value     |
-|---     |---       |---        |
-| `α`    | `bool`   | `true`    |
-| `β`    | `bool`   | `false`   |
-| `ε`    | `string` | `""`      |
-| `π`    | `float`  | `3.14...` |
-| `∅`    | `array`  | `{}`      |
+| Symbol | Type     | Value
+|---     |---       |---
+| `α`    | `bool`   | `true`
+| `β`    | `bool`   | `false`
+| `ε`    | `string` | `""`
+| `π`    | `float`  | `3.14...`
+| `∅`    | `array`  | `{}`
 
 # Patterns
 
