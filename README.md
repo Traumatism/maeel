@@ -1,15 +1,15 @@
 # The $$\mathscr{MAEEL}$$ programming language
 
 ```mermaid
-sequenceDiagram
-    participant Main
-    participant Lexer
-    participant Interpreter
+%%{init: {'theme':'forest'}}%%
 
-    Main->>Lexer: Code written in maeel
-    Lexer-->>Main: Tokens
-    Main->>Interpreter: Tokens
-    Interpreter->>Interpreter: Parsing tokens
+stateDiagram-v2
+    [*] --> Main
+    Main --> Lexer: Code
+    Lexer --> Lexer: Lexing code
+
+    Lexer --> Interpreter: Tokens
+    Interpreter --> Interpreter: Parsing tokens
 ```
 
 Maeel is a {concatenating, esoteric, stack-based, interpreted} programming language.
