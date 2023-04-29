@@ -69,6 +69,7 @@ Execute `maeel [file.maeel]`
 | `∨`    | $$\set{p,q}\rightarrow\set{p\lor{q}}$$
 | `⊕`    | $$\set{p,q}\rightarrow\set{p\oplus{q}}$$
 | `¬`    | $$\set{p}\rightarrow\set{\lnot{p}}$$
+| `⇒`    | $$p\implies\set{p}\rightarrow\set{f(\mathbb{S})}$$ $$\lnot{p}\implies{p}\rightarrow\set{}$$
 
 ## Comparison
 
@@ -91,7 +92,7 @@ Execute `maeel [file.maeel]`
 | `Σ`    | $$\set{\mathbb{A}}\rightarrow\set{\sum_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
 | `Π`    | $$\set{\mathbb{A}}\rightarrow\set{\prod_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
 | `#`    | $$\set{\mathbb{A}}\rightarrow\set{\sum_{0}^{\vert\mathbb{A}\vert}1}$$
-| `Γ`    | $$\set{\mathbb{A},n}\rightarrow\set{\mathbb{A},\mathbb{A_n}}$$
+| `Γ`    | $$\set{\mathbb{A},n}\rightarrow\set{\mathbb{A},\mathbb{A_\text{n}}}$$
 
 ## Constants
 
