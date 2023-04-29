@@ -90,55 +90,55 @@ a 100 < ω (
 
 | Symbol | Definition         |
 |---     |---                 |
-| `ρ`    | $$\set{a,b,c}\mapsto\set{a,b}$$ |
-| `σ`    | $$\set{a,b,c}\mapsto\set{a,c,b}$$ |
-| `ψ`    | $$\set{a,b,c}\mapsto\set{c,a,b}$$ |
-| `δ`    | $$\set{a,b,c}\mapsto\set{a,b,c,c}$$ |
-| `θ`    | $$\set{a,b,c}\mapsto\set{a,b,c,b}$$ |
+| `ρ`    | $$\set{a,b,c}\rightarrow\set{a,b}$$ |
+| `σ`    | $$\set{a,b,c}\rightarrow\set{a,c,b}$$ |
+| `ψ`    | $$\set{a,b,c}\rightarrow\set{c,a,b}$$ |
+| `δ`    | $$\set{a,b,c}\rightarrow\set{a,b,c,c}$$ |
+| `θ`    | $$\set{a,b,c}\rightarrow\set{a,b,c,b}$$ |
 
 ## Arithmetic
 
 | Symbol | Definition       |
 |---     |---               |
-| `+`    | $$\set{a,b}\mapsto\set{a+b}$$
-| `-`    | $$\set{a,b}\mapsto\set{a-b}$$
-| `*`    | $$\set{a,b}\mapsto\set{a\times{b}}$$
-| `/`    | $$\set{a,b}\mapsto\set{\frac{a}{b}}$$
-| `%`    | $$\set{a,b}\mapsto\set{a\mod{b}}$$
-| `!`    | $$\set{a}\mapsto\set{-a}$$
-| `∣`    | $$\set{a,b}\mapsto\set{a\equiv0\mod{b}}$$
-| `∤`    | $$\set{a,b}\mapsto\set{\lnot(a\equiv0\mod{b})}$$
+| `+`    | $$\set{a,b}\rightarrow\set{a+b}$$
+| `-`    | $$\set{a,b}\rightarrow\set{a-b}$$
+| `*`    | $$\set{a,b}\rightarrow\set{a\times{b}}$$
+| `/`    | $$\set{a,b}\rightarrow\set{\frac{a}{b}}$$
+| `%`    | $$\set{a,b}\rightarrow\set{a\mod{b}}$$
+| `!`    | $$\set{a}\rightarrow\set{-a}$$
+| `∣`    | $$\set{a,b}\rightarrow\set{a\equiv0\mod{b}}$$
+| `∤`    | $$\set{a,b}\rightarrow\set{\lnot(a\equiv0\mod{b})}$$
 
 ## Logic
 
 | Symbol | Definition         |
 |---     |---                 |
-| `∧`    | $$\set{p,q}\mapsto\set{p\land{q}}$$
-| `∨`    | $$\set{p,q}\mapsto\set{p\lor{q}}$$
-| `⊕`    | $$\set{p,q}\mapsto\set{p\oplus{q}}$$
-| `¬`    | $$\set{p}\mapsto\set{\lnot{p}}$$
+| `∧`    | $$\set{p,q}\rightarrow\set{p\land{q}}$$
+| `∨`    | $$\set{p,q}\rightarrow\set{p\lor{q}}$$
+| `⊕`    | $$\set{p,q}\rightarrow\set{p\oplus{q}}$$
+| `¬`    | $$\set{p}\rightarrow\set{\lnot{p}}$$
 
 ## Comparison
 
 | Symbol | Definition          |
 |---     |---                  |
-| `=`    | $$\set{a,b}\mapsto\set{a=b}$$
-| `≠`    | $$\set{a,b}\mapsto\set{a\neq{b}}$$
-| `>`    | $$\set{a,b}\mapsto\set{a\gt{b}}$$
-| `<`    | $$\set{a,b}\mapsto\set{a\lt{b}}$$
-| `⩽`    | $$\set{a,b}\mapsto\set{a\geq{b}}$$
-| `⩾`    | $$\set{a,b}\mapsto\set{a\leq{b}}$$
+| `=`    | $$\set{a,b}\rightarrow\set{a=b}$$
+| `≠`    | $$\set{a,b}\rightarrow\set{a\neq{b}}$$
+| `>`    | $$\set{a,b}\rightarrow\set{a\gt{b}}$$
+| `<`    | $$\set{a,b}\rightarrow\set{a\lt{b}}$$
+| `⩽`    | $$\set{a,b}\rightarrow\set{a\geq{b}}$$
+| `⩾`    | $$\set{a,b}\rightarrow\set{a\leq{b}}$$
 
 ## Arrays
 
 | Symbol | Definition         |
 |---     |---                 |
-| `∪`    | $$\set{\mathbb{A},\mathbb{B}}\mapsto\set{\mathbb{A}\cup\mathbb{B}}$$
-| `+`    | $$\set{a,\mathbb{A}}\mapsto\set{\set{a}\cup\mathbb{A}}$$
-| `*`    | $$\set{\mathbb{A},\mathbb{B}}\mapsto\set{\mathbb{A}\times\mathbb{B}}$$
-| `Σ`    | $$\set{\mathbb{A}}\mapsto\set{\sum_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
-| `Π`    | $$\set{\mathbb{A}}\mapsto\set{\prod_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
-| `#`    | $$\set{\mathbb{A}}\mapsto\set{\sum_{0}^{\vert\mathbb{A}\vert}1}$$
+| `∪`    | $$\set{\mathbb{A},\mathbb{B}}\rightarrow\set{\mathbb{A}\cup\mathbb{B}}$$
+| `+`    | $$\set{a,\mathbb{A}}\rightarrow\set{\set{a}\cup\mathbb{A}}$$
+| `*`    | $$\set{\mathbb{A},\mathbb{B}}\rightarrow\set{\mathbb{A}\times\mathbb{B}}$$
+| `Σ`    | $$\set{\mathbb{A}}\rightarrow\set{\sum_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
+| `Π`    | $$\set{\mathbb{A}}\rightarrow\set{\prod_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
+| `#`    | $$\set{\mathbb{A}}\rightarrow\set{\sum_{0}^{\vert\mathbb{A}\vert}1}$$
 
 ## Constants
 
