@@ -134,8 +134,8 @@ a 100 < ω (
 | `∪`    | `A B -- (A ∪ B)`   | yes         |
 | `+`    | `a A -- (A ∪ {a})` | yes         |
 | `*`    | `A B -- (A * B)`   | no          |
-| `Σ`    | $$ \sum_{n=0}^L L_n $$ | no |
-| `Π`    | $$ \prod_{n=0}^L L_n$$ | no |
+| `Σ`    | $ \sum_{n=0}^L L_n $ | no |
+| `Π`    | $ \prod_{n=0}^L L_n $ | no |
 
 ## Constants
 
