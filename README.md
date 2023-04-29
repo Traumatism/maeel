@@ -1,4 +1,4 @@
-# The Maeel programming language
+# The $$\mathbb{MAEEL}$$ programming language
 
 ![](./structure.png)
 
