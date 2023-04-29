@@ -10,11 +10,13 @@ pub enum VMType {
     Str(String),
     Bool(bool),
     Array(Vec<VMType>),
+    None,
 }
 
 impl Display for VMType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            VMType::None => write!(f, "None"),
             VMType::Float(x) => write!(f, "{}", x),
             VMType::Integer(x) => write!(f, "{}", x),
             VMType::Str(x) => write!(f, "{}", x),
