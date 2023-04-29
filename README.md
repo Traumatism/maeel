@@ -9,9 +9,7 @@ sequenceDiagram
     Main->>Lexer: Code written in maeel
     Lexer-->>Main: Tokens
     Main->>Interpreter: Tokens
-    loop
-        Interpreter->>Interpreter: Parsing tokens
-    end
+    Interpreter->>Interpreter: Parsing tokens
 ```
 
 Maeel is a {concatenating, esoteric, stack-based, interpreted} programming language.
