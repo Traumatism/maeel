@@ -111,7 +111,7 @@ a 100 < ω (
 
 | Symbol | Definition         | Commutative |
 |---     |---                 |---          |
-| `∧`    | `p q -- (p and q)` | yes         |
+| `∧`    | $$p q -- (p \and q)$$ | yes         |
 | `∨`    | `p q -- (p or q)`  | yes         |
 | `⊕`    | `p q -- (p xor q)` | yes         |
 | `¬`    | `p -- (not p)`     | n/a         |
@@ -134,8 +134,8 @@ a 100 < ω (
 | `∪`    | `A B -- (A ∪ B)`   | yes         |
 | `+`    | `a A -- (A ∪ {a})` | yes         |
 | `*`    | `A B -- (A * B)`   | no          |
-| `Σ`    | $$\sum_{n=0}^L L_n$$ | no |
-| `Π`    | $$\prod_{n=0}^L L_n$$ | no |
+| `Σ`    | $$\sum_{n=0}^{\vert L\vert} L_n$$ | no |
+| `Π`    | $$\prod_{n=0}^{\vert L\vert} L_n$$ | no |
 
 ## Constants
 
