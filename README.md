@@ -27,63 +27,6 @@ Run unit tests: `make test`
 
 Execute `maeel [file.maeel]`
 
-# Patterns
-
-## Variable definition
-
-`→ name` will set the "name" alias to the value on the top of the stack.
-
-Example:
-
-```
-3.14 → pi
-
-pi print
-```
-
-## Function definition
-
-`λ name [argument] (code)` will set the "name" alias to the next code block.
-
-Example:
-
-```
-λ square [x] (
-    x x *
-)
-
-2 square print
-```
-
-## If
-
-`⇒ (code)` will execute "code" if, and only if the stack top value is `true`
-
-Example:
-
-`a b = ⇒ ("a and b are equal!" print)`
-
-## While loop
-
-`ω (code)` will loop executing "code" while there is a `true` on the stack top. Note: the "code" needs to output a boolean at its end to define if it will continue looping or not.
-
-Example:
-
-```
-1 → a
-
-a 100 < ω (
-    a print
-    a 1 + → a
-
-    a 100 <
-)
-```
-
-## For loop
-
-`Ω (code)` will push(value) for all value elements of stack top (stack top must be an array) and then execute the next code block
-
 # Operators
 
 ## Stack functions
@@ -149,3 +92,60 @@ a 100 < ω (
 | `ε`    | `string` | `""`      |
 | `π`    | `float`  | `3.14...` |
 | `∅`    | `array`  | `{}`      |
+
+# Patterns
+
+## Variable definition
+
+`→ name` will set the "name" alias to the value on the top of the stack.
+
+Example:
+
+```
+3.14 → pi
+
+pi print
+```
+
+## Function definition
+
+`λ name [argument] (code)` will set the "name" alias to the next code block.
+
+Example:
+
+```
+λ square [x] (
+    x x *
+)
+
+2 square print
+```
+
+## If
+
+`⇒ (code)` will execute "code" if, and only if the stack top value is `true`
+
+Example:
+
+`a b = ⇒ ("a and b are equal!" print)`
+
+## While loop
+
+`ω (code)` will loop executing "code" while there is a `true` on the stack top. Note: the "code" needs to output a boolean at its end to define if it will continue looping or not.
+
+Example:
+
+```
+1 → a
+
+a 100 < ω (
+    a print
+    a 1 + → a
+
+    a 100 <
+)
+```
+
+## For loop
+
+`Ω (code)` will push(value) for all value elements of stack top (stack top must be an array) and then execute the next code block
