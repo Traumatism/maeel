@@ -1,8 +1,6 @@
 # The $$\mathscr{MAEEL}$$ programming language
 
 ```mermaid
-%%{init: {'theme':'forest'}}%%
-
 stateDiagram-v2
     [*] --> Main
     Main --> Lexer: Code
