@@ -1,4 +1,4 @@
-# The $$\mathscr{MAEEL}$$ programming language
+## The $$\mathscr{MAEEL}$$ programming language
 
 ```mermaid
 flowchart LR
