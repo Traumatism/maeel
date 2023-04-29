@@ -1,6 +1,12 @@
 # The $$\mathscr{MAEEL}$$ programming language
 
-![](./structure.png)
+```mermaid
+graph TD;
+    Main-->Interpreter;
+    Main<-->Lexer;
+    Interpreter-->Common;
+    Lexer-->Common;
+```
 
 Maeel is a {concatenating, esoteric, stack-based, interpreted} programming language.
 
@@ -149,12 +155,3 @@ a 100 < ω (
 ## For loop
 
 `Ω (code)` will push(value) for all value elements of stack top (stack top must be an array) and then execute the next code block
-
-
-```mermaid
-graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
-```
