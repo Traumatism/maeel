@@ -111,31 +111,32 @@ a 100 < ω (
 
 | Symbol | Definition         | Commutative |
 |---     |---                 |---          |
-| `∧`    | $$\set {p, q} \mapsto \set {p \land q}$$ | yes         |
-| `∨`    | $$\set {p, q} \mapsto \set {p \lor q}$$  | yes         |
-| `⊕`    | $$\set {p, q} \mapsto \set {p \oplus q}$$ | yes         |
-| `¬`    | $$\set {p} \mapsto \set {\lnot p}$$     | n/a         |
+| `∧`    | $$\set{p,q}\mapsto\set{p\land q}$$ | yes         |
+| `∨`    | $$\set{p,q}\mapsto\set{p\lor q}$$  | yes         |
+| `⊕`    | $$\set{p,q}\mapsto\set{p\oplus q}$$ | yes         |
+| `¬`    | $$\set{p}\mapsto\set{\lnot p}$$     | n/a         |
 
 ## Comparison
 
 | Symbol | Definition          | Commutative |
 |---     |---                  |---          |
-| `=`    | `a b -- (a = b)`    | yes         |
-| `≠`    | `a b -- (¬(a = b))` | yes         |
-| `>`    | `a b -- (a > b)`    | no          |
-| `<`    | `a b -- (a < b)`    | no          |
-| `⩽`    | `a b -- (a ⩽ b)`    | no          |
-| `⩾`    | `a b -- (a ⩾ b)`    | no          |
+| `=`    | $$\set{a,b}\mapsto\set{a=b}$$ | yes         |
+| `≠`    | $$\set{a,b}\mapsto\set{a\neq b}$$ | yes         |
+| `>`    | $$\set{a,b}\mapsto\set{a\gt b}$$ | no          |
+| `<`    | $$\set{a,b}\mapsto\set{a\lt b}$$ | no          |
+| `⩽`    | $$\set{a,b}\mapsto\set{a\geq b}$$ | no          |
+| `⩾`    | $$\set{a,b}\mapsto\set{a\leq b}$$ | no          |
 
 ## Arrays
 
 | Symbol | Definition         | Commutative |
 |---     |---                 |---          |
-| `∪`    | $$\set{\mathbb{A}, \mathbb{B}} \mapsto \set{\mathbb{A}\cup\mathbb{B}} $$   | yes         |
-| `+`    | $$\set{a, \mathbb{A}} \mapsto \set{\set{a}\cup\mathbb{A}}$$ | yes         |
-| `*`    | $$\set{\mathbb{A}, \mathbb{B}} \mapsto \set{\mathbb{A}\times\mathbb{B}}$$
-| `Σ`    | $$\set{\mathbb{A}} \mapsto \set{\sum_{n=0}^{\vert \mathbb{A}\vert} \mathbb{A}_n}$$ | no |
-| `Π`    | $$\set{\mathbb{A}} \mapsto \set{\prod_{n=0}^{\vert \mathbb{A}\vert} \mathbb{A}_n}$$ | no |
+| `∪`    | $$\set{\mathbb{A},\mathbb{B}}\mapsto\set{\mathbb{A}\cup\mathbb{B}}$$   | yes         |
+| `+`    | $$\set{a,\mathbb{A}}\mapsto\set{\set{a}\cup\mathbb{A}}$$ | yes         |
+| `*`    | $$\set{\mathbb{A},\mathbb{B}}\mapsto\set{\mathbb{A}\times\mathbb{B}}$$ | yes |
+| `Σ`    | $$\set{\mathbb{A}}\mapsto\set{\sum_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$ | no |
+| `Π`    | $$\set{\mathbb{A}}\mapsto\set{\prod_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$ | no |
+| `#`    | $$\set{\mathbb{A}}\mapsto\set{\sum_{0}^{\vert\mathbb{A}\vert}1}$$ | no |
 
 ## Constants
 
