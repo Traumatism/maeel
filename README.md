@@ -90,53 +90,55 @@ a 100 < ω (
 
 | Symbol | Definition         |
 |---     |---                 |
-| `ρ`    | `a b c -- a b`     |
-| `σ`    | `a b c -- a c b`   |
-| `ψ`    | `a b c -- c a b`   |
-| `δ`    | `a b c -- a b c c` |
-| `θ`    | `a b c -- a b c b` |
+| `ρ`    | $$\set{a,b,c}\mapsto\set{a,b}$$ |
+| `σ`    | $$\set{a,b,c}\mapsto\set{a,c,b}$$ |
+| `ψ`    | $$\set{a,b,c}\mapsto\set{c,a,b}$$ |
+| `δ`    | $$\set{a,b,c}\mapsto\set{a,b,c,c}$$ |
+| `θ`    | $$\set{a,b,c}\mapsto\set{a,b,c,b}$$ |
 
 ## Arithmetic
 
-| Symbol | Definition       | Commutative |
-|---     |---               |---          |
-| `+`    | `x y -- (x + y)` | yes         |
-| `-`    | `x y -- (x - y)` | no          |
-| `*`    | `x y -- (x * y)` | yes         |
-| `/`    | `x y -- (x / y)` | no          |
-| `%`    | `x y -- (x % y)` | no          |
-| `!`    | `x -- (-x)`      | n/a         |
+| Symbol | Definition       |
+|---     |---               |
+| `+`    | $$\set{a,b}\mapsto\set{a+b}$$
+| `-`    | $$\set{a,b}\mapsto\set{a-b}$$
+| `*`    | $$\set{a,b}\mapsto\set{a\times{b}}$$
+| `/`    | $$\set{a,b}\mapsto\set{\frac{a}{b}}$$
+| `%`    | $$\set{a,b}\mapsto\set{a\mod{b}}$$
+| `!`    | $$\set{a}\mapsto\set{-a}$$
+| `∣`    | $$\set{a,b}\mapsto\set{a\equiv0\mod{b}}$$
+| `∤`    | $$\set{a,b}\mapsto\set{\lnot(a\equiv0\mod{b})}$$
 
 ## Logic
 
-| Symbol | Definition         | Commutative |
-|---     |---                 |---          |
-| `∧`    | $$\set{p,q}\mapsto\set{p\land q}$$ | yes         |
-| `∨`    | $$\set{p,q}\mapsto\set{p\lor q}$$  | yes         |
-| `⊕`    | $$\set{p,q}\mapsto\set{p\oplus q}$$ | yes         |
-| `¬`    | $$\set{p}\mapsto\set{\lnot p}$$     | n/a         |
+| Symbol | Definition         |
+|---     |---                 |
+| `∧`    | $$\set{p,q}\mapsto\set{p\land q}$$
+| `∨`    | $$\set{p,q}\mapsto\set{p\lor q}$$
+| `⊕`    | $$\set{p,q}\mapsto\set{p\oplus q}$$
+| `¬`    | $$\set{p}\mapsto\set{\lnot p}$$
 
 ## Comparison
 
-| Symbol | Definition          | Commutative |
-|---     |---                  |---          |
-| `=`    | $$\set{a,b}\mapsto\set{a=b}$$ | yes         |
-| `≠`    | $$\set{a,b}\mapsto\set{a\neq b}$$ | yes         |
-| `>`    | $$\set{a,b}\mapsto\set{a\gt b}$$ | no          |
-| `<`    | $$\set{a,b}\mapsto\set{a\lt b}$$ | no          |
-| `⩽`    | $$\set{a,b}\mapsto\set{a\geq b}$$ | no          |
-| `⩾`    | $$\set{a,b}\mapsto\set{a\leq b}$$ | no          |
+| Symbol | Definition          |
+|---     |---                  |
+| `=`    | $$\set{a,b}\mapsto\set{a=b}$$
+| `≠`    | $$\set{a,b}\mapsto\set{a\neq b}$$
+| `>`    | $$\set{a,b}\mapsto\set{a\gt b}$$
+| `<`    | $$\set{a,b}\mapsto\set{a\lt b}$$
+| `⩽`    | $$\set{a,b}\mapsto\set{a\geq b}$$
+| `⩾`    | $$\set{a,b}\mapsto\set{a\leq b}$$
 
 ## Arrays
 
-| Symbol | Definition         | Commutative |
-|---     |---                 |---          |
-| `∪`    | $$\set{\mathbb{A},\mathbb{B}}\mapsto\set{\mathbb{A}\cup\mathbb{B}}$$   | yes         |
-| `+`    | $$\set{a,\mathbb{A}}\mapsto\set{\set{a}\cup\mathbb{A}}$$ | yes         |
-| `*`    | $$\set{\mathbb{A},\mathbb{B}}\mapsto\set{\mathbb{A}\times\mathbb{B}}$$ | yes |
-| `Σ`    | $$\set{\mathbb{A}}\mapsto\set{\sum_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$ | no |
-| `Π`    | $$\set{\mathbb{A}}\mapsto\set{\prod_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$ | no |
-| `#`    | $$\set{\mathbb{A}}\mapsto\set{\sum_{0}^{\vert\mathbb{A}\vert}1}$$ | no |
+| Symbol | Definition         |
+|---     |---                 |
+| `∪`    | $$\set{\mathbb{A},\mathbb{B}}\mapsto\set{\mathbb{A}\cup\mathbb{B}}$$
+| `+`    | $$\set{a,\mathbb{A}}\mapsto\set{\set{a}\cup\mathbb{A}}$$
+| `*`    | $$\set{\mathbb{A},\mathbb{B}}\mapsto\set{\mathbb{A}\times\mathbb{B}}$$
+| `Σ`    | $$\set{\mathbb{A}}\mapsto\set{\sum_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
+| `Π`    | $$\set{\mathbb{A}}\mapsto\set{\prod_{n=0}^{\vert\mathbb{A}\vert}\mathbb{A}_n}$$
+| `#`    | $$\set{\mathbb{A}}\mapsto\set{\sum_{0}^{\vert\mathbb{A}\vert}1}$$
 
 ## Constants
 
