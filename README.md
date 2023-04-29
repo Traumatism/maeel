@@ -111,10 +111,10 @@ a 100 < ω (
 
 | Symbol | Definition         | Commutative |
 |---     |---                 |---          |
-| `∧`    | $$\set {p, q} \rightarrow \set {p \land q}$$ | yes         |
-| `∨`    | $$\set {p, q} \rightarrow \set {p \lor q}$$  | yes         |
-| `⊕`    | $$\set {p, q} \rightarrow \set {p \oplus q}$$ | yes         |
-| `¬`    | $$\set {p} \rightarrow \set {\lnot p}$$     | n/a         |
+| `∧`    | $$\set {p, q} \mapsto \set {p \land q}$$ | yes         |
+| `∨`    | $$\set {p, q} \mapsto \set {p \lor q}$$  | yes         |
+| `⊕`    | $$\set {p, q} \mapsto \set {p \oplus q}$$ | yes         |
+| `¬`    | $$\set {p} \mapsto \set {\lnot p}$$     | n/a         |
 
 ## Comparison
 
@@ -131,11 +131,11 @@ a 100 < ω (
 
 | Symbol | Definition         | Commutative |
 |---     |---                 |---          |
-| `∪`    | $$\set{\mathbb{A}, \mathbb{B}} \rightarrow \set{\mathbb{A}\cup\mathbb{B}} $$   | yes         |
-| `+`    | $$\set{a, \mathbb{A}} \rightarrow \set{\set{a}\cup\mathbb{A}}$$ | yes         |
-| `*`    | $$\set{\mathbb{A}, \mathbb{B}} \rightarrow \set{\mathbb{A}\times\mathbb{B}}$$
-| `Σ`    | $$\set{\mathbb{A}} \rightarrow \sum_{n=0}^{\vert \mathbb{A}\vert} \mathbb{A}_n$$ | no |
-| `Π`    | $$\set{\mathbb{A}} \rightarrow \prod_{n=0}^{\vert \mathbb{A}\vert} \mathbb{A}_n$$ | no |
+| `∪`    | $$\set{\mathbb{A}, \mathbb{B}} \mapsto \set{\mathbb{A}\cup\mathbb{B}} $$   | yes         |
+| `+`    | $$\set{a, \mathbb{A}} \mapsto \set{\set{a}\cup\mathbb{A}}$$ | yes         |
+| `*`    | $$\set{\mathbb{A}, \mathbb{B}} \mapsto \set{\mathbb{A}\times\mathbb{B}}$$
+| `Σ`    | $$\set{\mathbb{A}} \mapsto \set{\sum_{n=0}^{\vert \mathbb{A}\vert} \mathbb{A}_n}$$ | no |
+| `Π`    | $$\set{\mathbb{A}} \mapsto \set{\prod_{n=0}^{\vert \mathbb{A}\vert} \mathbb{A}_n}$$ | no |
 
 ## Constants
 
