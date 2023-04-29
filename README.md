@@ -1,9 +1,9 @@
 # The $$\mathscr{MAEEL}$$ programming language
 
 ```mermaid
-graph TD;
-    Main-->Interpreter;
-    Main-->Lexer;
+sequenceDiagram
+    Maeel Main-->Interpreter;
+    Maeel Main-->Lexer;
     Interpreter-->Common;
     Lexer-->Common;
 ```
