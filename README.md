@@ -1,4 +1,4 @@
-# The maeel programming language
+# The Maeel programming language
 
 ![](./structure.png)
 
@@ -15,13 +15,15 @@ Important concepts:
 - https://simple.wikipedia.org/wiki/Greek_alphabet
 
 ---
-The interpreter is < 300 LoC thank to recursion and simplicity of concatenative.
+The interpreter is < 300 LoC thanks to recursion and simplicity of concatenative.
 
-# Build / install maeel
+# Build/Run/Install maeel
 
 Build: `make build`
 
 Install: `make install`
+
+Run unit tests: `make test`
 
 Execute `maeel [file.maeel]`
 
