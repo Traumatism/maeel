@@ -2,7 +2,7 @@
 
 ![](./structure.png)
 
-Maeel is a { concatenative, esoteric, stack-based, interpreted } programming language.
+Maeel is a {concatenating, esoteric, stack-based, interpreted} programming language.
 
 ---
 Important concepts:
@@ -15,7 +15,7 @@ Important concepts:
 - https://simple.wikipedia.org/wiki/Greek_alphabet
 
 ---
-The interpreter is < 300 LoC thanks to recursion and simplicity of concatenative.
+The interpreter is < 300 LoC thanks to recursion and simplicity of concatenation.
 
 # Build/Run/Install maeel
 
@@ -82,7 +82,7 @@ a 100 < ω (
 
 ## For loop
 
-`Ω (code)` will push(value) for all value element of stack top (stack top must be an array) and then execute the next code block
+`Ω (code)` will push(value) for all value elements of stack top (stack top must be an array) and then execute the next code block
 
 # Operators
 
@@ -96,7 +96,7 @@ a 100 < ω (
 | `δ`    | `a b c -- a b c c` |
 | `θ`    | `a b c -- a b c b` |
 
-## Arithmetics
+## Arithmetic
 
 | Symbol | Definition       | Commutative |
 |---     |---               |---          |
