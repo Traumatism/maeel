@@ -2,10 +2,10 @@
 
 ```mermaid
 graph TD;
-    Main->>Interpreter;
-    Main<->Lexer;
-    Interpreter->>Common;
-    Lexer->>Common;
+    Main-->Interpreter;
+    Main-->Lexer;
+    Interpreter-->Common;
+    Lexer-->Common;
 ```
 
 Maeel is a {concatenating, esoteric, stack-based, interpreted} programming language.
