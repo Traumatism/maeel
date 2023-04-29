@@ -1,13 +1,11 @@
 # The $$\mathscr{MAEEL}$$ programming language
 
 ```mermaid
-stateDiagram-v2
-    [*] --> Main
-    Main --> Lexer: Code
-    Lexer --> Lexer: Lexing code
-
-    Lexer --> Interpreter: Tokens
-    Interpreter --> Interpreter: Parsing tokens
+flowchart LR
+    Main -->|Code|Lexer
+    Lexer -->|Lexing code|Lexer
+    Lexer -->|Tokens|Interpreter
+    Interpreter -->|Parsing tokens|Interpreter
 ```
 
 Maeel is a {concatenating, esoteric, stack-based, interpreted} programming language.
