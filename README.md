@@ -111,10 +111,10 @@ a 100 < ω (
 
 | Symbol | Definition         | Commutative |
 |---     |---                 |---          |
-| `∧`    | $$p q -- (p \and q)$$ | yes         |
-| `∨`    | `p q -- (p or q)`  | yes         |
-| `⊕`    | `p q -- (p xor q)` | yes         |
-| `¬`    | `p -- (not p)`     | n/a         |
+| `∧`    | $$\set {p, q} - \set {p \land q}$$ | yes         |
+| `∨`    | $$\set {p, q} - \set {p \lor q}$$  | yes         |
+| `⊕`    | $$\set {p, q} - \set {p \oplus q}$$ | yes         |
+| `¬`    | $$\set {p} - \set {\lnot p}$$     | n/a         |
 
 ## Comparison
 
