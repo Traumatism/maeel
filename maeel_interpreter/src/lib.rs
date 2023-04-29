@@ -150,9 +150,7 @@ pub fn process_tokens<'a>(
                     panic!()
                 };
 
-                let Some(Token::IEnd) = tokens.next() else {
-                    panic!()
-                };
+                assert_eq!(Some(&Token::IEnd), tokens.next());
 
                 data.push(VMType::Array((*start..*end).map(VMType::Integer).collect()));
             }
