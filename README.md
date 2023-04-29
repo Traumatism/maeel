@@ -51,10 +51,10 @@ Execute `maeel [file.maeel]`
 | `-`    | $$\set{a,b}\rightarrow\set{a-b}$$
 | `*`    | $$\set{a,b}\rightarrow\set{a\times{b}}$$
 | `/`    | $$\set{a,b}\rightarrow\set{\frac{a}{b}}$$
-| `%`    | $$\set{a,b}\rightarrow\set{a\mod{b}}$$
+| `%`    | $$\set{a,b}\rightarrow\set{a\bmod{b}}$$
 | `!`    | $$\set{a}\rightarrow\set{-a}$$
-| `∣`    | $$\set{a,b}\rightarrow\set{a\equiv0\mod{b}}$$
-| `∤`    | $$\set{a,b}\rightarrow\set{\lnot(a\equiv0\mod{b})}$$
+| `∣`    | $$\set{a,b}\rightarrow\set{a\equiv0\pmod{b}}$$
+| `∤`    | $$\set{a,b}\rightarrow\set{\lnot(a\equiv0\pmod{b})}$$
 
 ## Logic
 
