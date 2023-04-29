@@ -9,7 +9,7 @@ sequenceDiagram
     Main->>Lexer: Code written in maeel
     Lexer-->>Main: Tokens
     Main->>Interpreter: Tokens
-    loop Interpreting
+    loop
         Interpreter->>Interpreter: Parsing tokens
     end
 ```
