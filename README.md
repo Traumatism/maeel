@@ -1,5 +1,7 @@
 # The maeel programming language
 
+![./structure.png]()
+
 Maeel is a { concatenative, esoteric, stack-based, interpreted } programming language.
 
 ---

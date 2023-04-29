@@ -1,7 +1,5 @@
-use maeel_interpreter::process_tokens;
 use maeel_lexer::lex_into_tokens;
 
-use std::collections::HashMap;
 use std::env::args;
 use std::fs::read_to_string;
 use std::io::Result;
@@ -15,12 +13,7 @@ fn main() -> Result<()> {
     )
     .expect("Failed to open file");
 
-    process_tokens(
-        &mut lex_into_tokens(&content).iter(),
-        &mut Vec::default(),
-        &mut HashMap::default(),
-        &mut HashMap::default(),
-    )?;
+    println!("{:?}", lex_into_tokens(&content));
 
     Ok(())
 }

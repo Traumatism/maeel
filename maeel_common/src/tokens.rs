@@ -1,3 +1,5 @@
+pub type Procedure<'a> = (&'a str, Vec<Token>);
+
 #[derive(Clone, Debug)]
 pub enum Token {
     Block(Vec<Token>),
