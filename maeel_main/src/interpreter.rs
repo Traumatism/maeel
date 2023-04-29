@@ -250,10 +250,10 @@ pub fn process_tokens<'a>(
                 data.push(over)
             }
 
+            Token::Clear => data.clear(),
+
             Token::Dup => data.push(data.last().cloned().unwrap()),
             Token::Over => data.push(data[data.len() - 2].to_owned()),
-
-            Token::Clear => data.clear(),
 
             Token::Gt => binary_op!(data, >, VMType::Bool),
             Token::Lt => binary_op!(data, <, VMType::Bool),
