@@ -6,6 +6,9 @@ flowchart LR
     Lexer -->|Lexing code|Lexer
     Lexer -->|Tokens|Interpreter
     Interpreter -->|Parsing tokens|Interpreter
+
+    Lexer-.->Common
+    Interpreter-.->Common
 ```
 
 Maeel is a {concatenating, esoteric, stack-based, interpreted} programming language.
