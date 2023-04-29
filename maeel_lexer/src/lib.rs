@@ -255,12 +255,9 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     c.is_ascii_digit() || c == '.' || c == '_'
                 });
 
-                // Float should have an unique dot
-                if content.matches('.').count() > 1 {
-                    panic!("Invalid float: {}", content)
-                }
-
                 tokens.push(if content.contains('.') {
+                    assert_eq!(content.matches('.').count(), 1);
+
                     Token::Float(content.parse().unwrap())
                 } else {
                     Token::Integer(content.parse().unwrap())
