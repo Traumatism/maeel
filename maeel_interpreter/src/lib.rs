@@ -1,14 +1,20 @@
 use maeel_common::maeel_std::{MAEEL_STD_CONTENT, MAEEL_STD_MATHS_CONTENT};
+
 use maeel_common::tokens::Token;
+
 use maeel_common::vmtypes::VMType;
 
 use std::collections::HashMap;
+
 use std::io::Result;
+
 use std::ops::Not;
+
 use std::slice::Iter;
 
 macro_rules! next {
     ($tokens:expr, "identifier") => {{
+
         match $tokens.next().unwrap()
         {
             Token::Identifier(value) => value.clone(),
@@ -17,6 +23,7 @@ macro_rules! next {
     }};
 
     ($tokens:expr, "block") => {{
+
         match $tokens.next().unwrap()
         {
             Token::Block(block) => block.to_vec(),
@@ -26,6 +33,7 @@ macro_rules! next {
 }
 
 /// Perform a binary operation between two `VMType`s
+
 macro_rules! perform_binary_op {
     ($data:expr, $operator:tt) => {{
         let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap());
@@ -56,6 +64,7 @@ macro_rules! perform_binary_op {
 /// Returns:
 ///
 /// a mutable reference to the Stack
+
 pub fn process_tokens<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Vec<VMType>,
@@ -63,16 +72,19 @@ pub fn process_tokens<'a>(
     procs: &'a mut HashMap<String, Vec<Token>>,
 ) -> Result<&'a mut Vec<VMType>>
 {
+
     // Specific to current code block (won't be given to the next/previous code block)
     let mut locals = HashMap::new();
 
     while let Some(token) = tokens.next()
     {
+
         match token
         {
             // Parse a new procedure
             Token::ProcStart =>
             {
+
                 // Procedure name
                 let name = next!(tokens, "identifier");
 
@@ -82,12 +94,14 @@ pub fn process_tokens<'a>(
 
                 loop
                 {
+
                     let token = tokens.next();
 
                     match token
                     {
                         Some(Token::Identifier(_)) =>
                         {
+
                             // Append variable definition to procedure block
                             procedure_block.append(&mut vec![Token::Let, token.unwrap().clone()])
                         }
@@ -108,25 +122,30 @@ pub fn process_tokens<'a>(
 
             Token::While =>
             {
+
                 // Code block to execute while P(x) is true
                 let tokens = next!(tokens, "block");
 
                 // This is why we need to push P(x) at the end of the code block
                 while let VMType::Bool(true) = data.pop().unwrap()
                 {
+
                     process_tokens(&mut tokens.iter(), data, globals, procs)?;
                 }
             }
 
             Token::For =>
             {
+
                 // Code block to execute for each value of L
                 let tokens = next!(tokens, "block");
 
                 if let Some(VMType::Array(array)) = data.pop()
                 {
+
                     for element in array
                     {
+
                         data.push(element);
 
                         process_tokens(&mut tokens.iter(), data, globals, procs)?;
@@ -134,12 +153,14 @@ pub fn process_tokens<'a>(
                 }
                 else
                 {
+
                     panic!() // An array must be on the stack's top
                 }
             }
 
             Token::Let =>
             {
+
                 // Variable name
                 let name = next!(tokens, "identifier");
 
@@ -154,17 +175,20 @@ pub fn process_tokens<'a>(
 
             Token::If =>
             {
+
                 // Code block to execute if, and only if P(x) is true
                 let tokens = next!(tokens, "block");
 
                 if let Some(VMType::Bool(true)) = data.pop()
                 {
+
                     process_tokens(&mut tokens.iter(), data, globals, procs)?;
                 }
             }
 
             Token::IStart =>
             {
+
                 let (
                     Some(Token::Integer(start)),
                     Some(Token::Integer(end))
@@ -179,10 +203,12 @@ pub fn process_tokens<'a>(
 
             Token::ArrayStart =>
             {
+
                 let mut array = Vec::default();
 
                 loop
                 {
+
                     match tokens.next().unwrap().clone()
                     {
                         Token::ArrayEnd => break,
@@ -198,6 +224,7 @@ pub fn process_tokens<'a>(
                         },
                         Token::Block(expr) =>
                         {
+
                             let generator = process_tokens(
                                 &mut next!(tokens, "block").iter(),
                                 data,
@@ -212,6 +239,7 @@ pub fn process_tokens<'a>(
 
                             for element in target
                             {
+
                                 let mut tmp_data = vec![element];
 
                                 let output = process_tokens(
@@ -235,18 +263,27 @@ pub fn process_tokens<'a>(
 
             Token::Block(tokens) =>
             {
+
                 process_tokens(&mut tokens.iter(), data, globals, procs)?;
             }
+
             Token::Str(content) => data.push(VMType::Str(content.clone())),
+
             Token::Bool(content) => data.push(VMType::Bool(*content)),
+
             Token::Float(content) => data.push(VMType::Float(*content)),
+
             Token::Integer(content) => data.push(VMType::Integer(*content)),
+
             Token::Pop =>
             {
+
                 data.pop();
             }
+
             Token::Rot =>
             {
+
                 let (a, b, c) = (
                     data.pop().unwrap(),
                     data.pop().unwrap(),
@@ -254,30 +291,47 @@ pub fn process_tokens<'a>(
                 );
 
                 data.push(b);
+
                 data.push(a);
+
                 data.push(c);
             }
+
             Token::Swap =>
             {
+
                 let (top, over) = (data.pop().unwrap(), data.pop().unwrap());
 
                 data.push(top);
+
                 data.push(over)
             }
+
             Token::Clear => data.clear(),
+
             Token::Dup => data.push(data.last().cloned().unwrap()),
+
             Token::Over => data.push(data[data.len() - 2].to_owned()),
+
             Token::Gt => perform_binary_op!(data, >, VMType::Bool),
+
             Token::Lt => perform_binary_op!(data, <, VMType::Bool),
+
             Token::Eq => perform_binary_op!(data, ==, VMType::Bool),
+
             Token::Add => perform_binary_op!(data, +),
+
             Token::Mul => perform_binary_op!(data, *),
+
             Token::Div => perform_binary_op!(data, /),
+
             Token::Mod => perform_binary_op!(data, %),
 
             Token::Not =>
             {
+
                 let p = data.pop().unwrap();
+
                 data.push(p.not())
             }
 
@@ -285,6 +339,7 @@ pub fn process_tokens<'a>(
             {
                 (Some(VMType::Integer(n)), Some(VMType::Array(array))) =>
                 {
+
                     data.push(array.get(n as usize).unwrap().clone());
                 }
                 _ => panic!(),
@@ -294,8 +349,11 @@ pub fn process_tokens<'a>(
             {
                 Some(VMType::Integer(n)) =>
                 {
+
                     let mut array = (0..n).map(|_| data.pop().unwrap()).collect::<Vec<VMType>>();
+
                     array.reverse();
+
                     data.push(VMType::Array(array));
                 }
                 _ => panic!(),
@@ -307,6 +365,7 @@ pub fn process_tokens<'a>(
 
                 "include" =>
                 {
+
                     let Some(Token::Str(target)) = tokens.next() else {
                         panic!()
                     };
@@ -318,7 +377,9 @@ pub fn process_tokens<'a>(
 
                         _ =>
                         {
+
                             let file_name = format!("{}.maeel", target.replace('.', "/"));
+
                             std::fs::read_to_string(file_name).expect("Failed to include file")
                         }
                     };
@@ -333,15 +394,20 @@ pub fn process_tokens<'a>(
 
                 identifier =>
                 {
+
                     if let Some(value) = globals.get(identifier)
                     {
+
                         data.push(value.clone());
+
                         continue
                     }
 
                     if let Some(value) = locals.get(identifier)
                     {
+
                         data.push(value.clone());
+
                         continue
                     }
 
