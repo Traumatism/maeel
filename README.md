@@ -31,6 +31,16 @@ Run unit tests: `make test`
 
 Execute `maeel [file.maeel]`
 
+# Made with maeel
+
+- [Fibonacci numbers discovery](./examples/fibonacci.maeel)
+- [Prime numbers discovery](./examples/wilson.maeel)
+- [GCD](./examples/gcd.maeel)
+- [Square root](./examples/square_root.maeel)
+- [Pseudo-random number generation](./examples/random.maeel)
+- [Fizz buzz](./examples/fizz-buzz.maeel)
+- [3x+1](./examples/3x%2B1.maeel)
+
 # Operators
 
 ## Stack functions
