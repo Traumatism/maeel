@@ -10,5 +10,5 @@ vscode:
 
 test:
 	cargo build -q && mv target/debug/maeel ./maeel.tmp && \
-	./maeel.tmp tests.maeel && \
+	./maeel.tmp tests.maeel || \
 	rm maeel.tmp
