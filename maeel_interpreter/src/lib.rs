@@ -1,3 +1,4 @@
+use maeel_common::maeel_std::{MAEEL_STD_CONTENT, MAEEL_STD_MATHS_CONTENT};
 use maeel_common::tokens::Token;
 use maeel_common::vmtypes::VMType;
 
@@ -285,6 +286,29 @@ pub fn process_tokens<'a>(
             Token::Identifier(identifier) => match identifier.as_str() {
                 "print" => {
                     print!("{}", data.last().unwrap());
+                }
+
+                "include" => {
+                    let Some(Token::Str(target)) = tokens.next() else {
+                        panic!()
+                    };
+
+                    let content = match target.as_str() {
+                        "std" => MAEEL_STD_CONTENT.to_string(),
+                        "math" => MAEEL_STD_MATHS_CONTENT.to_string(),
+
+                        _ => {
+                            let file_name = format!("{}.maeel", target.replace(".", "/"));
+                            std::fs::read_to_string(file_name).expect("Failed to include file")
+                        }
+                    };
+
+                    process_tokens(
+                        &mut maeel_lexer::lex_into_tokens(&content).iter(),
+                        &mut Vec::default(),
+                        globals,
+                        procs,
+                    )?;
                 }
 
                 identifier => {

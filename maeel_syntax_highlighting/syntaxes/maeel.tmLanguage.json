@@ -44,7 +44,7 @@
 		},
 		{
 			"name": "support.function.maeel",
-			"match": "(ρ|δ|ψ|φ|θ|σ|ζ|τ|Γ|Π|Σ|#|±|∓|↓|↑|\\bprint\\b)"
+			"match": "(ρ|δ|ψ|φ|θ|σ|ζ|τ|Γ|Π|Σ|#|±|∓|↓|↑|\\bprint\\b|\\binclude\\b)"
 		},
 		{
 			"name": "constant.language.boolean.maeel",
