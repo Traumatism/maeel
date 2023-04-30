@@ -13,14 +13,14 @@ macro_rules! next {
     ($tokens:expr, "identifier") => {{
         match $tokens.next().unwrap() {
             Token::Identifier(value) => value.clone(),
-            token => panic!("Expected identifier, got {token:?}"),
+            token => panic!("{token:?}"),
         }
     }};
 
     ($tokens:expr, "block") => {{
         match $tokens.next().unwrap() {
             Token::Block(block) => block.to_vec(),
-            token => panic!("Expected block, got {token:?}"),
+            token => panic!("{token:?}"),
         }
     }};
 }
@@ -407,6 +407,7 @@ pub fn process_tokens<'a>(
             },
 
             Token::Take => match data.pop() {
+                // 'take' expect an array on top of the stack
                 Some(VMType::Integer(max_index)) => {
                     let mut array = (0..max_index)
                         .map(|_| data.pop().unwrap())
@@ -431,7 +432,7 @@ pub fn process_tokens<'a>(
                         let content = match target.as_str() {
                             "std" => MAEEL_STD_CONTENT.to_string(),
 
-                            "math" => {
+                            "maths" => {
                                 MAEEL_STD_MATHS_CONTENT.to_string()
                             }
 
