@@ -1,9 +1,7 @@
 λ assert_eq [_content _should_be _value] (
     λ p [_content] (_content print ρ)
 
-    _content p
-    ": " p
-
+    _content p ": " p
     _should_be _value = δ ⇒ ("OK\n" p) ¬ ⇒ ("FAIL\n" p)
 )
 
@@ -69,10 +67,6 @@ result_f1 result_f2 "not(a or b) <=> not(a) and not(b)" assert_eq
 λ square  [_x] (_x _x *)
 
 λ cube    [_x] (_x _x square *)
-
-λ quartic [_x] (_x _x cube *)
-
-λ quintic [_x] (_x _x quartic *)
 
 λ gcd_1 [a b] (
     b 0 ≠ ω (b ≕ _t a b % ≕ b _t ≕ a b 0 ≠) a
