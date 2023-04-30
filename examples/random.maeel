@@ -1,1 +1,9 @@
-seed
+1337 → x
+
+16807 → a
+10 → c
+4294967296 → m
+
+λ calculate [] (x a * c + m % δ → x)
+
+{(calculate) ([1 30])} print
