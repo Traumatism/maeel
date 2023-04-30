@@ -1,46 +1,73 @@
 {
 	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
 	"name": "maeel",
+	"scopeName": "source.maeel",
+	"fileTypes": [
+		"maeel"
+	],
 	"patterns": [
 		{
-			"name": "constant.language.boolean",
-			"match": "(α|β)"
-		},
-		{
-			"name": "keyword.control.my-language",
-			"match": "(⟹|⇒|ω|Ω)"
-		},
-		{
-			"name": "constant.numeric.my-language",
-			"match": "\\b\\d+(\\.\\d+)?\\b"
-		},
-		{
-			"name": "punctuation.definition.block.start.my-language",
-			"match": "\\("
-		},
-		{
-			"name": "punctuation.definition.block.end.my-language",
-			"match": "\\)"
-		},
-		{
-			"name": "string.quoted.double.my-language",
-			"begin": "\"",
-			"end": "\"",
+			"begin": "(",
+			"beginCaptures": {
+				"0": {
+					"name": "puncuation.section.block.begin.maeel"
+				}
+			},
+			"end": ")",
+			"endCaptures": {
+				"0": {
+					"name": "puncuation.section.block.end.maeel"
+				}
+			},
+			"name": "meta.block.maeel",
 			"patterns": [
 				{
-					"name": "constant.character.escape.my-language",
-					"match": "\\\\."
+					"include": "#code"
 				}
 			]
 		},
 		{
-			"name": "variable.other.constant.my-language",
-			"match": "\\b([a-zA-Z_]+[a-zA-Z0-9_]*)\\b"
+			"name": "keyword.control.maeel",
+			"match": "(Ω|⟹|⇒|ω|λ)"
 		},
 		{
-			"name": "keyword.operator.my-language",
-			"match": "(¬|!|-|∪|∨|\\+|∧|\\*|⊕|⊻|/|%|∣|∤|ρ|δ|ψ|θ|σ|ζ|≕|→|⟶|λ|∅|ε|π|<|≤|⩽|>|≥|⩾|=|≠|±|∓)"
+			"name": "keyword.operator.lodical.maeel",
+			"match": "(¬|∧|∨|⊕|⊻)"
+		},
+		{
+			"name": "keyword.operator.arithmetic.maeel",
+			"match": "(\\-|\\+|\\*|\/|%|∣|∤|!)"
+		},
+		{
+			"name": "keyword.operator.comparison.maeel",
+			"match": "(=|≠|≥|⩾|≤|⩽|<|>)"
+		},
+		{
+			"name": "support.function.maeel",
+			"match": "(ρ|δ|ψ|θ|σ|ζ|τ|Γ|Π|Σ|#|±|∓|↓|↑|\\bprint\\b)"
+		},
+		{
+			"name": "constant.language.boolean.maeel",
+			"match": "(α|β)"
+		},
+		{
+			"name": "constant.numeric.maeel",
+			"match": "([0-9]+(\\.?[0-9]+)?)"
+		},
+		{
+			"name": "entity.name",
+			"match": "([a-zA-Z_][a-zA-Z0-9_]*)"
+		},
+		{
+			"name": "string.quoted.double.maeel",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.maeel",
+					"match": "\\\\(?:[0\"\\abfnrtv]|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{4})"
+				}
+			]
 		}
-	],
-	"scopeName": "source.maeel"
+	]
 }
