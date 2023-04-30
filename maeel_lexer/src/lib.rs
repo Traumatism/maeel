@@ -45,10 +45,11 @@ macro_rules! lex_single_char {
             'φ' => vec![Token::Rot],
 
             'θ' => {
-                vec![Token::Swap, Token::Dup, Token::Rot, Token::Rot]
+                vec![Token::Over]
             }
 
             'σ' => vec![Token::Swap],
+
             'ζ' => vec![Token::Clear],
 
             '≕' | '→' | '⟶' => vec![Token::Let],
@@ -299,7 +300,8 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                 let token = Token::Identifier(take_with_predicate!(
                     character,
                     characters,
-                    |&c| c.is_alphanumeric() || c == '_'
+                    |&character| character.is_alphanumeric()
+                        || character == '_'
                 ));
 
                 tokens.push(token)
@@ -310,14 +312,15 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                 let content = take_with_predicate!(
                     character,
                     characters,
-                    |&c| {
-                        c.is_ascii_digit() || c == '.' || c == '_'
+                    |&character| {
+                        character.is_ascii_digit()
+                            || character == '.'
+                            || character == '_'
                     }
                 );
 
                 tokens.push(if content.contains('.') {
                     assert_eq!(content.matches('.').count(), 1);
-
                     Token::Float(content.parse().unwrap())
                 } else {
                     Token::Integer(content.parse().unwrap())

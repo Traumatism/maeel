@@ -1,7 +1,9 @@
-reorder_imports = true
+reorder_imports = false
+reorder_modules = false
 match_arm_leading_pipes = "Never"
 brace_style = "AlwaysNextLine"
 empty_item_single_line = false
+struct_field_align_threshold = 30
 enum_discrim_align_threshold = 30
 format_strings = true
 trailing_semicolon = false
@@ -9,3 +11,4 @@ blank_lines_upper_bound = 1
 blank_lines_lower_bound = 0
 chain_width = 30
 max_width = 70
+reorder_impl_items = true

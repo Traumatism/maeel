@@ -339,9 +339,7 @@ pub fn process_tokens<'a>(
                 );
 
                 data.push(b);
-
                 data.push(a);
-
                 data.push(c);
             }
 
@@ -350,7 +348,6 @@ pub fn process_tokens<'a>(
                     (data.pop().unwrap(), data.pop().unwrap());
 
                 data.push(top);
-
                 data.push(over)
             }
 
@@ -428,11 +425,12 @@ pub fn process_tokens<'a>(
 
                     "include" => {
                         let Some(Token::Str(target)) = tokens.next() else {
-                        panic!()
-                    };
+                            panic!()
+                        };
 
                         let content = match target.as_str() {
                             "std" => MAEEL_STD_CONTENT.to_string(),
+
                             "math" => {
                                 MAEEL_STD_MATHS_CONTENT.to_string()
                             }
