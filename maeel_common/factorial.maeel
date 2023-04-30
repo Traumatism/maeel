@@ -1,3 +1,0 @@
-λ fact (δ 1 > ⇒ (δ↓ fact *))
-
-7 fact print

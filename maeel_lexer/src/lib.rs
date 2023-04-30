@@ -6,7 +6,6 @@ use std::f64::consts::PI;
 
 macro_rules! lex_single_char {
     ($chr:expr) => {
-
         match $chr
         {
             '¬' | '!' => vec![Token::Not],
@@ -34,14 +33,22 @@ macro_rules! lex_single_char {
 
             '∣' => vec![Token::Mod, Token::Integer(0), Token::Eq],
 
-            '∤' => vec![Token::Mod, Token::Integer(0), Token::Eq, Token::Not],
+            '∤' => vec![
+                Token::Mod,
+                Token::Integer(0),
+                Token::Eq,
+                Token::Not,
+            ],
 
             'ρ' => vec![Token::Pop],
             'δ' => vec![Token::Dup],
 
             'φ' => vec![Token::Rot],
 
-            'θ' => vec![Token::Swap, Token::Dup, Token::Rot, Token::Rot],
+            'θ' =>
+            {
+                vec![Token::Swap, Token::Dup, Token::Rot, Token::Rot]
+            }
 
             'σ' => vec![Token::Swap],
             'ζ' => vec![Token::Clear],
@@ -93,11 +100,20 @@ macro_rules! lex_single_char {
                 Token::Integer(0),
                 Token::Swap,
                 Token::For,
-                Token::Block(vec![Token::Pop, Token::Integer(1), Token::Add]),
+                Token::Block(vec![
+                    Token::Pop,
+                    Token::Integer(1),
+                    Token::Add,
+                ]),
             ],
 
             '↓' => vec![Token::Integer(1), Token::Not, Token::Add],
-            '↘' => vec![Token::Integer(1), Token::Not, Token::Add, Token::Let],
+            '↘' => vec![
+                Token::Integer(1),
+                Token::Not,
+                Token::Add,
+                Token::Let,
+            ],
 
             '↑' => vec![Token::Integer(1), Token::Add],
             '↗' => vec![Token::Integer(1), Token::Add, Token::Let],
@@ -136,33 +152,28 @@ macro_rules! lex_single_char {
 
 fn extract_blocks(tokens: &[Token]) -> Vec<Token>
 {
-
     let mut output = Vec::new();
 
     let mut tokens_iter = tokens.iter();
 
     while let Some(token) = tokens_iter.next()
     {
-
         output.push(match token
         {
             Token::BlockStart =>
             {
-
                 let mut block_tokens = Vec::new();
 
                 let mut n = 1_u8;
 
                 while n > 0
                 {
-
                     match tokens_iter.next()
                     {
                         None => break,
 
                         Some(Token::BlockEnd) =>
                         {
-
                             block_tokens.push(Token::BlockEnd);
 
                             n -= 1
@@ -170,13 +181,15 @@ fn extract_blocks(tokens: &[Token]) -> Vec<Token>
 
                         Some(Token::BlockStart) =>
                         {
-
                             block_tokens.push(Token::BlockStart);
 
                             n += 1
                         }
 
-                        Some(token) => block_tokens.push(token.clone()),
+                        Some(token) =>
+                        {
+                            block_tokens.push(token.clone())
+                        }
                     }
                 }
 
@@ -192,7 +205,6 @@ fn extract_blocks(tokens: &[Token]) -> Vec<Token>
 
 macro_rules! take_with_predicate {
     ($chr:expr, $chars:expr, $p:expr) => {{
-
         let content = std::iter::once($chr)
             .chain($chars.clone().take_while($p))
             .collect::<String>();
@@ -200,7 +212,6 @@ macro_rules! take_with_predicate {
         // Apply changes to the iterator
         // (we cloned it previously)
         (1..content.len()).for_each(|_| {
-
             $chars.next().unwrap();
         });
 
@@ -220,7 +231,6 @@ macro_rules! take_with_predicate {
 
 pub fn lex_into_tokens(code: &str) -> Vec<Token>
 {
-
     let mut chars = code.chars().peekable();
 
     let mut tokens = Vec::default();
@@ -229,7 +239,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
 
     while let Some(chr) = chars.next()
     {
-
         match chr
         {
             // Ignore white-spaces
@@ -237,7 +246,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
 
             '(' =>
             {
-
                 tokens.push(Token::BlockStart);
 
                 depth += 1;
@@ -245,7 +253,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
 
             ')' =>
             {
-
                 tokens.push(Token::BlockEnd);
 
                 depth -= 1;
@@ -254,16 +261,18 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
             // Lex strings
             '"' =>
             {
+                let content_vec: Vec<char> = chars
+                    .by_ref()
+                    .take_while(|&c| c != '"')
+                    .collect();
 
-                let content_vec: Vec<char> = chars.by_ref().take_while(|&c| c != '"').collect();
-
-                let mut content = String::with_capacity(content_vec.len());
+                let mut content =
+                    String::with_capacity(content_vec.len());
 
                 let mut i = 0;
 
                 while i < content_vec.len()
                 {
-
                     let c = content_vec[i];
 
                     i += 1;
@@ -271,10 +280,8 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                     content.push(
                         if c == '\\'
                         {
-
                             if let Some(next_c) = content_vec.get(i)
                             {
-
                                 i += 1;
 
                                 match next_c
@@ -284,18 +291,20 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                                     't' => '\t',
                                     '\\' => '\\',
                                     '"' => '"',
-                                    _ => panic!("Invalid escape sequence: \\{}", next_c),
+                                    _ => panic!(
+                                        "Invalid escape sequence: \
+                                         \\{}",
+                                        next_c
+                                    ),
                                 }
                             }
                             else
                             {
-
                                 panic!("Incomplete escape sequence");
                             }
                         }
                         else
                         {
-
                             c
                         },
                     )
@@ -307,9 +316,10 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
             // Lex identifiers
             'a'..='z' | 'A'..='Z' | '_' =>
             {
-
                 let content =
-                    take_with_predicate!(chr, chars, |&c| c.is_alphanumeric() || c == '_');
+                    take_with_predicate!(chr, chars, |&c| c
+                        .is_alphanumeric()
+                        || c == '_');
 
                 tokens.push(Token::Identifier(content))
             }
@@ -317,23 +327,20 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
             // Lex integers
             '0'..='9' =>
             {
-
-                let content = take_with_predicate!(chr, chars, |&c| {
-
-                    c.is_ascii_digit() || c == '.' || c == '_'
-                });
+                let content =
+                    take_with_predicate!(chr, chars, |&c| {
+                        c.is_ascii_digit() || c == '.' || c == '_'
+                    });
 
                 tokens.push(
                     if content.contains('.')
                     {
-
                         assert_eq!(content.matches('.').count(), 1);
 
                         Token::Float(content.parse().unwrap())
                     }
                     else
                     {
-
                         Token::Integer(content.parse().unwrap())
                     },
                 );
