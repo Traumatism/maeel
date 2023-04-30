@@ -7,3 +7,5 @@ empty_item_single_line = false
 enum_discrim_align_threshold = 30
 format_strings = true
 trailing_semicolon = false
+blank_lines_upper_bound = 2
+blank_lines_lower_bound = 1
