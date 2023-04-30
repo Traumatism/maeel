@@ -9,7 +9,7 @@
 ∅ → primes
 
 
-[1 2000] Σ (
+[1 2000] Ω (
     δ wilson_theorem ⇒ (primes +→ primes)
 )
 
