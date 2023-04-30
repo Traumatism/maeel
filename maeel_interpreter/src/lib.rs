@@ -23,7 +23,7 @@ macro_rules! next {
 }
 
 /// Perform a binary operation between two `VMType`s
-macro_rules! binary_op {
+macro_rules! perform_binary_op {
     ($data:expr, $operator:tt) => {{
         let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap());
         $data.push(b $operator a)
@@ -74,8 +74,7 @@ pub fn process_tokens<'a>(
                     panic!()
                 };
 
-                // Procedure block
-                let mut block = Vec::default();
+                let mut procedure_block = Vec::default();
 
                 loop {
                     let token = tokens.next();
@@ -83,7 +82,7 @@ pub fn process_tokens<'a>(
                     match token {
                         Some(Token::Identifier(_)) => {
                             // Append variable definition to procedure block
-                            block.append(&mut vec![Token::Let, token.unwrap().clone()])
+                            procedure_block.append(&mut vec![Token::Let, token.unwrap().clone()])
                         }
 
                         // List end
@@ -95,9 +94,9 @@ pub fn process_tokens<'a>(
                 }
 
                 // Finally append real procedure tokens
-                block.append(&mut next!(tokens, "block"));
+                procedure_block.append(&mut next!(tokens, "block"));
 
-                procs.insert(name, block);
+                procs.insert(name, procedure_block);
             }
 
             Token::While => {
@@ -230,15 +229,15 @@ pub fn process_tokens<'a>(
             }
 
             Token::Rot => {
-                let (top, over_0, over_1) = (
+                let (a, b, c) = (
                     data.pop().unwrap(),
                     data.pop().unwrap(),
                     data.pop().unwrap(),
                 );
 
-                data.push(over_0);
-                data.push(top);
-                data.push(over_1)
+                data.push(b);
+                data.push(a);
+                data.push(c);
             }
 
             Token::Swap => {
@@ -253,14 +252,14 @@ pub fn process_tokens<'a>(
             Token::Dup => data.push(data.last().cloned().unwrap()),
             Token::Over => data.push(data[data.len() - 2].to_owned()),
 
-            Token::Gt => binary_op!(data, >, VMType::Bool),
-            Token::Lt => binary_op!(data, <, VMType::Bool),
-            Token::Eq => binary_op!(data, ==, VMType::Bool),
+            Token::Gt => perform_binary_op!(data, >, VMType::Bool),
+            Token::Lt => perform_binary_op!(data, <, VMType::Bool),
+            Token::Eq => perform_binary_op!(data, ==, VMType::Bool),
 
-            Token::Add => binary_op!(data, +),
-            Token::Mul => binary_op!(data, *),
-            Token::Div => binary_op!(data, /),
-            Token::Mod => binary_op!(data, %),
+            Token::Add => perform_binary_op!(data, +),
+            Token::Mul => perform_binary_op!(data, *),
+            Token::Div => perform_binary_op!(data, /),
+            Token::Mod => perform_binary_op!(data, %),
 
             Token::Not => {
                 let p = data.pop().unwrap();
@@ -271,13 +270,13 @@ pub fn process_tokens<'a>(
                 (Some(VMType::Integer(n)), Some(VMType::Array(array))) => {
                     data.push(array.get(n as usize).unwrap().clone());
                 }
-
                 _ => panic!(),
             },
 
             Token::Take => match data.pop() {
                 Some(VMType::Integer(n)) => {
-                    let array = (0..n).map(|_| data.pop().unwrap()).collect();
+                    let mut array = (0..n).map(|_| data.pop().unwrap()).collect::<Vec<VMType>>();
+                    array.reverse();
                     data.push(VMType::Array(array));
                 }
                 _ => panic!(),
@@ -300,7 +299,7 @@ pub fn process_tokens<'a>(
                     }
 
                     process_tokens(
-                        &mut procs.get(identifier).unwrap().clone().iter(),
+                        &mut procs.get(identifier).expect(identifier).clone().iter(),
                         data,
                         globals,
                         procs,
@@ -309,6 +308,7 @@ pub fn process_tokens<'a>(
             },
 
             Token::BlockStart | Token::ArrayEnd | Token::IEnd => panic!(),
+
             Token::BlockEnd => {}
         };
     }

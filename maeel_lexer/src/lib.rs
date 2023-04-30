@@ -7,8 +7,11 @@ macro_rules! lex_single_char {
     ($chr:expr) => {
         match $chr {
             '¬' | '!' => vec![Token::Not],
+
             '-' => vec![Token::Not, Token::Add],
+
             '∪' | '∨' | '+' => vec![Token::Add],
+
             '∧' | '*' => vec![Token::Mul],
 
             '⊕' | '⊻' => vec![
@@ -23,15 +26,20 @@ macro_rules! lex_single_char {
             ],
 
             '/' => vec![Token::Div],
+
             '%' => vec![Token::Mod],
 
             '∣' => vec![Token::Mod, Token::Integer(0), Token::Eq],
+
             '∤' => vec![Token::Mod, Token::Integer(0), Token::Eq, Token::Not],
 
             'ρ' => vec![Token::Pop],
             'δ' => vec![Token::Dup],
-            'ψ' => vec![Token::Rot],
-            'θ' => vec![Token::Over],
+
+            'φ' => vec![Token::Rot],
+
+            'θ' => vec![Token::Swap, Token::Dup, Token::Rot, Token::Rot],
+
             'σ' => vec![Token::Swap],
             'ζ' => vec![Token::Clear],
 
@@ -147,14 +155,14 @@ fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
                             n += 1
                         }
 
-                        Some(t) => block_tokens.push(t.clone()),
+                        Some(token) => block_tokens.push(token.clone()),
                     }
                 }
 
                 Token::Block(extract_blocks(&block_tokens))
             }
 
-            t => t.clone(),
+            token => token.clone(),
         })
     }
 
@@ -189,7 +197,7 @@ macro_rules! take_with_predicate {
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut chars = code.chars().peekable();
     let mut tokens = Vec::default();
-    let mut n = 0;
+    let mut depth = 0;
 
     while let Some(chr) = chars.next() {
         match chr {
@@ -198,12 +206,12 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
             '(' => {
                 tokens.push(Token::BlockStart);
-                n += 1;
+                depth += 1;
             }
 
             ')' => {
                 tokens.push(Token::BlockEnd);
-                n -= 1;
+                depth -= 1;
             }
 
             // Lex strings
@@ -271,7 +279,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
         }
     }
 
-    assert_eq!(n, 0);
+    assert_eq!(depth, 0);
 
     extract_blocks(tokens.as_slice())
 }
