@@ -4,7 +4,8 @@ use std::env::args;
 use std::fs::read_to_string;
 use std::io::Result;
 
-fn main() -> Result<()> {
+fn main() -> Result<()>
+{
     let content = read_to_string(
         args()
             .collect::<Vec<String>>()

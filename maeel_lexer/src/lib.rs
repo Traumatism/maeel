@@ -5,7 +5,8 @@ use std::f64::consts::PI;
 /// Transform a single character into a token
 macro_rules! lex_single_char {
     ($chr:expr) => {
-        match $chr {
+        match $chr
+        {
             '¬' | '!' => vec![Token::Not],
 
             '-' => vec![Token::Not, Token::Add],
@@ -131,26 +132,34 @@ macro_rules! lex_single_char {
     };
 }
 
-fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
+fn extract_blocks(tokens: &[Token]) -> Vec<Token>
+{
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
 
-    while let Some(token) = tokens_iter.next() {
-        output.push(match token {
-            Token::BlockStart => {
+    while let Some(token) = tokens_iter.next()
+    {
+        output.push(match token
+        {
+            Token::BlockStart =>
+            {
                 let mut block_tokens = Vec::new();
                 let mut n = 1_u8;
 
-                while n > 0 {
-                    match tokens_iter.next() {
+                while n > 0
+                {
+                    match tokens_iter.next()
+                    {
                         None => break,
 
-                        Some(Token::BlockEnd) => {
+                        Some(Token::BlockEnd) =>
+                        {
                             block_tokens.push(Token::BlockEnd);
                             n -= 1
                         }
 
-                        Some(Token::BlockStart) => {
+                        Some(Token::BlockStart) =>
+                        {
                             block_tokens.push(Token::BlockStart);
                             n += 1
                         }
@@ -194,63 +203,80 @@ macro_rules! take_with_predicate {
 /// Returns:
 ///
 /// A vector of `Token`s, which are the result of lexing the input `code` string.
-pub fn lex_into_tokens(code: &str) -> Vec<Token> {
+pub fn lex_into_tokens(code: &str) -> Vec<Token>
+{
     let mut chars = code.chars().peekable();
     let mut tokens = Vec::default();
     let mut depth = 0;
 
-    while let Some(chr) = chars.next() {
-        match chr {
+    while let Some(chr) = chars.next()
+    {
+        match chr
+        {
             // Ignore white-spaces
             ' ' | '\n' => continue,
 
-            '(' => {
+            '(' =>
+            {
                 tokens.push(Token::BlockStart);
                 depth += 1;
             }
 
-            ')' => {
+            ')' =>
+            {
                 tokens.push(Token::BlockEnd);
                 depth -= 1;
             }
 
             // Lex strings
-            '"' => {
+            '"' =>
+            {
                 let content_vec: Vec<char> = chars.by_ref().take_while(|&c| c != '"').collect();
 
                 let mut content = String::with_capacity(content_vec.len());
                 let mut i = 0;
 
-                while i < content_vec.len() {
+                while i < content_vec.len()
+                {
                     let c = content_vec[i];
 
                     i += 1;
 
-                    content.push(if c == '\\' {
-                        if let Some(next_c) = content_vec.get(i) {
-                            i += 1;
+                    content.push(
+                        if c == '\\'
+                        {
+                            if let Some(next_c) = content_vec.get(i)
+                            {
+                                i += 1;
 
-                            match next_c {
-                                'n' => '\n',
-                                'r' => '\r',
-                                't' => '\t',
-                                '\\' => '\\',
-                                '"' => '"',
-                                _ => panic!("Invalid escape sequence: \\{}", next_c),
+                                match next_c
+                                {
+                                    'n' => '\n',
+                                    'r' => '\r',
+                                    't' => '\t',
+                                    '\\' => '\\',
+                                    '"' => '"',
+                                    _ => panic!("Invalid escape sequence: \\{}", next_c),
+                                }
                             }
-                        } else {
-                            panic!("Incomplete escape sequence");
+                            else
+                            {
+                                panic!("Incomplete escape sequence");
+                            }
                         }
-                    } else {
-                        c
-                    })
+                        else
+                        {
+                            c
+                        },
+                    )
                 }
 
                 tokens.push(Token::Str(content))
             }
 
             // Lex identifiers
-            'a'..='z' | 'A'..='Z' | '_' => {
+            'a'..='z' | 'A'..='Z' | '_' =>
+            {
                 let content =
                     take_with_predicate!(chr, chars, |&c| c.is_alphanumeric() || c == '_');
 
@@ -258,18 +284,24 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             }
 
             // Lex integers
-            '0'..='9' => {
+            '0'..='9' =>
+            {
                 let content = take_with_predicate!(chr, chars, |&c| {
                     c.is_ascii_digit() || c == '.' || c == '_'
                 });
 
-                tokens.push(if content.contains('.') {
-                    assert_eq!(content.matches('.').count(), 1);
+                tokens.push(
+                    if content.contains('.')
+                    {
+                        assert_eq!(content.matches('.').count(), 1);
 
-                    Token::Float(content.parse().unwrap())
-                } else {
-                    Token::Integer(content.parse().unwrap())
-                });
+                        Token::Float(content.parse().unwrap())
+                    }
+                    else
+                    {
+                        Token::Integer(content.parse().unwrap())
+                    },
+                );
             }
 
             // Lex a symbol

@@ -1,4 +1,19 @@
 include "std"
 
+@ Animal [
+    type
+    name
+    sound
+]
 
-"hello" println
+λ describe [animal] (
+    "C'est un " print
+    animal:type println
+
+    "Le son qu'il emet est " print
+    animal:sound             println
+)
+
+Animal ["mamifère" "chat" "miaou"] → chat
+
+chat describe
