@@ -32,17 +32,14 @@ pub enum Token
     Pop,
 
     Let,
-
     ProcStart,
 
     ArrayStart,
     ArrayEnd,
-
-    IStart,
-    IEnd,
-
     BlockStart,
     BlockEnd,
+    IStart,
+    IEnd,
 
     If,
     For,

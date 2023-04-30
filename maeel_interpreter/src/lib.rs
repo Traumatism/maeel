@@ -396,12 +396,12 @@ pub fn process_tokens<'a>(
 
             Token::Get => match (data.pop(), data.pop()) {
                 (
-                    Some(VMType::Integer(n)),
+                    Some(VMType::Integer(index)),
                     Some(VMType::Array(array)),
                 ) => {
                     data.push(
                         array
-                            .get(n as usize)
+                            .get(index as usize)
                             .unwrap()
                             .clone(),
                     );
@@ -410,8 +410,8 @@ pub fn process_tokens<'a>(
             },
 
             Token::Take => match data.pop() {
-                Some(VMType::Integer(n)) => {
-                    let mut array = (0..n)
+                Some(VMType::Integer(max_index)) => {
+                    let mut array = (0..max_index)
                         .map(|_| data.pop().unwrap())
                         .collect::<Vec<VMType>>();
 
