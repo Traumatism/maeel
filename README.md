@@ -49,7 +49,7 @@ Execute `maeel [file.maeel]`
 |---     |---
 | `ρ`    | $$\set{a,b,c}\rightarrow\set{a,b}$$
 | `σ`    | $$\set{a,b,c}\rightarrow\set{a,c,b}$$
-| `ψ`    | $$\set{a,b,c}\rightarrow\set{c,a,b}$$
+| `φ`    | $$\set{a,b,c}\rightarrow\set{c,a,b}$$
 | `δ`    | $$\set{a,b,c}\rightarrow\set{a,b,c,c}$$
 | `θ`    | $$\set{a,b,c}\rightarrow\set{a,b,c,b}$$
 
