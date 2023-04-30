@@ -1,8 +1,6 @@
-indent_style = "Block"
-reorder_imports = false
+reorder_imports = true
 match_arm_leading_pipes = "Never"
 brace_style = "AlwaysNextLine"
-control_brace_style = "AlwaysNextLine"
 empty_item_single_line = false
 enum_discrim_align_threshold = 30
 format_strings = true
