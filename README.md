@@ -64,7 +64,7 @@ Execute `maeel [file.maeel]`
 | `∨`    | $$\set{p,q}\rightarrow\set{p\lor{q}}$$
 | `⊕`    | $$\set{p,q}\rightarrow\set{p\oplus{q}}$$
 | `¬`    | $$\set{p}\rightarrow\set{\lnot{p}}$$
-| `⇒`    | $$p\implies\set{p}\rightarrow\set{f(\mathbb{S})}$$ $$\lnot{p}\implies{p}\rightarrow\set{}$$
+| `⇒`    | $$p\implies\set{p}\rightarrow\set{f(\mathbb{S})}$$ $$\lnot{p}\implies{\set{p}}\rightarrow\set{}$$
 
 ## Comparison
 
