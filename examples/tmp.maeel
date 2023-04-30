@@ -1,0 +1,4 @@
+include "std"
+
+
+"hello" println

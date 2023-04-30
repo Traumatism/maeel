@@ -1,9 +1,10 @@
-1337 → x
+λ fact [] (δ 1 > ⇒ (δ↓ fact*))
 
-16807 → a
-10 → c
-4294967296 → m
+15 fact   → seed
+4097      → a
+11 fact   → c
+429496729 → m
 
-λ calculate [] (x a * c + m % δ → x)
+λ calculate [] (seed a * c + m % δ → seed)
 
-{(calculate) ([1 30])} print
+{(calculate 15 %) ([1 15])} print

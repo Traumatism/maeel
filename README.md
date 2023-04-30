@@ -6,7 +6,6 @@ flowchart LR
     Lexer -->|Lexing code|Lexer
     Lexer -->|Tokens|Interpreter
     Interpreter -->|Parsing tokens|Interpreter
-
     Lexer-.-Common
     Interpreter-.-Common
 ```
@@ -130,9 +129,7 @@ pi print
 Example:
 
 ```
-λ square [x] (
-    x x *
-)
+λ square [x] (x x *)
 
 2 square print
 ```

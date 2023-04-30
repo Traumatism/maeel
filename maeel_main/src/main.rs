@@ -15,6 +15,7 @@ fn main() -> Result<()> {
     )
     .expect("Failed to open file");
 
+    // Interpret/parse the tokens
     process_tokens(
         &mut lex_into_tokens(&content).iter(),
         &mut Vec::default(),
