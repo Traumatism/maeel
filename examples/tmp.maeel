@@ -1,13 +1,18 @@
 include "std"
 
 @@ Animal [
-    type nom son
+    type
+    name
+    sound
 ]
 
-{ "mammifère" "chat"         "miaou"            } Animal
-{ "mammifère" "chien"        "waf"              } Animal
-{ "chienne"   "mme poudelet" "l'ère mézozoïque" } Animal
+{ "mammal" "cat" "meow" } Animal
+{ "mammal" "dog" "waf"  } Animal
 
 3 τ → zoo
 
-zoo println
+zoo Ω (
+    δ @ type  println ρ
+    δ @ name  println ρ
+    δ @ sound println ρ
+)
