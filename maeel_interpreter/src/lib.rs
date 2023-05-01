@@ -285,11 +285,24 @@ pub fn process_tokens<'a>(
             Token::BlockEnd => {}
 
             Token::At => {
-                match (tokens.next(), tokens.next()) {
-                    (
-                        Some(Token::At),
-                        Some(Token::Identifier(struct_name)),
-                    ) => {
+                match tokens.next() {
+                    Some(Token::Identifier(struct_field)) => {
+                        let Some(VMType::Struct((_, top_struct))) = data.pop() else {
+                            panic!()
+                        };
+
+                        data.push(
+                            top_struct
+                                .get(struct_field)
+                                .unwrap()
+                                .clone(),
+                        )
+                    }
+                    Some(Token::At) => {
+                        let Some(Token::Identifier(struct_name)) = tokens.next() else {
+                            panic!()
+                        };
+
                         assert_eq!(
                             Some(&Token::IStart),
                             tokens.next()
