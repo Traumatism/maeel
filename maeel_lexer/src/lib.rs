@@ -7,6 +7,8 @@ use std::f64::consts::PI;
 macro_rules! lex_single_char {
     ($character:expr) => {
         match $character {
+            '@' => vec![Token::At],
+
             '¬' | '!' => vec![Token::Not],
 
             '-' => vec![Token::Not, Token::Add],

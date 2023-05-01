@@ -8,6 +8,7 @@ use std::{
         Rem,
         Sub,
     },
+    collections::HashMap,
 };
 
 #[derive(Debug, Clone)]
@@ -19,6 +20,7 @@ pub enum VMType
     Str(String),
     Bool(bool),
     Array(Vec<VMType>),
+    Struct((String, HashMap<String, VMType>)),
     None,
 }
 
@@ -28,6 +30,15 @@ impl Display for VMType
         -> std::fmt::Result
     {
         match self {
+            VMType::Struct((name, fields)) => {
+                write!(f, "{} {{ ", name)?;
+
+                for (k, v) in fields.iter() {
+                    write!(f, "({}={}) ", k, v)?
+                }
+
+                write!(f, "}}")
+            }
             VMType::None => write!(f, "None"),
             VMType::Float(x) => write!(f, "{}", x),
             VMType::Integer(x) => write!(f, "{}", x),

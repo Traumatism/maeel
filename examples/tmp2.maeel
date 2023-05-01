@@ -1,0 +1,4 @@
+λ plus_one [x] (x 1 +)
+λ square [x] (x x *)
+
+λ f [x] (square plus_one)
