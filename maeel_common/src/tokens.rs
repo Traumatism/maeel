@@ -11,6 +11,8 @@ pub enum Token
     Float(f64),
     Bool(bool),
 
+    At,
+
     Add,
     Mul,
     Mod,

@@ -1,19 +1,13 @@
 include "std"
 
-@ Animal [
-    type
-    name
-    sound
+@@ Animal [
+    type nom son
 ]
 
-λ describe [animal] (
-    "C'est un " print
-    animal:type println
+{ "mammifère" "chat"         "miaou"            } Animal
+{ "mammifère" "chien"        "waf"              } Animal
+{ "chienne"   "mme poudelet" "l'ère mézozoïque" } Animal
 
-    "Le son qu'il emet est " print
-    animal:sound             println
-)
+3 τ → zoo
 
-Animal ["mamifère" "chat" "miaou"] → chat
-
-chat describe
+zoo println

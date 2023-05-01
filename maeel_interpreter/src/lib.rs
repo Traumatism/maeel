@@ -48,6 +48,7 @@ pub fn process_tokens<'a>(
     data: &'a mut Vec<VMType>,
     globals: &'a mut HashMap<String, VMType>,
     procs: &'a mut HashMap<String, Vec<Token>>,
+    structs: &'a mut HashMap<String, Vec<String>>,
 ) -> Result<&'a mut Vec<VMType>>
 {
     // Specific to current code block (won't be given to the next/previous code block)
@@ -60,15 +61,15 @@ pub fn process_tokens<'a>(
             }
 
             Token::While => {
-                parse_while(tokens, data, globals, procs);
+                parse_while(tokens, data, globals, procs, structs);
             }
 
             Token::For => {
-                parse_for(tokens, data, globals, procs);
+                parse_for(tokens, data, globals, procs, structs);
             }
 
             Token::If => {
-                parse_if(tokens, data, globals, procs);
+                parse_if(tokens, data, globals, procs, structs);
             }
 
             Token::IStart => {
@@ -76,7 +77,7 @@ pub fn process_tokens<'a>(
             }
 
             Token::ArrayStart => {
-                parse_array(tokens, data, globals, procs);
+                parse_array(tokens, data, globals, procs, structs);
             }
 
             Token::Let => {
@@ -134,6 +135,7 @@ pub fn process_tokens<'a>(
                     data,
                     globals,
                     procs,
+                    structs,
                 )?;
             }
 
@@ -216,6 +218,7 @@ pub fn process_tokens<'a>(
                             &mut Vec::default(),
                             globals,
                             procs,
+                            structs,
                         )?;
                     }
 
@@ -232,6 +235,34 @@ pub fn process_tokens<'a>(
                             continue
                         }
 
+                        if let Some(fields_names) = structs
+                            .get(identifier)
+                            .cloned()
+                        {
+                            let Some(VMType::Array(fields_values)) = data.pop() else {
+                                panic!()
+                            };
+
+                            let mut struct_kv = HashMap::new();
+
+                            std::iter::zip(
+                                fields_names,
+                                fields_values,
+                            )
+                            .for_each(
+                                |(k, v)| {
+                                    struct_kv.insert(k, v);
+                                },
+                            );
+
+                            data.push(VMType::Struct((
+                                identifier.to_string(),
+                                struct_kv,
+                            )));
+
+                            continue
+                        }
+
                         process_tokens(
                             &mut procs
                                 .get(identifier)
@@ -241,6 +272,7 @@ pub fn process_tokens<'a>(
                             data,
                             globals,
                             procs,
+                            structs,
                         )?;
                     }
                 }
@@ -251,6 +283,44 @@ pub fn process_tokens<'a>(
             }
 
             Token::BlockEnd => {}
+
+            Token::At => {
+                match (tokens.next(), tokens.next()) {
+                    (
+                        Some(Token::At),
+                        Some(Token::Identifier(struct_name)),
+                    ) => {
+                        assert_eq!(
+                            Some(&Token::IStart),
+                            tokens.next()
+                        );
+
+                        let mut struct_fields = Vec::default();
+
+                        loop {
+                            let token = tokens.next();
+
+                            match token {
+                                Some(Token::Identifier(field)) => {
+                                    struct_fields.push(field.clone())
+                                }
+
+                                // List end
+                                Some(Token::IEnd) => break,
+
+                                // We want only identifiers
+                                _ => panic!(),
+                            }
+                        }
+
+                        structs.insert(
+                            struct_name.to_string(),
+                            struct_fields,
+                        );
+                    }
+                    _ => panic!(),
+                };
+            }
         };
     }
 
@@ -302,6 +372,7 @@ fn parse_while<'a>(
     data: &'a mut Vec<VMType>,
     globals: &'a mut HashMap<String, VMType>,
     procs: &'a mut HashMap<String, Vec<Token>>,
+    structs: &'a mut HashMap<String, Vec<String>>,
 )
 {
     // Code block to execute while P(x) is true
@@ -309,8 +380,14 @@ fn parse_while<'a>(
 
     // This is why we need to push P(x) at the end of the code block
     while let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(&mut tokens.iter(), data, globals, procs)
-            .unwrap();
+        process_tokens(
+            &mut tokens.iter(),
+            data,
+            globals,
+            procs,
+            structs,
+        )
+        .unwrap();
     }
 }
 
@@ -320,6 +397,7 @@ fn parse_for<'a>(
     data: &'a mut Vec<VMType>,
     globals: &'a mut HashMap<String, VMType>,
     procs: &'a mut HashMap<String, Vec<Token>>,
+    structs: &'a mut HashMap<String, Vec<String>>,
 )
 {
     // Code block to execute for each value of L
@@ -329,8 +407,14 @@ fn parse_for<'a>(
         for element in array {
             data.push(element);
 
-            process_tokens(&mut tokens.iter(), data, globals, procs)
-                .unwrap();
+            process_tokens(
+                &mut tokens.iter(),
+                data,
+                globals,
+                procs,
+                structs,
+            )
+            .unwrap();
         }
     } else {
         panic!() // An array must be on the stack's top
@@ -367,14 +451,21 @@ fn parse_if<'a>(
     data: &'a mut Vec<VMType>,
     globals: &'a mut HashMap<String, VMType>,
     procs: &'a mut HashMap<String, Vec<Token>>,
+    structs: &'a mut HashMap<String, Vec<String>>,
 )
 {
     // Code block to execute if, and only if P(x) is true
     let tokens = next!(tokens, "block");
 
     if let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(&mut tokens.iter(), data, globals, procs)
-            .unwrap();
+        process_tokens(
+            &mut tokens.iter(),
+            data,
+            globals,
+            procs,
+            structs,
+        )
+        .unwrap();
     }
 }
 
@@ -405,6 +496,7 @@ fn parse_array<'a>(
     data: &'a mut Vec<VMType>,
     globals: &'a mut HashMap<String, VMType>,
     procs: &'a mut HashMap<String, Vec<Token>>,
+    structs: &'a mut HashMap<String, Vec<String>>,
 )
 {
     let mut array = Vec::default();
@@ -440,6 +532,7 @@ fn parse_array<'a>(
                     data,
                     globals,
                     procs,
+                    structs,
                 )
                 .unwrap()
                 .pop();
@@ -456,6 +549,7 @@ fn parse_array<'a>(
                         &mut tmp_data,
                         globals,
                         procs,
+                        structs,
                     )
                     .unwrap()
                     .pop();
