@@ -1,6 +1,13 @@
 use std::{
     fmt::Display,
-    ops::{Add, Div, Mul, Not, Rem, Sub},
+    ops::{
+        Add,
+        Div,
+        Mul,
+        Not,
+        Rem,
+        Sub,
+    },
 };
 
 #[derive(Debug, Clone)]

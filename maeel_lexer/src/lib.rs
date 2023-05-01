@@ -15,16 +15,18 @@ macro_rules! lex_single_char {
 
             '∧' | '*' => vec![Token::Mul],
 
-            '⊕' | '⊻' => vec![
-                Token::Over,
-                Token::Over,
-                Token::Mul,
-                Token::Not,
-                Token::Rot,
-                Token::Rot,
-                Token::Add,
-                Token::Mul,
-            ],
+            '⊕' | '⊻' => {
+                vec![
+                    Token::Over,
+                    Token::Over,
+                    Token::Mul,
+                    Token::Not,
+                    Token::Rot,
+                    Token::Rot,
+                    Token::Add,
+                    Token::Mul,
+                ]
+            }
 
             '/' => vec![Token::Div],
 
@@ -32,12 +34,14 @@ macro_rules! lex_single_char {
 
             '∣' => vec![Token::Mod, Token::Integer(0), Token::Eq],
 
-            '∤' => vec![
-                Token::Mod,
-                Token::Integer(0),
-                Token::Eq,
-                Token::Not,
-            ],
+            '∤' => {
+                vec![
+                    Token::Mod,
+                    Token::Integer(0),
+                    Token::Eq,
+                    Token::Not,
+                ]
+            }
 
             'ρ' => vec![Token::Pop],
             'δ' => vec![Token::Dup],
@@ -81,38 +85,46 @@ macro_rules! lex_single_char {
 
             'Γ' => vec![Token::Get],
 
-            'Π' => vec![
-                Token::Integer(1),
-                Token::Swap,
-                Token::For,
-                Token::Block(vec![Token::Mul]),
-            ],
-
-            'Σ' => vec![
-                Token::Integer(0),
-                Token::Swap,
-                Token::For,
-                Token::Block(vec![Token::Add]),
-            ],
-
-            '#' => vec![
-                Token::Integer(0),
-                Token::Swap,
-                Token::For,
-                Token::Block(vec![
-                    Token::Pop,
+            'Π' => {
+                vec![
                     Token::Integer(1),
-                    Token::Add,
-                ]),
-            ],
+                    Token::Swap,
+                    Token::For,
+                    Token::Block(vec![Token::Mul]),
+                ]
+            }
+
+            'Σ' => {
+                vec![
+                    Token::Integer(0),
+                    Token::Swap,
+                    Token::For,
+                    Token::Block(vec![Token::Add]),
+                ]
+            }
+
+            '#' => {
+                vec![
+                    Token::Integer(0),
+                    Token::Swap,
+                    Token::For,
+                    Token::Block(vec![
+                        Token::Pop,
+                        Token::Integer(1),
+                        Token::Add,
+                    ]),
+                ]
+            }
 
             '↓' => vec![Token::Integer(1), Token::Not, Token::Add],
-            '↘' => vec![
-                Token::Integer(1),
-                Token::Not,
-                Token::Add,
-                Token::Let,
-            ],
+            '↘' => {
+                vec![
+                    Token::Integer(1),
+                    Token::Not,
+                    Token::Add,
+                    Token::Let,
+                ]
+            }
 
             '↑' => vec![Token::Integer(1), Token::Add],
             '↗' => vec![Token::Integer(1), Token::Add, Token::Let],
@@ -123,26 +135,30 @@ macro_rules! lex_single_char {
             '±' | '∓' => vec![Token::Dup, Token::Not],
 
             '<' => vec![Token::Lt],
-            '≤' | '⩽' => vec![
-                Token::Over,
-                Token::Over,
-                Token::Lt,
-                Token::Rot,
-                Token::Rot,
-                Token::Eq,
-                Token::Add,
-            ],
+            '≤' | '⩽' => {
+                vec![
+                    Token::Over,
+                    Token::Over,
+                    Token::Lt,
+                    Token::Rot,
+                    Token::Rot,
+                    Token::Eq,
+                    Token::Add,
+                ]
+            }
 
             '>' => vec![Token::Gt],
-            '≥' | '⩾' => vec![
-                Token::Over,
-                Token::Over,
-                Token::Gt,
-                Token::Rot,
-                Token::Rot,
-                Token::Eq,
-                Token::Add,
-            ],
+            '≥' | '⩾' => {
+                vec![
+                    Token::Over,
+                    Token::Over,
+                    Token::Gt,
+                    Token::Rot,
+                    Token::Rot,
+                    Token::Eq,
+                    Token::Add,
+                ]
+            }
 
             character => panic!("{character}"),
         }
@@ -267,29 +283,34 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
 
                     index += 1;
 
-                    content.push(if character == '\\' {
-                        if let Some(next_character) =
-                            content_vec.get(index)
-                        {
-                            index += 1;
+                    content.push(
+                        if character == '\\' {
+                            if let Some(next_character) =
+                                content_vec.get(index)
+                            {
+                                index += 1;
 
-                            match next_character {
-                                'n' => '\n',
-                                'r' => '\r',
-                                't' => '\t',
-                                '\\' => '\\',
-                                '"' => '"',
-                                _ => panic!(
-                                    "Invalid escape sequence: \\{}",
-                                    next_character
-                                ),
+                                match next_character {
+                                    'n' => '\n',
+                                    'r' => '\r',
+                                    't' => '\t',
+                                    '\\' => '\\',
+                                    '"' => '"',
+                                    _ => {
+                                        panic!(
+                                            "Invalid escape \
+                                             sequence: \\{}",
+                                            next_character
+                                        )
+                                    }
+                                }
+                            } else {
+                                panic!("Incomplete escape sequence");
                             }
                         } else {
-                            panic!("Incomplete escape sequence");
-                        }
-                    } else {
-                        character
-                    })
+                            character
+                        },
+                    )
                 }
 
                 tokens.push(Token::Str(content))
@@ -300,8 +321,10 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                 let token = Token::Identifier(take_with_predicate!(
                     character,
                     characters,
-                    |&character| character.is_alphanumeric()
-                        || character == '_'
+                    |&character| {
+                        character.is_alphanumeric()
+                            || character == '_'
+                    }
                 ));
 
                 tokens.push(token)
@@ -319,18 +342,22 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                     }
                 );
 
-                tokens.push(if content.contains('.') {
-                    assert_eq!(content.matches('.').count(), 1);
-                    Token::Float(content.parse().unwrap())
-                } else {
-                    Token::Integer(content.parse().unwrap())
-                });
+                tokens.push(
+                    if content.contains('.') {
+                        assert_eq!(content.matches('.').count(), 1);
+                        Token::Float(content.parse().unwrap())
+                    } else {
+                        Token::Integer(content.parse().unwrap())
+                    },
+                );
             }
 
             // Lex a symbol
-            _ => lex_single_char!(character)
-                .iter()
-                .for_each(|token| tokens.push(token.clone())),
+            _ => {
+                lex_single_char!(character)
+                    .iter()
+                    .for_each(|token| tokens.push(token.clone()))
+            }
         }
     }
 
