@@ -1,3 +1,4 @@
+
 λ fact [] (δ 1 > ⇒ (δ↓ fact*))
 
 15 fact   → seed

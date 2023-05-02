@@ -9,7 +9,7 @@ include "std"
 { "mammal" "cat" "meow" } Animal
 { "mammal" "dog" "waf"  } Animal
 
-3 τ → zoo
+2 τ → zoo
 
 zoo Ω (
     δ @ type  println ρ
