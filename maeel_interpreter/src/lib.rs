@@ -1,3 +1,5 @@
+mod parsing;
+
 use maeel_common::{
     maeel_std::{
         MAEEL_STD_CONTENT,
@@ -7,11 +9,17 @@ use maeel_common::{
     vmtypes::VMType,
 };
 
-use std::{collections::HashMap,};
+use std::collections::HashMap;
 use std::io::Result;
 use std::ops::Not;
 use std::slice::Iter;
 
+type Stack = Vec<VMType>;
+type VariablesRegistery = HashMap<String, VMType>;
+type ProceduresRegistery = HashMap<String, Vec<Token>>;
+type StructuresRegistery = HashMap<String, Vec<String>>;
+
+#[macro_export]
 macro_rules! next {
     ($tokens:expr,"identifier") => {{
         match $tokens.next().unwrap() {
@@ -41,15 +49,40 @@ macro_rules! perform_binary_op {
     }};
 }
 
+#[macro_export]
+macro_rules! parse_identifiers_list {
+    ($tokens:expr) => {{
+        let mut identifiers = Vec::default();
+
+        loop {
+            let token = $tokens.next();
+
+            match token {
+                Some(Token::Identifier(field)) => {
+                    identifiers.push(field.clone())
+                }
+
+                // List end
+                Some(Token::IEnd) => break,
+
+                // We want only identifiers
+                _ => panic!(),
+            }
+        }
+
+        identifiers
+    }};
+}
+
 /// The `process_tokens` function processes a sequence of tokens and executes the corresponding
 /// operations on a stack of values, global variables, and procedures.
 pub fn process_tokens<'a>(
     tokens: &'a mut Iter<Token>,
-    data: &'a mut Vec<VMType>,
-    globals: &'a mut HashMap<String, VMType>,
-    procs: &'a mut HashMap<String, Vec<Token>>,
-    structs: &'a mut HashMap<String, Vec<String>>,
-) -> Result<&'a mut Vec<VMType>>
+    data: &'a mut Stack,
+    globals: &'a mut VariablesRegistery,
+    procs: &'a mut ProceduresRegistery,
+    structs: &'a mut StructuresRegistery,
+) -> Result<&'a mut Stack>
 {
     // Specific to current code block (won't be given to the next/previous code block)
     let mut locals = HashMap::new();
@@ -57,31 +90,50 @@ pub fn process_tokens<'a>(
     while let Some(token) = tokens.next() {
         match token {
             Token::ProcStart => {
-                parse_proc(tokens, procs);
+                parsing::procedures::parse_proc(tokens, procs);
             }
 
             Token::While => {
-                parse_while(tokens, data, globals, procs, structs);
+                parsing::loops::parse_while(
+                    tokens, data, globals, procs, structs,
+                );
             }
 
             Token::For => {
-                parse_for(tokens, data, globals, procs, structs);
+                parsing::loops::parse_for(
+                    tokens, data, globals, procs, structs,
+                );
             }
 
             Token::If => {
-                parse_if(tokens, data, globals, procs, structs);
+                parsing::conditions::parse_if(
+                    tokens, data, globals, procs, structs,
+                );
             }
 
             Token::IStart => {
-                parse_interval(tokens, data);
+                parsing::iterables::parse_interval(tokens, data);
             }
 
             Token::ArrayStart => {
-                parse_array(tokens, data, globals, procs, structs);
+                parsing::iterables::parse_array(
+                    tokens, data, globals, procs, structs,
+                );
+            }
+
+            Token::At => {
+                parsing::structures::parse_struct(
+                    tokens, data, structs,
+                );
             }
 
             Token::Let => {
-                parse_assignement(tokens, data, &mut locals, globals);
+                parsing::assignments::parse_assignment(
+                    tokens,
+                    data,
+                    &mut locals,
+                    globals,
+                );
             }
 
             Token::Gt => {
@@ -283,310 +335,21 @@ pub fn process_tokens<'a>(
             }
 
             Token::BlockEnd => {}
-
-            Token::At => {
-                match tokens.next() {
-                    Some(Token::Identifier(struct_field)) => {
-                        let Some(VMType::Struct((_, top_struct))) = data.pop() else {
-                            panic!()
-                        };
-
-                        data.push(
-                            top_struct
-                                .get(struct_field)
-                                .unwrap()
-                                .clone(),
-                        )
-                    }
-                    Some(Token::At) => {
-                        let Some(Token::Identifier(struct_name)) = tokens.next() else {
-                            panic!()
-                        };
-
-                        assert_eq!(
-                            Some(&Token::IStart),
-                            tokens.next()
-                        );
-
-                        let mut struct_fields = Vec::default();
-
-                        loop {
-                            let token = tokens.next();
-
-                            match token {
-                                Some(Token::Identifier(field)) => {
-                                    struct_fields.push(field.clone())
-                                }
-
-                                // List end
-                                Some(Token::IEnd) => break,
-
-                                // We want only identifiers
-                                _ => panic!(),
-                            }
-                        }
-
-                        structs.insert(
-                            struct_name.to_string(),
-                            struct_fields,
-                        );
-                    }
-                    _ => panic!(),
-                };
-            }
         };
     }
 
     Ok(data)
 }
 
-/// Parses a procedure definition.
-fn parse_proc<'a>(
-    tokens: &'a mut Iter<Token>,
-    procs: &'a mut HashMap<String, Vec<Token>>,
-)
-{
-    // Procedure name
-    let name = next!(tokens, "identifier");
-
-    assert_eq!(Some(&Token::IStart), tokens.next());
-
-    let mut procedure_block = Vec::default();
-
-    loop {
-        let token = tokens.next();
-
-        match token {
-            Some(Token::Identifier(_)) => {
-                // Append variable definition to procedure block
-                procedure_block.append(&mut vec![
-                    Token::Let,
-                    token.unwrap().clone(),
-                ])
-            }
-
-            // List end
-            Some(Token::IEnd) => break,
-
-            // We want only identifiers
-            _ => panic!(),
-        }
-    }
-
-    // Finally append real procedure tokens
-    procedure_block.append(&mut next!(tokens, "block"));
-
-    procs.insert(name, procedure_block);
-}
-
-/// Executes a code block repeatedly while a certain condition is true.
-fn parse_while<'a>(
-    tokens: &'a mut Iter<Token>,
-    data: &'a mut Vec<VMType>,
-    globals: &'a mut HashMap<String, VMType>,
-    procs: &'a mut HashMap<String, Vec<Token>>,
-    structs: &'a mut HashMap<String, Vec<String>>,
-)
-{
-    // Code block to execute while P(x) is true
-    let tokens = next!(tokens, "block");
-
-    // This is why we need to push P(x) at the end of the code block
-    while let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(
-            &mut tokens.iter(),
-            data,
-            globals,
-            procs,
-            structs,
-        )
-        .unwrap();
-    }
-}
-
-/// Iterates through an array on the stack and executes a code block for each element.
-fn parse_for<'a>(
-    tokens: &'a mut Iter<Token>,
-    data: &'a mut Vec<VMType>,
-    globals: &'a mut HashMap<String, VMType>,
-    procs: &'a mut HashMap<String, Vec<Token>>,
-    structs: &'a mut HashMap<String, Vec<String>>,
-)
-{
-    // Code block to execute for each value of L
-    let tokens = next!(tokens, "block");
-
-    if let Some(VMType::Array(array)) = data.pop() {
-        for element in array {
-            data.push(element);
-
-            process_tokens(
-                &mut tokens.iter(),
-                data,
-                globals,
-                procs,
-                structs,
-            )
-            .unwrap();
-        }
-    } else {
-        panic!() // An array must be on the stack's top
-    }
-}
-
-/// Parses an assignment statement and stores the assigned value in either a local or
-/// global variable depending on the variable name.
-fn parse_assignement<'a>(
-    tokens: &'a mut Iter<Token>,
-    data: &'a mut Vec<VMType>,
-    locals: &'a mut HashMap<String, VMType>,
-    globals: &'a mut HashMap<String, VMType>,
-)
-{
-    // Variable name
-    let name = next!(tokens, "identifier");
-
-    // Variable privateness/publicness depends of the name
-    match name
-        .chars()
-        .collect::<Vec<char>>()
-        .first()
-    {
-        Some('_') => locals.insert(name, data.pop().unwrap()),
-        Some(_) => globals.insert(name, data.pop().unwrap()),
-        None => panic!(),
-    };
-}
-
 /// Parses and executes a code block if a certain condition is true.
-fn parse_if<'a>(
-    tokens: &'a mut Iter<Token>,
-    data: &'a mut Vec<VMType>,
-    globals: &'a mut HashMap<String, VMType>,
-    procs: &'a mut HashMap<String, Vec<Token>>,
-    structs: &'a mut HashMap<String, Vec<String>>,
-)
-{
-    // Code block to execute if, and only if P(x) is true
-    let tokens = next!(tokens, "block");
-
-    if let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(
-            &mut tokens.iter(),
-            data,
-            globals,
-            procs,
-            structs,
-        )
-        .unwrap();
-    }
-}
-
-fn parse_interval<'a>(
-    tokens: &'a mut Iter<Token>,
-    data: &'a mut Vec<VMType>,
-)
-{
-    let (
-        Some(Token::Integer(start)),
-        Some(Token::Integer(end))
-    ) = (tokens.next(), tokens.next()) else {
-        panic!()
-    };
-
-    assert_eq!(Some(&Token::IEnd), tokens.next());
-
-    data.push(VMType::Array(
-        (*start..*end)
-            .map(VMType::Integer)
-            .collect(),
-    ));
-}
-
-/// Parses and executes a code block if a certain condition is true.
-fn parse_array<'a>(
-    tokens: &'a mut Iter<Token>,
-    data: &'a mut Vec<VMType>,
-    globals: &'a mut HashMap<String, VMType>,
-    procs: &'a mut HashMap<String, Vec<Token>>,
-    structs: &'a mut HashMap<String, Vec<String>>,
-)
-{
-    let mut array = Vec::default();
-
-    loop {
-        match tokens.next().unwrap().clone() {
-            Token::ArrayEnd => break,
-
-            Token::ArrayStart => {
-                panic!()
-            }
-
-            Token::Str(value) => array.push(VMType::Str(value)),
-
-            Token::Integer(value) => {
-                array.push(VMType::Integer(value))
-            }
-
-            Token::Float(value) => array.push(VMType::Float(value)),
-
-            Token::Bool(value) => array.push(VMType::Bool(value)),
-
-            Token::Identifier(identifier) => {
-                match globals.get(&identifier) {
-                    Some(value) => array.push(value.clone()),
-                    None => panic!(),
-                }
-            }
-
-            Token::Block(expr) => {
-                let generator = process_tokens(
-                    &mut next!(tokens, "block").iter(),
-                    data,
-                    globals,
-                    procs,
-                    structs,
-                )
-                .unwrap()
-                .pop();
-
-                let Some(VMType::Array(target)) = generator else {
-                    panic!()
-                };
-
-                for element in target {
-                    let mut tmp_data = vec![element];
-
-                    let output = process_tokens(
-                        &mut expr.iter(),
-                        &mut tmp_data,
-                        globals,
-                        procs,
-                        structs,
-                    )
-                    .unwrap()
-                    .pop();
-
-                    array.push(output.unwrap());
-                }
-            }
-
-            _ => panic!(),
-        }
-    }
-
-    data.push(VMType::Array(array))
-}
-
-/// Parses and executes a code block if a certain condition is true.
-fn handle_take(data: &mut Vec<VMType>)
+fn handle_take(data: &mut Stack)
 {
     match data.pop() {
         // 'take' expect an array on top of the stack
         Some(VMType::Integer(max_index)) => {
             let mut array = (0..max_index)
                 .map(|_| data.pop().unwrap())
-                .collect::<Vec<VMType>>();
+                .collect::<Stack>();
 
             array.reverse();
 
@@ -597,7 +360,7 @@ fn handle_take(data: &mut Vec<VMType>)
 }
 
 /// Parses and executes a code block if a certain condition is true.
-fn handle_get(data: &mut Vec<VMType>)
+fn handle_get(data: &mut Stack)
 {
     match (data.pop(), data.pop()) {
         (

@@ -3,7 +3,6 @@ use maeel_common::tokens::Token;
 use std::f64::consts::PI;
 
 /// Transform a single character into a token
-
 macro_rules! lex_single_char {
     ($character:expr) => {
         match $character {
@@ -320,16 +319,16 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
 
             // Lex identifiers
             'a'..='z' | 'A'..='Z' | '_' => {
-                let token = Token::Identifier(take_with_predicate!(
+                let content = take_with_predicate!(
                     character,
                     characters,
                     |&character| {
                         character.is_alphanumeric()
                             || character == '_'
                     }
-                ));
+                );
 
-                tokens.push(token)
+                tokens.push(Token::Identifier(content))
             }
 
             // Lex integers
