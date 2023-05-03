@@ -3,7 +3,7 @@ use super::super::{
     parse_identifiers_list,
 };
 
-use maeel_common::{tokens::Token,};
+use maeel_common::tokens::Token;
 
 use std::collections::HashMap;
 use std::slice::Iter;

@@ -9,8 +9,6 @@ use std::collections::HashMap;
 use std::slice::Iter;
 
 type Stack = Vec<VMType>;
-type VariablesRegistery = HashMap<String, VMType>;
-type ProceduresRegistery = HashMap<String, Vec<Token>>;
 type StructuresRegistery = HashMap<String, Vec<String>>;
 
 /// Parse a structure definition/call
