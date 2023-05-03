@@ -8,8 +8,6 @@ use std::slice::Iter;
 
 type Stack = Vec<VMType>;
 type VariablesRegistery = HashMap<String, VMType>;
-type ProceduresRegistery = HashMap<String, Vec<Token>>;
-type StructuresRegistery = HashMap<String, Vec<String>>;
 
 /// Parses an assignment statement and stores the assigned value in either a local or
 /// global variable depending on the variable name.
