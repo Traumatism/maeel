@@ -3,5 +3,4 @@
 λ log [n b] (0 n b ≥ ω (↑ n b / → n n b ≥))
 λ pow [exp base] (base exp 0 ≠ ω (base * exp ↘ exp exp 0≠) base /)
 λ gcd [a b] (b 0 ≠ ω (b ≕ _t a b % ≕ b _t ≕ a b 0 ≠) a)
-
 λ abs [x] (x 0 < δ ⇒ (x! σ) ¬ ⇒ (x))

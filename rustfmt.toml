@@ -1,12 +1,12 @@
+condense_wildcard_suffixes = true
 reorder_imports = false
+combine_control_expr = false
 reorder_modules = false
+empty_item_single_line = false
 match_arm_leading_pipes = "Never"
 brace_style = "AlwaysNextLine"
-empty_item_single_line = false
 struct_field_align_threshold = 30
 enum_discrim_align_threshold = 30
-combine_control_expr = false
-condense_wildcard_suffixes = true
 force_multiline_blocks = true
 format_macro_matchers = true
 imports_layout = "Vertical"

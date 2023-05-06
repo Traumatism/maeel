@@ -3,11 +3,12 @@ use maeel_common::{
     vmtypes::VMType,
 };
 
-use std::collections::HashMap;
-use std::slice::Iter;
+use super::super::{
+    Stack,
+    VariablesRegistery,
+};
 
-type Stack = Vec<VMType>;
-type VariablesRegistery = HashMap<String, VMType>;
+use std::slice::Iter;
 
 /// Parses an assignment statement and stores the assigned value in either a local or
 /// global variable depending on the variable name.

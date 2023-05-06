@@ -1,6 +1,20 @@
+
 λ fib [n] (
-    0 1 1 →b →i →a
-    i n ≤ ω (a b+→c b→a c→b i↗i i n≤) a
+    0→b
+    1→i
+    1→a
+
+    i n ≤ ω (
+        a b+ → c
+        b→a
+        c→b
+        i↗i
+        i n≤
+    )
+
+    a
 )
 
-{ (fib) ([1 10]) } print
+[1 10]→ one_to_ten
+
+{ (fib) (one_to_ten) } print

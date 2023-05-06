@@ -27,11 +27,52 @@
 			]
 		},
 		{
-			"name": "keyword.control.maeel",
-			"match": "(Ω|⟹|⇒|ω|λ)"
+			"match": "(@@)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
+			"captures": {
+				"1": {
+					"name": "keyword.control.maeel"
+				},
+				"0": {
+					"name": "entity.name.class.maeel"
+				}
+			}
 		},
 		{
-			"name": "keyword.operator.lodical.maeel",
+			"match": "(λ)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
+			"captures": {
+				"1": {
+					"name": "keyword.control.maeel"
+				},
+				"0": {
+					"name": "entity.name.function.maeel"
+				}
+			}
+		},
+		{
+			"name": "keyword.control.maeel",
+			"match": "(Ω|⟹|⇒|ω)"
+		},
+		{
+			"match": "(≕|→|⟶|↗|↘)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
+			"captures": {
+				"1": {
+					"name": "keyword.operator.assignment.maeel"
+				},
+				"0": {
+					"name": "variable.name"
+				}
+			}
+		},
+		{
+			"name": "keyword.operator.range.maeel",
+			"match": "(\\[[0-9]+ [0-9]+\\])"
+		},
+		{
+			"name": "variable.parameter.function.maeel",
+			"match": "\\[(?:[a-zA-Z0-9_\\s]*)\\]"
+		},
+		{
+			"name": "keyword.operator.logical.maeel",
 			"match": "(¬|∧|∨|⊕|⊻)"
 		},
 		{
