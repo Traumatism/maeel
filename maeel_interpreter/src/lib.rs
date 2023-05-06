@@ -12,6 +12,8 @@ use maeel_common::{
 use std::collections::HashMap;
 use std::io::Result;
 use std::ops::Not;
+use std::iter::zip;
+use std::fs::read_to_string;
 use std::slice::Iter;
 
 type Stack = Vec<VMType>;
@@ -257,7 +259,7 @@ pub fn process_tokens<'a>(
                                     target.replace('.', "/")
                                 );
 
-                                std::fs::read_to_string(file_name)
+                                read_to_string(file_name)
                                     .expect("Failed to include file")
                             }
                         };
@@ -275,16 +277,22 @@ pub fn process_tokens<'a>(
                     }
 
                     identifier => {
-                        if let Some(value) = globals.get(identifier) {
-                            data.push(value.clone());
-
-                            continue
-                        }
-
-                        if let Some(value) = locals.get(identifier) {
-                            data.push(value.clone());
-
-                            continue
+                        match (
+                            globals.get(identifier),
+                            locals.get(identifier),
+                        ) {
+                            (None, Some(value)) => {
+                                data.push(value.clone());
+                                continue
+                            }
+                            (Some(value), None) => {
+                                data.push(value.clone());
+                                continue
+                            }
+                            (Some(_), Some(_)) => {
+                                panic!()
+                            }
+                            (..) => {}
                         }
 
                         if let Some(fields_names) = structs
@@ -297,15 +305,10 @@ pub fn process_tokens<'a>(
 
                             let mut struct_kv = HashMap::new();
 
-                            std::iter::zip(
-                                fields_names,
-                                fields_values,
-                            )
-                            .for_each(
-                                |(k, v)| {
+                            zip(fields_names, fields_values)
+                                .for_each(|(k, v)| {
                                     struct_kv.insert(k, v);
-                                },
-                            );
+                                });
 
                             data.push(VMType::Struct((
                                 identifier.to_string(),

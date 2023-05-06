@@ -241,7 +241,6 @@ macro_rules! take_with_predicate {
 /// Returns:
 ///
 /// A vector of `Token`s, which are the result of lexing the input `code` string.
-
 pub fn lex_into_tokens(code: &str) -> Vec<Token>
 {
     let mut depth = 0;

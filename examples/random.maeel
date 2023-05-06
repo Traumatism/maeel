@@ -1,5 +1,4 @@
-
-λ fact [] (δ 1 > ⇒ (δ↓ fact*))
+include "maths"
 
 15 fact   → seed
 4097      → a
@@ -8,4 +7,8 @@
 
 λ calculate [] (seed a * c + m % δ → seed)
 
-{(calculate 15 %) ([1 15])} print
+λ generate_random_numbers [] (
+    {(calculate 15 %) ([1 15])}
+)
+
+generate_random_numbers print

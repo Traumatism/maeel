@@ -1,3 +1,10 @@
+include "std"
+
 [0 100] Ω (
-    "" σ δ 3∣ ⇒ ("Fizz" σ) 5∣ ⇒ ("Buzz") print "\n" print
+    "" σ δ
+
+    3∣ ⇒ ("Fizz" σ)
+    5∣ ⇒ ("Buzz")
+
+    println
 )

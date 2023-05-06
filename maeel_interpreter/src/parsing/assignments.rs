@@ -28,12 +28,14 @@ pub fn parse_assignment<'a>(
                 Some('_') => {
                     locals.insert(name.clone(), data.pop().unwrap())
                 }
+
                 Some(_) => {
                     globals.insert(name.clone(), data.pop().unwrap())
                 }
                 None => panic!(),
             };
         }
+
         Some(Token::At) => {
             match (tokens.next(), tokens.next()) {
                 (
