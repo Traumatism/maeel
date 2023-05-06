@@ -84,11 +84,11 @@ pub fn parse_array<'a>(
                 .unwrap()
                 .pop();
 
-                let Some(VMType::Array(target)) = generator else {
+                let Some(VMType::Array(xs)) = generator else {
                     panic!()
                 };
 
-                for element in target {
+                for element in xs {
                     let mut tmp_data = vec![element];
 
                     let output = process_tokens(

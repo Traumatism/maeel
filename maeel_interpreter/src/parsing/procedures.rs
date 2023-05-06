@@ -21,14 +21,17 @@ pub fn parse_proc<'a>(
 
     assert_eq!(Some(&Token::IStart), tokens.next());
 
+    // Procedure block
     let mut procedure_block = Vec::default();
 
-    for identifier in parse_identifiers_list!(tokens) {
-        procedure_block.append(&mut vec![
-            Token::Let,
-            Token::Identifier(identifier),
-        ])
-    }
+    parse_identifiers_list!(tokens)
+        .iter()
+        .for_each(|identifier| {
+            procedure_block.append(&mut vec![
+                Token::Let,
+                Token::Identifier(identifier.clone()),
+            ])
+        });
 
     // Finally append real procedure tokens
     procedure_block.append(&mut next!(tokens, "block"));
