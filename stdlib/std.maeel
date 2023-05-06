@@ -1,0 +1,2 @@
+λ println [] (print "\n" print ρ)
+λ assert_eq [_content should_be value] (λ p [_content] (_content print ρ) _content p ": " p should_be value = δ ⇒ ("OK\n" p) ¬ ⇒ ("FAIL (" p should_be p ", " p value p ")\n" p))
