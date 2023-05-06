@@ -1,14 +1,12 @@
 use super::super::{
     next,
     parse_identifiers_list,
+    ProceduresRegistery,
 };
 
 use maeel_common::tokens::Token;
 
-use std::collections::HashMap;
 use std::slice::Iter;
-
-type ProceduresRegistery = HashMap<String, Vec<Token>>;
 
 /// Parses a procedure definition.
 pub fn parse_proc<'a>(

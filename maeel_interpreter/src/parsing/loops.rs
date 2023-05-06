@@ -1,6 +1,10 @@
 use super::super::{
     process_tokens,
     next,
+    Stack,
+    StructuresRegistery,
+    ProceduresRegistery,
+    VariablesRegistery,
 };
 
 use maeel_common::{
@@ -8,13 +12,7 @@ use maeel_common::{
     vmtypes::VMType,
 };
 
-use std::collections::HashMap;
 use std::slice::Iter;
-
-type Stack = Vec<VMType>;
-type VariablesRegistery = HashMap<String, VMType>;
-type ProceduresRegistery = HashMap<String, Vec<Token>>;
-type StructuresRegistery = HashMap<String, Vec<String>>;
 
 /// Executes a code block repeatedly while a certain condition is true.
 pub fn parse_while<'a>(

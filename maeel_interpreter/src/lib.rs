@@ -11,7 +11,6 @@ use maeel_common::{
 
 use std::collections::HashMap;
 use std::io::Result;
-use std::ops::Not;
 use std::iter::zip;
 use std::fs::read_to_string;
 use std::slice::Iter;
@@ -182,7 +181,6 @@ pub fn process_tokens<'a>(
                 data.push(VMType::Integer(*content));
             }
 
-            // Execute next block
             Token::Block(tokens) => {
                 process_tokens(
                     &mut tokens.iter(),
@@ -193,7 +191,6 @@ pub fn process_tokens<'a>(
                 )?;
             }
 
-            // Pop value from the stack
             Token::Pop => {
                 data.pop();
             }
@@ -227,7 +224,7 @@ pub fn process_tokens<'a>(
             Token::Not => {
                 let p = data.pop().unwrap();
 
-                data.push(p.not())
+                data.push(!p)
             }
 
             Token::Get => {

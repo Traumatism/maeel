@@ -1,15 +1,15 @@
-use super::super::parse_identifiers_list;
+use super::super::{
+    parse_identifiers_list,
+    Stack,
+    StructuresRegistery,
+};
 
 use maeel_common::{
     tokens::Token,
     vmtypes::VMType,
 };
 
-use std::collections::HashMap;
 use std::slice::Iter;
-
-type Stack = Vec<VMType>;
-type StructuresRegistery = HashMap<String, Vec<String>>;
 
 /// Parse a structure definition/call
 pub fn parse_struct<'a>(
