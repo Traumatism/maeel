@@ -1,8 +1,11 @@
+"natural" include
+
+
 λ wilson_theorem [n] (
     1 → f
     2
 
-    2 n < ω (δ f* n% →f ↑ δ n<)
+    2 n < ω (dup f* n% →f ↑ dup n<)
 
     n↓ f=
 )
@@ -10,7 +13,7 @@
 ∅ → primes
 
 [1 2000] Ω (
-    δ wilson_theorem ⇒ (primes + → primes)
+    dup wilson_theorem ⇒ (primes + → primes)
 )
 
 primes print

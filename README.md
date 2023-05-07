@@ -166,7 +166,7 @@ a 100 < ω (
 ## Structures
 
 ```
-include "std"
+"std" include
 
 @@ Animal [
     type

@@ -15,6 +15,6 @@
     a
 )
 
-[1 10]→ one_to_ten
+[1 10] → one_to_ten
 
 { (fib) (one_to_ten) } print

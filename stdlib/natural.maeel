@@ -1,0 +1,22 @@
+λ dup       [] (δ)
+λ duplicate [] (δ)
+
+λ drop      [] (ρ)
+λ pop       [] (ρ)
+
+λ over      [] (θ)
+λ swap      [] (σ)
+
+λ rot       [] (φ)
+λ rotate    [] (φ)
+
+λ and       [] (∧)
+λ or        [] (∨)
+λ xor       [] (⊕)
+λ not       [] (¬)
+
+λ sum       [] (Σ)
+λ product   [] (Π)
+
+α → true
+β → false

@@ -4,6 +4,7 @@ use maeel_common::{
     maeel_std::{
         MAEEL_STD_CONTENT,
         MAEEL_STD_MATHS_CONTENT,
+        MAEEL_STD_NATURAL_CONTENT,
     },
     tokens::Token,
     vmtypes::VMType,
@@ -246,8 +247,23 @@ pub fn process_tokens<'a>(
                 match identifier.as_str() {
                     "print" => print!("{}", data.last().unwrap()),
 
+                    "eval" => {
+                        let Some(VMType::Str(code)) = data.pop() else {
+                            panic!()
+                        };
+
+                        process_tokens(
+                            &mut maeel_lexer::lex_into_tokens(&code)
+                                .iter(),
+                            data,
+                            globals,
+                            procs,
+                            structs,
+                        )?;
+                    }
+
                     "include" => {
-                        let Some(Token::Str(target)) = tokens.next() else {
+                        let Some(VMType::Str(target)) = data.pop() else {
                             panic!()
                         };
 
@@ -256,6 +272,10 @@ pub fn process_tokens<'a>(
 
                             "maths" => {
                                 MAEEL_STD_MATHS_CONTENT.to_string()
+                            }
+
+                            "natural" => {
+                                MAEEL_STD_NATURAL_CONTENT.to_string()
                             }
 
                             _ => {
