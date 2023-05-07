@@ -16,9 +16,9 @@ use std::fs::read_to_string;
 use std::slice::Iter;
 
 type Stack = Vec<VMType>;
-type VariablesRegistery = HashMap<String, VMType>;
-type ProceduresRegistery = HashMap<String, Vec<Token>>;
-type StructuresRegistery = HashMap<String, Vec<String>>;
+type VariablesRegistry = HashMap<String, VMType>;
+type ProceduresRegistry = HashMap<String, Vec<Token>>;
+type StructuresRegistry = HashMap<String, Vec<String>>;
 
 #[macro_export]
 macro_rules! next {
@@ -80,9 +80,9 @@ macro_rules! parse_identifiers_list {
 pub fn process_tokens<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
-    globals: &'a mut VariablesRegistery,
-    procs: &'a mut ProceduresRegistery,
-    structs: &'a mut StructuresRegistery,
+    globals: &'a mut VariablesRegistry,
+    procs: &'a mut ProceduresRegistry,
+    structs: &'a mut StructuresRegistry,
 ) -> Result<&'a mut Stack>
 {
     // Specific to current code block (won't be given to the next/previous code block)
@@ -90,6 +90,20 @@ pub fn process_tokens<'a>(
 
     while let Some(token) = tokens.next() {
         match token {
+            Token::Call => {
+                match data.pop() {
+                    Some(VMType::Procedure(tokens)) => {
+                        process_tokens(
+                            &mut tokens.iter(),
+                            data,
+                            globals,
+                            procs,
+                            structs,
+                        )?;
+                    }
+                    _ => panic!(),
+                }
+            }
             Token::ProcStart => {
                 parsing::procedures::parse_proc(tokens, procs);
             }
@@ -182,13 +196,7 @@ pub fn process_tokens<'a>(
             }
 
             Token::Block(tokens) => {
-                process_tokens(
-                    &mut tokens.iter(),
-                    data,
-                    globals,
-                    procs,
-                    structs,
-                )?;
+                data.push(VMType::Procedure(tokens.clone()))
             }
 
             Token::Pop => {

@@ -1,10 +1,10 @@
 use super::super::{
     process_tokens,
     next,
-    ProceduresRegistery,
+    ProceduresRegistry,
     Stack,
-    VariablesRegistery,
-    StructuresRegistery,
+    VariablesRegistry,
+    StructuresRegistry,
 };
 
 use maeel_common::{
@@ -39,9 +39,9 @@ pub fn parse_interval<'a>(
 pub fn parse_array<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
-    globals: &'a mut VariablesRegistery,
-    procs: &'a mut ProceduresRegistery,
-    structs: &'a mut StructuresRegistery,
+    globals: &'a mut VariablesRegistry,
+    procs: &'a mut ProceduresRegistry,
+    structs: &'a mut StructuresRegistry,
 )
 {
     let mut array = Vec::default();

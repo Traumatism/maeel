@@ -2,9 +2,9 @@ use super::super::{
     process_tokens,
     next,
     Stack,
-    StructuresRegistery,
-    ProceduresRegistery,
-    VariablesRegistery,
+    StructuresRegistry,
+    ProceduresRegistry,
+    VariablesRegistry,
 };
 
 use maeel_common::{
@@ -18,9 +18,9 @@ use std::slice::Iter;
 pub fn parse_while<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
-    globals: &'a mut VariablesRegistery,
-    procs: &'a mut ProceduresRegistery,
-    structs: &'a mut StructuresRegistery,
+    globals: &'a mut VariablesRegistry,
+    procs: &'a mut ProceduresRegistry,
+    structs: &'a mut StructuresRegistry,
 )
 {
     // Code block to execute while P(x) is true
@@ -43,9 +43,9 @@ pub fn parse_while<'a>(
 pub fn parse_for<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
-    globals: &'a mut VariablesRegistery,
-    procs: &'a mut ProceduresRegistery,
-    structs: &'a mut StructuresRegistery,
+    globals: &'a mut VariablesRegistry,
+    procs: &'a mut ProceduresRegistry,
+    structs: &'a mut StructuresRegistry,
 )
 {
     // Code block to execute for each value of L

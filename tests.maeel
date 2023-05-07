@@ -59,8 +59,11 @@ result_f1 result_f2 "not(a and b) <=> not(a) or not(b)" assert_eq
 
 ∅ ∅ → result_f1 → result_f2
 
-{ α β } δ * Ω (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
-{ α β } δ * Ω (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
+{ α β } δ * Ω
+    (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
+
+{ α β } δ * Ω
+    (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
 
 result_f1 result_f2 "not(a or b) <=> not(a) and not(b)" assert_eq
 

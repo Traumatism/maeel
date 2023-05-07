@@ -5,7 +5,7 @@ use maeel_common::{
 
 use super::super::{
     Stack,
-    VariablesRegistery,
+    VariablesRegistry,
 };
 
 use std::slice::Iter;
@@ -15,8 +15,8 @@ use std::slice::Iter;
 pub fn parse_assignment<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
-    locals: &'a mut VariablesRegistery,
-    globals: &'a mut VariablesRegistery,
+    locals: &'a mut VariablesRegistry,
+    globals: &'a mut VariablesRegistry,
 )
 {
     match tokens.next() {

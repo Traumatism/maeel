@@ -1,10 +1,10 @@
 use super::super::{
     process_tokens,
     next,
-    ProceduresRegistery,
+    ProceduresRegistry,
     Stack,
-    VariablesRegistery,
-    StructuresRegistery,
+    VariablesRegistry,
+    StructuresRegistry,
 };
 
 use maeel_common::{
@@ -18,9 +18,9 @@ use std::slice::Iter;
 pub fn parse_if<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
-    globals: &'a mut VariablesRegistery,
-    procs: &'a mut ProceduresRegistery,
-    structs: &'a mut StructuresRegistery,
+    globals: &'a mut VariablesRegistry,
+    procs: &'a mut ProceduresRegistry,
+    structs: &'a mut StructuresRegistry,
 )
 {
     // Code block to execute if, and only if P(x) is true
