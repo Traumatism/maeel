@@ -1,17 +1,16 @@
+use maeel_common::tokens::Token;
 use super::super::{
     next,
     parse_identifiers_list,
-    ProceduresRegistery,
+    ProceduresRegistry,
 };
-
-use maeel_common::tokens::Token;
 
 use std::slice::Iter;
 
 /// Parses a procedure definition.
 pub fn parse_proc<'a>(
     tokens: &'a mut Iter<Token>,
-    procs: &'a mut ProceduresRegistery,
+    procs: &'a mut ProceduresRegistry,
 )
 {
     // Procedure name

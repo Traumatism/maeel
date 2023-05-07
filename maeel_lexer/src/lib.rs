@@ -49,6 +49,8 @@ macro_rules! lex_single_char {
 
             'φ' => vec![Token::Rot],
 
+            '&' => vec![Token::Call],
+
             'θ' => {
                 vec![Token::Over]
             }

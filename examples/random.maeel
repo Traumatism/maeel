@@ -1,14 +1,14 @@
+include "std"
 include "maths"
 
-15 fact   → seed
-4097      → a
-11 fact   → c
+15 fact → seed
+11 fact → c
+
+4097 → a
 429496729 → m
 
-λ calculate [] (seed a * c + m % δ → seed)
+λ generate_random_numbers [] ({
+    ((seed a* c+ m% δ→seed)& 15 %) ([1 15])
+})
 
-λ generate_random_numbers [] (
-    {(calculate 15 %) ([1 15])}
-)
-
-generate_random_numbers print
+generate_random_numbers println

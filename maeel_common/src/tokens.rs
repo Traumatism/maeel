@@ -13,6 +13,8 @@ pub enum Token
 
     At,
 
+    Call,
+
     Add,
     Mul,
     Mod,

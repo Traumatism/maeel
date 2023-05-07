@@ -12,3 +12,7 @@ test:
 	cargo build -q && mv target/debug/maeel ./maeel.tmp && \
 	./maeel.tmp tests.maeel || \
 	rm maeel.tmp
+
+clean:
+	rm ./maeel ./maeel.tmp Cargo.lock || \
+	rm -r target

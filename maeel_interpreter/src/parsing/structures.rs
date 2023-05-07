@@ -1,7 +1,7 @@
 use super::super::{
     parse_identifiers_list,
     Stack,
-    StructuresRegistery,
+    StructuresRegistry,
 };
 
 use maeel_common::{
@@ -15,7 +15,7 @@ use std::slice::Iter;
 pub fn parse_struct<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
-    structs: &'a mut StructuresRegistery,
+    structs: &'a mut StructuresRegistry,
 )
 {
     match tokens.next() {

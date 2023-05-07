@@ -1,18 +1,8 @@
 include "std"
 
-@@ Animal [
-    type
-    name
-    sound
-]
+3(δ*)&
+println
 
-{ "mammal" "cat" "meow" } Animal
-{ "mammal" "dog" "waf"  } Animal
-
-2 τ → zoo
-
-zoo Ω (
-    δ @ type  println ρ
-    δ @ name  println ρ
-    δ @ sound println ρ
-)
+λsquare_a[x](xδ*)
+3 square_a
+println

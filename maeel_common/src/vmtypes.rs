@@ -11,6 +11,8 @@ use std::{
     collections::HashMap,
 };
 
+use crate::tokens::Token;
+
 #[derive(Debug, Clone)]
 
 pub enum VMType
@@ -21,6 +23,7 @@ pub enum VMType
     Bool(bool),
     Array(Vec<VMType>),
     Struct((String, HashMap<String, VMType>)),
+    Procedure(Vec<Token>),
     None,
 }
 
@@ -30,6 +33,7 @@ impl Display for VMType
         -> std::fmt::Result
     {
         match self {
+            VMType::Procedure(tokens) => write!(f, "{:?}", tokens),
             VMType::Struct((name, fields)) => {
                 write!(f, "{} {{ ", name)?;
 
