@@ -1,4 +1,12 @@
-λ abs (δ 0< δ ⇒ (σ! σ!) ⇒ (σ))
+"natural" include
+"std" include
 
-10 abs print
-10! abs print
+λ abs [] (
+    duplicate 0 < duplicate
+
+    ⇒ (swap not swap not)
+    ⇒ (swap)
+)
+
+10 abs println
+10! abs println

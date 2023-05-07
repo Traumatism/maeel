@@ -1,4 +1,4 @@
-include "std"
+"std" include
 
 [0 100] Ω (
     "" σ δ

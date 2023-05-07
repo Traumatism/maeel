@@ -1,5 +1,4 @@
-include "std"
-include "maths"
+{"std" "maths" "natural"} Ω (include)
 
 1 2 3 ρ       2             "ρ(1 2 3)=2"            assert_eq
 3 1 2 ρ       1             "ρ(3 1 2)=1"            assert_eq
@@ -49,8 +48,10 @@ include "maths"
 
 ∅ ∅ → result_f1 → result_f2
 
-{ α β } δ * Ω (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
-{ α β } δ * Ω (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
+{ α β } δ * Ω
+    (δ 0 Γ σ 1 Γ f1 result_f1 + → result_f1)
+{ α β } δ * Ω
+    (δ 0 Γ σ 1 Γ f2 result_f2 + → result_f2)
 
 result_f1 result_f2 "not(a and b) <=> not(a) or not(b)" assert_eq
 
