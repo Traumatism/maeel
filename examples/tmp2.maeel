@@ -1,4 +1,3 @@
-λ plus_one [x] (x 1 +)
-λ square [x] (x x *)
+"std"     include
+"natural" include
 
-λ f [x] (square plus_one)

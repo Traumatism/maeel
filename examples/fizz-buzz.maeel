@@ -1,10 +1,13 @@
 "std" include
+"natural" include
+
+
 
 [0 100] Ω (
-    "" σ δ
+    "" swap dup
 
-    3∣ ⇒ ("Fizz" σ)
-    5∣ ⇒ ("Buzz")
+    3 ∣ ⇒ ("Fizz" swap)
+    5 ∣ ⇒ ("Buzz")
 
     println
 )

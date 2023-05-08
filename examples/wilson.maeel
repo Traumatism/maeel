@@ -2,18 +2,18 @@
 
 
 λ wilson_theorem [n] (
-    1 → f
-    2
+    1 → f 2 2 n lower_than ω (
+        duplicate f multiply n modulo
+        →f ↑ dup n lower_than
+    )
 
-    2 n < ω (dup f* n% →f ↑ dup n<)
-
-    n↓ f=
+    n↓ f is_equal_to
 )
 
 ∅ → primes
 
 [1 2000] Ω (
-    dup wilson_theorem ⇒ (primes + → primes)
+    dup wilson_theorem ⇒ (primes add → primes)
 )
 
 primes print

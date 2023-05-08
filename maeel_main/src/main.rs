@@ -22,7 +22,6 @@ fn main() -> Result<()>
         &mut Vec::default(),
         &mut HashMap::default(),
         &mut HashMap::default(),
-        &mut HashMap::default(),
     )?;
 
     Ok(())

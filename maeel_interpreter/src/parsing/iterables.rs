@@ -4,7 +4,6 @@ use super::super::{
     ProceduresRegistry,
     Stack,
     VariablesRegistry,
-    StructuresRegistry,
 };
 
 use maeel_common::{
@@ -41,7 +40,6 @@ pub fn parse_array<'a>(
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
     procs: &'a mut ProceduresRegistry,
-    structs: &'a mut StructuresRegistry,
 )
 {
     let mut array = Vec::default();
@@ -77,7 +75,6 @@ pub fn parse_array<'a>(
                     data,
                     globals,
                     procs,
-                    structs,
                 )
                 .unwrap()
                 .pop();
@@ -94,7 +91,6 @@ pub fn parse_array<'a>(
                         &mut tmp_data,
                         globals,
                         procs,
-                        structs,
                     )
                     .unwrap()
                     .pop();

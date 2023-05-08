@@ -87,3 +87,8 @@ result_f1 result_f2 "not(a or b) <=> not(a) and not(b)" assert_eq
 2 10 pow 1024 "2**10 = 1024"     assert_eq
 10 abs 10! abs "|10| = |-10|"    assert_eq
 7 fact 5040 "7! = 5040"          assert_eq
+
+"foo" → foo
+("bar" → foo) → might_change_foo
+might_change_foo&
+foo "foo" "Function side effect" assert_eq

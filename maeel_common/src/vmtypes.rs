@@ -8,7 +8,6 @@ use std::{
         Rem,
         Sub,
     },
-    collections::HashMap,
 };
 
 use crate::tokens::Token;
@@ -22,7 +21,6 @@ pub enum VMType
     Str(String),
     Bool(bool),
     Array(Vec<VMType>),
-    Struct((String, HashMap<String, VMType>)),
     Procedure(Vec<Token>),
     None,
 }
@@ -34,15 +32,6 @@ impl Display for VMType
     {
         match self {
             VMType::Procedure(tokens) => write!(f, "{:?}", tokens),
-            VMType::Struct((name, fields)) => {
-                write!(f, "{} {{ ", name)?;
-
-                for (k, v) in fields.iter() {
-                    write!(f, "({}={}) ", k, v)?
-                }
-
-                write!(f, "}}")
-            }
             VMType::None => write!(f, "None"),
             VMType::Float(x) => write!(f, "{}", x),
             VMType::Integer(x) => write!(f, "{}", x),

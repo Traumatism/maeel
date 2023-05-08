@@ -4,7 +4,6 @@ use super::super::{
     ProceduresRegistry,
     Stack,
     VariablesRegistry,
-    StructuresRegistry,
 };
 
 use maeel_common::{
@@ -20,20 +19,13 @@ pub fn parse_if<'a>(
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
     procs: &'a mut ProceduresRegistry,
-    structs: &'a mut StructuresRegistry,
 )
 {
     // Code block to execute if, and only if P(x) is true
     let tokens = next!(tokens, "block");
 
     if let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(
-            &mut tokens.iter(),
-            data,
-            globals,
-            procs,
-            structs,
-        )
-        .unwrap();
+        process_tokens(&mut tokens.iter(), data, globals, procs)
+            .unwrap();
     }
 }

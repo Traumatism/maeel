@@ -2,7 +2,6 @@ use super::super::{
     process_tokens,
     next,
     Stack,
-    StructuresRegistry,
     ProceduresRegistry,
     VariablesRegistry,
 };
@@ -20,7 +19,6 @@ pub fn parse_while<'a>(
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
     procs: &'a mut ProceduresRegistry,
-    structs: &'a mut StructuresRegistry,
 )
 {
     // Code block to execute while P(x) is true
@@ -28,14 +26,8 @@ pub fn parse_while<'a>(
 
     // This is why we need to push P(x) at the end of the code block
     while let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(
-            &mut tokens.iter(),
-            data,
-            globals,
-            procs,
-            structs,
-        )
-        .unwrap();
+        process_tokens(&mut tokens.iter(), data, globals, procs)
+            .unwrap();
     }
 }
 
@@ -45,7 +37,6 @@ pub fn parse_for<'a>(
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
     procs: &'a mut ProceduresRegistry,
-    structs: &'a mut StructuresRegistry,
 )
 {
     // Code block to execute for each value of L
@@ -55,14 +46,8 @@ pub fn parse_for<'a>(
         for element in xs {
             data.push(element);
 
-            process_tokens(
-                &mut tokens.iter(),
-                data,
-                globals,
-                procs,
-                structs,
-            )
-            .unwrap();
+            process_tokens(&mut tokens.iter(), data, globals, procs)
+                .unwrap();
         }
     } else {
         panic!() // An array must be on the stack's top

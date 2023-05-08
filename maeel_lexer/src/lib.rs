@@ -251,6 +251,17 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
 
     while let Some(character) = characters.next() {
         match character {
+            // Ignore comments
+            '|' => {
+                for character in characters.by_ref() {
+                    if character != '\n' {
+                        continue
+                    }
+
+                    break
+                }
+            }
+
             // Ignore white-spaces
             ' ' | '\n' => continue,
 
