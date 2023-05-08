@@ -1,7 +1,4 @@
-use maeel_common::{
-    tokens::Token,
-    vmtypes::VMType,
-};
+use maeel_common::{tokens::Token,};
 
 use super::super::{
     Stack,
@@ -37,39 +34,6 @@ pub fn parse_assignment<'a>(
             };
         }
 
-        Some(Token::At) => {
-            match (tokens.next(), tokens.next()) {
-                (
-                    Some(Token::Identifier(struct_variable_name)),
-                    Some(Token::Identifier(field_name)),
-                ) => {
-                    let (struct_name, mut struct_fields) =
-                        match globals
-                            .get(struct_variable_name)
-                            .unwrap()
-                        {
-                            VMType::Struct((name, fields)) => {
-                                (name, fields.clone())
-                            }
-                            _ => panic!(),
-                        };
-
-                    struct_fields.insert(
-                        field_name.clone(),
-                        data.pop().unwrap(),
-                    );
-
-                    globals.insert(
-                        struct_variable_name.to_string(),
-                        VMType::Struct((
-                            struct_name.clone(),
-                            struct_fields,
-                        )),
-                    );
-                }
-                _ => panic!(),
-            }
-        }
         _ => panic!(),
     }
 }

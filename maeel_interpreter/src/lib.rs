@@ -12,14 +12,12 @@ use maeel_common::{
 
 use std::collections::HashMap;
 use std::io::Result;
-use std::iter::zip;
 use std::fs::read_to_string;
 use std::slice::Iter;
 
 type Stack = Vec<VMType>;
 type VariablesRegistry = HashMap<String, VMType>;
 type ProceduresRegistry = HashMap<String, Vec<Token>>;
-type StructuresRegistry = HashMap<String, Vec<String>>;
 
 #[macro_export]
 macro_rules! next {
@@ -83,7 +81,6 @@ pub fn process_tokens<'a>(
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
     procs: &'a mut ProceduresRegistry,
-    structs: &'a mut StructuresRegistry,
 ) -> Result<&'a mut Stack>
 {
     // Specific to current code block (won't be given to the next/previous code block)
@@ -97,9 +94,8 @@ pub fn process_tokens<'a>(
                         process_tokens(
                             &mut tokens.iter(),
                             data,
-                            globals,
+                            &mut globals.clone(),
                             procs,
-                            structs,
                         )?;
                     }
                     _ => panic!(),
@@ -111,19 +107,19 @@ pub fn process_tokens<'a>(
 
             Token::While => {
                 parsing::loops::parse_while(
-                    tokens, data, globals, procs, structs,
+                    tokens, data, globals, procs,
                 );
             }
 
             Token::For => {
                 parsing::loops::parse_for(
-                    tokens, data, globals, procs, structs,
+                    tokens, data, globals, procs,
                 );
             }
 
             Token::If => {
                 parsing::conditions::parse_if(
-                    tokens, data, globals, procs, structs,
+                    tokens, data, globals, procs,
                 );
             }
 
@@ -133,15 +129,11 @@ pub fn process_tokens<'a>(
 
             Token::ArrayStart => {
                 parsing::iterables::parse_array(
-                    tokens, data, globals, procs, structs,
+                    tokens, data, globals, procs,
                 );
             }
 
-            Token::At => {
-                parsing::structures::parse_struct(
-                    tokens, data, structs,
-                );
-            }
+            Token::At => {}
 
             Token::Let => {
                 parsing::assignments::parse_assignment(
@@ -258,7 +250,6 @@ pub fn process_tokens<'a>(
                             data,
                             globals,
                             procs,
-                            structs,
                         )?;
                     }
 
@@ -297,7 +288,6 @@ pub fn process_tokens<'a>(
                             &mut Vec::default(),
                             globals,
                             procs,
-                            structs,
                         )?;
                     }
 
@@ -320,29 +310,6 @@ pub fn process_tokens<'a>(
                             (..) => {}
                         }
 
-                        if let Some(fields_names) = structs
-                            .get(identifier)
-                            .cloned()
-                        {
-                            let Some(VMType::Array(fields_values)) = data.pop() else {
-                                panic!()
-                            };
-
-                            let mut struct_kv = HashMap::new();
-
-                            zip(fields_names, fields_values)
-                                .for_each(|(k, v)| {
-                                    struct_kv.insert(k, v);
-                                });
-
-                            data.push(VMType::Struct((
-                                identifier.to_string(),
-                                struct_kv,
-                            )));
-
-                            continue
-                        }
-
                         process_tokens(
                             &mut procs
                                 .get(identifier)
@@ -350,9 +317,8 @@ pub fn process_tokens<'a>(
                                 .clone()
                                 .iter(),
                             data,
-                            globals,
+                            &mut globals.clone(),
                             procs,
-                            structs,
                         )?;
                     }
                 }

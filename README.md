@@ -162,26 +162,3 @@ a 100 < ω (
 ## For loop
 
 `Ω (code)` will push(value) for all value elements of stack top (stack top must be an array) and then execute the next code block
-
-## Structures
-
-```
-"std" include
-
-@@ Animal [
-    type
-    name
-    sound
-]
-
-{ "mammal" "cat" "meow" } Animal
-{ "mammal" "dog" "waf"  } Animal
-
-3 τ → zoo
-
-zoo Ω (
-    δ @ type  println ρ
-    δ @ name  println ρ
-    δ @ sound println ρ
-)
-```
