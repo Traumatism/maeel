@@ -1,11 +1,6 @@
 mod parsing;
 
 use maeel_common::{
-    maeel_std::{
-        MAEEL_STD_CONTENT,
-        MAEEL_STD_MATHS_CONTENT,
-        MAEEL_STD_NATURAL_CONTENT,
-    },
     tokens::Token,
     vmtypes::VMType,
 };
@@ -259,14 +254,30 @@ pub fn process_tokens<'a>(
                         };
 
                         let content = match target.as_str() {
-                            "std" => MAEEL_STD_CONTENT.to_string(),
+                            "std" => {
+                                include_str!("../../stdlib/std.maeel")
+                                    .to_string()
+                            }
 
                             "maths" => {
-                                MAEEL_STD_MATHS_CONTENT.to_string()
+                                include_str!(
+                                    "../../stdlib/maths.maeel"
+                                )
+                                .to_string()
                             }
 
                             "natural" => {
-                                MAEEL_STD_NATURAL_CONTENT.to_string()
+                                include_str!(
+                                    "../../stdlib/natural.maeel"
+                                )
+                                .to_string()
+                            }
+
+                            "array" => {
+                                include_str!(
+                                    "../../stdlib/array.maeel"
+                                )
+                                .to_string()
                             }
 
                             _ => {

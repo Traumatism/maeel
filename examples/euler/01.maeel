@@ -1,16 +1,7 @@
-let sum 0
+"std" include
 
-0
+0 ⟶ s
 
-true while do
-    1+ dup
+[1 1000] Ω (δ δ3∣ σ5∣ ∨ ⇒ (s + ⟶ s))
 
-    dup 3% 0= swap 5% 0= + if do
-        dup sum + let sum pop
-    end
-
-    dup 1000 <
-end
-
-sum print
-"\n" print
+s println

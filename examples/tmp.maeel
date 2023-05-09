@@ -1,4 +1,0 @@
-"std" include
-"natural" include
-
-λ len [] (0 swap Ω (pop 1 add))
