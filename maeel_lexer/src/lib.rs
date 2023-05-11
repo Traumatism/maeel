@@ -51,9 +51,7 @@ macro_rules! lex_single_char {
 
             '&' => vec![Token::Call],
 
-            'θ' => {
-                vec![Token::Over]
-            }
+            'θ' => vec![Token::Over],
 
             'σ' => vec![Token::Swap],
 

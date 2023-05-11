@@ -152,3 +152,26 @@ a 100 < ω (
 ## For loop
 
 `Ω (code)` will push(value) for all value elements of stack top (stack top must be an array) and then execute the next code block
+
+## TODO
+
+
+
+```mermaid
+flowchart LR
+    Main -->|Code|Lexer
+    Lexer -->|Lexing code|Lexer
+    Lexer -->|Tokens|Interpreter
+    Lexer -->|Tokens|Compiler
+
+    Interpreter -->|Parsing tokens|Interpreter
+    Compiler -->|Converting tokens to C/Rust?|Compiler
+
+    Lexer-.-Common
+
+    Interpreter-.-Common
+    Compiler-.-Common
+
+    Compiler-.-TokensHandler
+    Interpreter-.-TokensHandler
+```
