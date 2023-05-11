@@ -1,5 +1,9 @@
 "std" include
 
+λ last [xs] (xs len 1- Γ)
+
+λ first [xs] (xs 0Γ)
+
 | Returns the length of an array.
 λ len [] (0 σ Ω(ρ↑))
 
@@ -9,7 +13,7 @@
 )
 
 | Returns a reversed copy of an array.
-λ reverse [xs] (∅→ys xs len δ1⩾ ω(1- δ xs σ Γ ys+ →ys δ1⩾) ys)
+λ reverse [xs] (∅→ys xs len δ1⩾ ω(1- δ xs σΓ ys+ →ys δ1⩾) ys)
 
 | Push an element at the begin of an array.
 λ push [xs element] (element 1τ xs Ω(+))
