@@ -33,8 +33,29 @@ Assignment are fully dynamic:
 - push 44
 - reassign the STV to four
 
-There is also way to declare code-block specific (=private) variables: simply add a _ at the begin of the variable name.
+There is also way to declare code block specific (=private) variables: simply add a _ at the begin of the variable name.
 
 ## Functionnal!
 
-Maeel uses only functions: no structures, no classes. Functions have no side-effects and ...
+Maeel uses only functions with no side effects: no structures, no classes.
+They are defined with the lambda letter followed by parameters, and code block.
+
+```
+λ foo [bar] (
+    bar print
+)
+
+"Hello, world\n" foo
+```
+
+Since stack is shared between functions, you can also declare non-args functions!
+
+```
+λ foo [] (print)
+
+"Hello, world\n" foo
+```
+
+## Looooops
+
+Maeel for/while loops implementation is pretty bad.
