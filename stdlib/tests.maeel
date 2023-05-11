@@ -95,9 +95,9 @@ result_f1 result_f2 "not(a or b) <=> not(a) and not(b)" assert_eq
 ("bar" → foo) → might_change_foo
 might_change_foo&
 
-foo "foo" "Function (a) side effect" assert_eq
+foo "foo" "Function (anonymous) side effect" assert_eq
 
 λ might_change_foo [] ("bar" → foo)
 might_change_foo
 
-foo "foo" "Function (b) side effect" assert_eq
+foo "foo" "Function (named) side effect" assert_eq

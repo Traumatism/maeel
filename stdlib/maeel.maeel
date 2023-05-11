@@ -1,0 +1,5 @@
+λ drop [_]      ()
+λ dup  [t]      (t t)
+λ swap [o t]    (o t)
+λ over [o t]    (t o t)
+λ rot  [oo o t] (oo t o)
