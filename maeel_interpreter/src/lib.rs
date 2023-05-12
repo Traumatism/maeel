@@ -128,10 +128,6 @@ pub fn process_tokens<'a>(
                 );
             }
 
-            Token::At => {
-                todo!()
-            }
-
             Token::Let => {
                 parsing::assignments::parse_assignment(
                     tokens,
@@ -191,16 +187,8 @@ pub fn process_tokens<'a>(
 
             Token::Clear => data.clear(),
 
-            Token::Not => {
-                let p = data.pop().unwrap();
-                data.push(!p)
-            }
-
             Token::Get => {
                 handle_get(data);
-            }
-            Token::Take => {
-                handle_take(data);
             }
 
             Token::Identifier(identifier) => {
@@ -324,24 +312,6 @@ pub fn process_tokens<'a>(
     }
 
     Ok(data)
-}
-
-/// Parses and executes a code block if a certain condition is true.
-fn handle_take(data: &mut Stack)
-{
-    match data.pop() {
-        // 'take' expect an array on top of the stack
-        Some(VMType::Integer(max_index)) => {
-            let mut array = (0..max_index)
-                .map(|_| data.pop().unwrap())
-                .collect::<Stack>();
-
-            array.reverse();
-
-            data.push(VMType::Array(array));
-        }
-        _ => panic!(),
-    }
 }
 
 /// Parses and executes a code block if a certain condition is true.

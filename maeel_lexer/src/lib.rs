@@ -4,70 +4,32 @@ use maeel_common::tokens::Token;
 macro_rules! lex_single_char {
     ($character:expr) => {
         match $character {
-            '@' => vec![Token::At],
-
-            '¬' | '!' => vec![Token::Not],
-
-            '-' => vec![Token::Not, Token::Add],
-
-            '∪' | '∨' | '+' => vec![Token::Add],
-
-            '∧' | '*' => vec![Token::Mul],
-
+            '!' => vec![Token::Integer(-1), Token::Mul],
+            '-' => vec![Token::Integer(-1), Token::Mul, Token::Add],
+            '+' => vec![Token::Add],
+            '*' => vec![Token::Mul],
             '/' => vec![Token::Div],
-
             '%' => vec![Token::Mod],
-
-            '∣' => vec![Token::Mod, Token::Integer(0), Token::Eq],
-
-            '∤' => {
-                vec![
-                    Token::Mod,
-                    Token::Integer(0),
-                    Token::Eq,
-                    Token::Not,
-                ]
-            }
-
             '&' => vec![Token::Call],
             'ζ' => vec![Token::Clear],
-
-            '≕' | '→' | '⟶' => vec![Token::Let],
-
+            '≕' | '→' | '⟶' | '@' => vec![Token::Let],
             'λ' => vec![Token::ProcStart],
-
             '⟹' | '⇒' => vec![Token::If],
-
             'ω' => vec![Token::While],
             'Ω' => vec![Token::For],
-
             'α' => vec![Token::Bool(true)],
             'β' => vec![Token::Bool(false)],
             '∅' => vec![Token::ArrayStart, Token::ArrayEnd],
-
             '(' => vec![Token::BlockStart],
             ')' => vec![Token::BlockEnd],
-
             '{' => vec![Token::ArrayStart],
             '}' => vec![Token::ArrayEnd],
-
             '[' => vec![Token::IStart],
             ']' => vec![Token::IEnd],
-
-            'τ' => vec![Token::Take],
-
             'Γ' => vec![Token::Get],
-
-            '↓' => vec![Token::Integer(1), Token::Not, Token::Add],
-            '↑' => vec![Token::Integer(1), Token::Add],
-
             '=' => vec![Token::Eq],
-            '≠' => vec![Token::Eq, Token::Not],
-
             '<' => vec![Token::Lt],
-
             '>' => vec![Token::Gt],
-
             character => panic!("{character}"),
         }
     };
