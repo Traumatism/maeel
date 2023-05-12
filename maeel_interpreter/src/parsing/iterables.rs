@@ -95,6 +95,10 @@ pub fn parse_array<'a>(
                     .unwrap()
                     .pop();
 
+                    if output.is_none() {
+                        continue
+                    }
+
                     array.push(output.unwrap());
                 }
             }

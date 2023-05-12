@@ -9,3 +9,13 @@
 λ not [a] (a α = ⇒ (β) a β = ⇒ (α))
 
 λ then [val fn] (val ⇒ (fn&))
+
+λ equiv [f1 f2] (
+    ∅ ∅ → result_f1 → result_f2
+    { α β } dup * dup
+
+    Ω(dup 0Γ swap 1Γ f1& result_f1+ →result_f1)
+    Ω(dup 0Γ swap 1Γ f2& result_f2+ →result_f2)
+
+    result_f1 result_f2 =
+)

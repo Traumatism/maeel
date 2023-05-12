@@ -6,14 +6,7 @@
     _content
 ] (
     λ p [_content] (_content print drop)
-    _content p
-    ": " p
-    should_be value =
-
+    _content p ": " p should_be value =
     dup ⇒ ("OK\n" p)
     not ⇒ ("FAIL (" p should_be p ", " p value p ")\n" p)
-)
-
-λ map [xs fn] (
-    { (fn&) (xs) }
 )

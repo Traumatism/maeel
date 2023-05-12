@@ -11,8 +11,6 @@ pub enum Token
     Float(f64),
     Bool(bool),
 
-    At,
-
     Call,
 
     Add,
@@ -20,14 +18,11 @@ pub enum Token
     Mod,
     Div,
 
-    Not,
     Eq,
     Gt,
     Lt,
 
-    Take,
     Get,
-
     Clear,
 
     Let,

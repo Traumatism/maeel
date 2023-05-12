@@ -1,14 +1,14 @@
 "stack" include
 
-λ fact [] (dup 1 > ⇒ (dup 1- fact*))
+λ fact [n] (1 0 dup n < ω (1+ swap over * swap dup n <) swap)
 
 λ sqrt [a] (a 2 / → y 0 0 α ω (a y/ y+ 2/ →y 1+ dup 5<) drop drop y)
 
 λ log [base n] (0 n base gteq ω (1+ n base / → n n base gteq))
 
-λ pow [base exp] (base exp 0 ≠ ω (base * exp 1- → exp exp 0≠) base /)
+λ pow [base exp] (base exp 0 = not ω (base * exp 1- → exp exp 0= not) base /)
 
-λ gcd [a b] (b 0 ≠ ω (b → _t a b % → b _t → a b 0 ≠) a)
+λ gcd [a b] (b 0 = not ω (b → _t a b % → b _t → a b 0 = not) a)
 
 λ abs [x] (x 0 < dup ⇒ (x not swap) not ⇒ (x))
 
@@ -27,3 +27,5 @@
 λ square [] (dup *)
 
 λ cube [] (dup square *)
+
+λ divides [] (% 0 =)
