@@ -1,0 +1,14 @@
+| Drop the stack top element
+λ drop [a] ()
+
+| Duplicate the stack top element
+λ dup [a] (a a)
+
+| Swap the two stack top elements
+λ swap [a b] (b a)
+
+| Push the element over the stack top element
+λ over [a b] (a b a)
+
+| Rotate the three stack top elements
+λ rot [a b c] (c a b)

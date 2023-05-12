@@ -21,7 +21,11 @@ pub fn parse_proc<'a>(
     // Procedure block
     let mut procedure_block = Vec::default();
 
-    parse_identifiers_list!(tokens)
+    let mut id_list = parse_identifiers_list!(tokens);
+
+    id_list.reverse();
+
+    id_list
         .iter()
         .for_each(|identifier| {
             procedure_block.append(&mut vec![

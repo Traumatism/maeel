@@ -1,73 +1,77 @@
 {
     "std"
     "maths"
-    "natural"
     "array"
+    "logic"
+    "stack"
 } Ω (include)
 
-1 2 3 ρ                 2                          "ρ(1 2 3)=2"                assert_eq
-3 1 2 ρ                 1                          "ρ(3 1 2)=1"                assert_eq
-1 2 3 δ                 3                          "δ(1 2 3)=3"                assert_eq
-3 2 1 δ                 1                          "δ(3 2 1)=1"                assert_eq
-1 2 3 θ                 2                          "θ(1 2 3)=2"                assert_eq
-3 1 2 θ                 1                          "θ(3 1 2)=1"                assert_eq
+1 2 3 drop              2                          "ρ(1 2 3)=2"                assert_eq
+3 1 2 drop              1                          "ρ(3 1 2)=1"                assert_eq
+1 2 3 dup               3                          "δ(1 2 3)=3"                assert_eq
+3 2 1 dup               1                          "δ(3 2 1)=1"                assert_eq
+1 2 3 over              2                          "θ(1 2 3)=2"                assert_eq
+3 1 2 over              1                          "θ(3 1 2)=1"                assert_eq
 1 2 3 3 τ               {1 2 3}                    "τ(1 2 3)={1 2 3}"          assert_eq
-1 2 3 φ 3 τ             {2 3 1}                    "φ(1 2 3)={2 3 1}"          assert_eq
+1 2 3 rot rot 3 τ       {2 3 1}                    "φ(1 2 3)={2 3 1}"          assert_eq
 1 1 +                   2                          "1+1=2"                     assert_eq
 2 2 *                   4                          "2*2=4"                     assert_eq
 5 2 %                   1                          "5%2=1"                     assert_eq
+2 2 lteq                α                          "2<=2=1"                    assert_eq
+2 2 gteq                α                          "2>=2=1"                    assert_eq
+3 2 gteq                α                          "3>=2=1"                    assert_eq
+3 2 lteq                β                          "3<=2=0"                    assert_eq
 5 2 /                   2.5                        "5/2=2.5"                   assert_eq
-α α ∨                   α                          "OR test 1 (1-1)"           assert_eq
-β β ∨                   β                          "OR test 2 (0-0)"           assert_eq
-α β ∨                   α                          "OR test 3 (1-0)"           assert_eq
-β α ∨                   α                          "OR test 4 (0-1)"           assert_eq
-β   ¬                   α                          "NOT test 1 (0)"            assert_eq
-α   ¬                   β                          "NOT test 2 (1)"            assert_eq
-α α ∧                   α                          "AND test 1 (1-1)"          assert_eq
-β β ∧                   β                          "AND test 2 (0-0)"          assert_eq
-α β ∧                   β                          "AND test 3 (1-0)"          assert_eq
-β α ∧                   β                          "AND test 4 (0-1)"          assert_eq
-α α ⊕                   β                          "XOR test 1 (1-1)"          assert_eq
-β β ⊕                   β                          "XOR test 2 (0-0)"          assert_eq
-α β ⊕                   α                          "XOR test 3 (1-0)"          assert_eq
-β α ⊕                   α                          "XOR test 4 (0-1)"          assert_eq
-α α ∧¬                  β                          "NAND test 1 (1-1)"         assert_eq
-β β ∧¬                  α                          "NAND test 2 (0-0)"         assert_eq
-α β ∧¬                  α                          "NAND test 3 (1-0)"         assert_eq
-β α ∧¬                  α                          "NAND test 4 (0-1)"         assert_eq
-α α ∨¬                  β                          "NOR test 1 (1-1)"          assert_eq
-β β ∨¬                  α                          "NOR test 2 (0-0)"          assert_eq
-α β ∨¬                  β                          "NOR test 3 (1-0)"          assert_eq
-β α ∨¬                  β                          "NOR test 4 (0-1)"          assert_eq
+α α or                  α                          "OR test 1 (1-1)"           assert_eq
+β β or                  β                          "OR test 2 (0-0)"           assert_eq
+α β or                  α                          "OR test 3 (1-0)"           assert_eq
+β α or                  α                          "OR test 4 (0-1)"           assert_eq
+β   not                 α                          "NOT test 1 (0)"            assert_eq
+α   not                 β                          "NOT test 2 (1)"            assert_eq
+α α and                 α                          "AND test 1 (1-1)"          assert_eq
+β β and                 β                          "AND test 2 (0-0)"          assert_eq
+α β and                 β                          "AND test 3 (1-0)"          assert_eq
+β α and                 β                          "AND test 4 (0-1)"          assert_eq
+α α xor                 β                          "XOR test 1 (1-1)"          assert_eq
+β β xor                 β                          "XOR test 2 (0-0)"          assert_eq
+α β xor                 α                          "XOR test 3 (1-0)"          assert_eq
+β α xor                 α                          "XOR test 4 (0-1)"          assert_eq
+α α ∧ not               β                          "NAND test 1 (1-1)"         assert_eq
+β β ∧ not               α                          "NAND test 2 (0-0)"         assert_eq
+α β ∧ not               α                          "NAND test 3 (1-0)"         assert_eq
+β α ∧ not               α                          "NAND test 4 (0-1)"         assert_eq
+α α ∨ not               β                          "NOR test 1 (1-1)"          assert_eq
+β β ∨ not               α                          "NOR test 2 (0-0)"          assert_eq
+α β ∨ not               β                          "NOR test 3 (1-0)"          assert_eq
+β α ∨ not               β                          "NOR test 4 (0-1)"          assert_eq
 { 11 12 13 } len        3                          "List length"               assert_eq
 { 1 2 3 } reverse       { 3 2 1 }                  "List reverse"              assert_eq
-{ 1 2 3 } pop           { 1 { 2 3 } }              "List pop"                  assert_eq
-0 { 1 2 3 } push        { 0 1 2 3 }                "List push"                 assert_eq
-{ 1 2 3 } Σ             6                          "List sum"                  assert_eq
-{ 1 2 3 4 } Π           24                         "List product"              assert_eq
-0 { 1 2 3 } Ω (+)       6                          "For loop (sum)"            assert_eq
+{ 1 2 3 } 0 push        { 0 1 2 3 }                "List push"                 assert_eq
+{ 1 2 3 } sum           6                          "List sum"                  assert_eq
+{ 1 2 3 4 } product     24                         "List product"              assert_eq
 { 1 2 3 4 5 }           [1 6]                      "Int interval"              assert_eq
 { 1 2 3 } 3 +           { 1 2 3 3 }                "List push"                 assert_eq
 { 1 2 3 } { 1 2 3 } ∪   { 1 2 3 1 2 3 }            "List union"                assert_eq
 { (2*) ({ 1 2 3 }) }    { 2 4 6 }                  "List comprehension"        assert_eq
+{ 1 2 3 } (2*) map      { 2 4 6 }                  "Map"                       assert_eq
 
-λ f1 [] (∧¬)
-λ f2 [] (¬σ¬∨)
+λ f1 [] (and not)
+λ f2 [] (not swap not or)
 
 ∅ ∅ → result_f1 → result_f2
 
-{ α β } δ* Ω(δ0Γ σ1Γ f1 result_f1+ →result_f1)
-{ α β } δ* Ω(δ0Γ σ1Γ f2 result_f2+ →result_f2)
+{ α β } dup * Ω(dup 0Γ swap 1Γ f1 result_f1+ →result_f1)
+{ α β } dup * Ω(dup 0Γ swap 1Γ f2 result_f2+ →result_f2)
 
 result_f1 result_f2 "not(a and b) <=> not(a) or not(b)" assert_eq
 
-λ f1 [] (∨¬)
-λ f2 [] (¬σ¬∧)
+λ f1 [] (or not)
+λ f2 [] (not swap not and)
 
 ∅ ∅ → result_f1 → result_f2
 
-{ α β } δ* Ω(δ0Γ σ1Γ f1 result_f1+ →result_f1)
-{ α β } δ* Ω(δ0Γ σ1Γ f2 result_f2+ →result_f2)
+{ α β } dup * Ω(dup 0Γ swap 1Γ f1 result_f1+ →result_f1)
+{ α β } dup * Ω(dup 0Γ swap 1Γ f2 result_f2+ →result_f2)
 
 result_f1 result_f2 "not(a or b) <=> not(a) and not(b)" assert_eq
 
@@ -79,7 +83,7 @@ result_f1 result_f2 "not(a or b) <=> not(a) and not(b)" assert_eq
 )
 
 λ gcd_2 [a b] (
-    a b ≠ ω (a b > ± ⟹ (b a - → b) ⟹ (a b - → a) a b ≠) a
+    a b ≠ ω (a b > pom ⟹ (b a - → b) ⟹ (a b - → a) a b ≠) a
 )
 
 42 12 gcd_1 6 "gcd1(42, 12) = 6" assert_eq
@@ -88,7 +92,7 @@ result_f1 result_f2 "not(a or b) <=> not(a) and not(b)" assert_eq
 3 cube 27 "3^3 = 27"             assert_eq
 2 65536 log 16 "65536 = 2**16"   assert_eq
 2 10 pow 1024 "2**10 = 1024"     assert_eq
-10 abs 10! abs "|10| = |-10|"    assert_eq
+10 abs 10 0- abs "|10| = |-10|"    assert_eq
 7 fact 5040 "7! = 5040"          assert_eq
 
 "foo" → foo

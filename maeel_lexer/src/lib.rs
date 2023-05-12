@@ -1,7 +1,5 @@
 use maeel_common::tokens::Token;
 
-use std::f64::consts::PI;
-
 /// Transform a single character into a token
 macro_rules! lex_single_char {
     ($character:expr) => {
@@ -15,19 +13,6 @@ macro_rules! lex_single_char {
             '∪' | '∨' | '+' => vec![Token::Add],
 
             '∧' | '*' => vec![Token::Mul],
-
-            '⊕' | '⊻' => {
-                vec![
-                    Token::Over,
-                    Token::Over,
-                    Token::Mul,
-                    Token::Not,
-                    Token::Rot,
-                    Token::Rot,
-                    Token::Add,
-                    Token::Mul,
-                ]
-            }
 
             '/' => vec![Token::Div],
 
@@ -44,17 +29,7 @@ macro_rules! lex_single_char {
                 ]
             }
 
-            'ρ' => vec![Token::Pop],
-            'δ' => vec![Token::Dup],
-
-            'φ' => vec![Token::Rot],
-
             '&' => vec![Token::Call],
-
-            'θ' => vec![Token::Over],
-
-            'σ' => vec![Token::Swap],
-
             'ζ' => vec![Token::Clear],
 
             '≕' | '→' | '⟶' => vec![Token::Let],
@@ -68,10 +43,7 @@ macro_rules! lex_single_char {
 
             'α' => vec![Token::Bool(true)],
             'β' => vec![Token::Bool(false)],
-
             '∅' => vec![Token::ArrayStart, Token::ArrayEnd],
-            'ε' => vec![Token::Str(String::default())],
-            'π' => vec![Token::Float(PI)],
 
             '(' => vec![Token::BlockStart],
             ')' => vec![Token::BlockEnd],
@@ -86,80 +58,15 @@ macro_rules! lex_single_char {
 
             'Γ' => vec![Token::Get],
 
-            'Π' => {
-                vec![
-                    Token::Integer(1),
-                    Token::Swap,
-                    Token::For,
-                    Token::Block(vec![Token::Mul]),
-                ]
-            }
-
-            'Σ' => {
-                vec![
-                    Token::Integer(0),
-                    Token::Swap,
-                    Token::For,
-                    Token::Block(vec![Token::Add]),
-                ]
-            }
-
-            '#' => {
-                vec![
-                    Token::Integer(0),
-                    Token::Swap,
-                    Token::For,
-                    Token::Block(vec![
-                        Token::Pop,
-                        Token::Integer(1),
-                        Token::Add,
-                    ]),
-                ]
-            }
-
             '↓' => vec![Token::Integer(1), Token::Not, Token::Add],
-            '↘' => {
-                vec![
-                    Token::Integer(1),
-                    Token::Not,
-                    Token::Add,
-                    Token::Let,
-                ]
-            }
-
             '↑' => vec![Token::Integer(1), Token::Add],
-            '↗' => vec![Token::Integer(1), Token::Add, Token::Let],
 
             '=' => vec![Token::Eq],
             '≠' => vec![Token::Eq, Token::Not],
 
-            '±' | '∓' => vec![Token::Dup, Token::Not],
-
             '<' => vec![Token::Lt],
-            '≤' | '⩽' => {
-                vec![
-                    Token::Over,
-                    Token::Over,
-                    Token::Lt,
-                    Token::Rot,
-                    Token::Rot,
-                    Token::Eq,
-                    Token::Add,
-                ]
-            }
 
             '>' => vec![Token::Gt],
-            '≥' | '⩾' => {
-                vec![
-                    Token::Over,
-                    Token::Over,
-                    Token::Gt,
-                    Token::Rot,
-                    Token::Rot,
-                    Token::Eq,
-                    Token::Add,
-                ]
-            }
 
             character => panic!("{character}"),
         }

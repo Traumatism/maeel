@@ -29,11 +29,6 @@ pub enum Token
     Get,
 
     Clear,
-    Swap,
-    Over,
-    Rot,
-    Dup,
-    Pop,
 
     Let,
     ProcStart,

@@ -1,19 +1,18 @@
 "std" include
+"stack" include
 
-λ last [xs] (xs len 1- Γ)
+λ last [xs] (xs len 1 - Γ)
 
 λ first [xs] (xs 0Γ)
 
 | Returns the length of an array.
-λ len [] (0 σ Ω(ρ↑))
+λ len [] (0 swap Ω(drop ↑))
 
 | Returns an array of arrays with {idx element}.
-λ enumerate [] (
-    0→i ∅ σ Ω(i 1τ+ 1τ+ i↗i)
-)
+λ enumerate [] (0→i ∅ swap Ω(i 1τ+ 1τ+ i 1+ →i))
 
 | Returns a reversed copy of an array.
-λ reverse [xs] (∅→ys xs len δ1⩾ ω(1- δ xs σΓ ys+ →ys δ1⩾) ys)
+λ reverse [xs] (∅→ys xs len dup 1 gteq ω(1- dup xs swap Γ ys+ →ys dup 1 gteq) ys)
 
 | Push an element at the begin of an array.
 λ push [xs element] (element 1τ xs Ω(+))
@@ -23,6 +22,6 @@
     ∅→ys
     xs len→xs_len
     xs 0Γ1τ→first_element
-    1 δxs_len< ω(xs θΓ ys+ →ys 1+ δ xs_len <)
+    1 dup xs_len< ω(xs over Γ ys+ →ys 1+ dup xs_len <)
     first_element ys 1τ+
 )
