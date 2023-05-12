@@ -1,31 +1,29 @@
-λ fact [] (
-    δ 1 > ⇒ (δ↓ fact*)
-)
+"stack" include
 
-λ sqrt [a] (
-    a 2 / → y
-    0 0
-    α ω (
-        a y/ y+ 2/ →y ↑
-        δ 5<
-    )
-    ρ ρ y
-)
+λ fact [] (dup 1 > ⇒ (dup 1- fact*))
 
-λ log [n b] (
-    0 n b ≥ ω (↑ n b / → n n b ≥)
-)
+λ sqrt [a] (a 2 / → y 0 0 α ω (a y/ y+ 2/ →y 1+ dup 5<) drop drop y)
 
-λ pow [exp base] (
-    base
-    exp 0 ≠ ω (base * exp ↘ exp exp 0≠)
-    base /
-)
+λ log [base n] (0 n base gteq ω (1+ n base / → n n base gteq))
 
-λ gcd [a b] (
-    b 0 ≠ ω (b ≕ _t a b % ≕ b _t ≕ a b 0 ≠) a
-)
+λ pow [base exp] (base exp 0 ≠ ω (base * exp 1- → exp exp 0≠) base /)
 
-λ abs [x] (
-    x 0 < δ ⇒ (x! σ) ¬ ⇒ (x)
-)
+λ gcd [a b] (b 0 ≠ ω (b → _t a b % → b _t → a b 0 ≠) a)
+
+λ abs [x] (x 0 < dup ⇒ (x not swap) not ⇒ (x))
+
+λ sum [xs] (0 xs Ω (+))
+
+λ product [xs] (1 xs Ω (*))
+
+λ lteq [] (over over < rot = +)
+
+λ gteq [] (over over > rot = +)
+
+λ pom [] (dup not)
+
+λ inverse [] (1/)
+
+λ square [] (dup *)
+
+λ cube [] (dup square *)

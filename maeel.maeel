@@ -1,0 +1,36 @@
+"std" include
+"array" include
+"logic" include
+
+{"+" "*" "+"} → program | Operations: + then * then +
+{5 5 3 100}   → stack   | Base stack: {5 5 3 100} => ((5+5)*3)+100 = 130
+
+program Ω (
+    | Operation is a +
+    dup "+" = ⇒ (
+        stack pop
+        dup 0Γ → value_a | Stack top value -> value_a
+            1Γ → stack   | Stack without the top value -> stack
+
+        stack pop
+        dup 0Γ → value_b | Stack top value -> value_a
+            1Γ → stack   | Stack without the top value -> stack
+
+        stack value_a value_b + push → stack
+    )
+
+    | Operation is a *
+    dup "*" = ⇒ (
+        stack pop
+        dup 0Γ → value_a
+            1Γ → stack
+
+        stack pop
+        dup 0Γ → value_b
+            1Γ → stack
+
+        stack value_a value_b * push → stack
+    )
+)
+
+stack println

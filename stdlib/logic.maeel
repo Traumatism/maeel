@@ -1,0 +1,11 @@
+"stack" include
+
+λ xor [] (over over * not rot + *)
+
+λ and [] (*)
+
+λ or [] (+)
+
+λ not [a] (a α = ⇒ (β) a β = ⇒ (α))
+
+λ then [val fn] (val ⇒ (fn&))

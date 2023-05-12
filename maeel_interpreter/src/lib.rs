@@ -189,39 +189,10 @@ pub fn process_tokens<'a>(
                 data.push(VMType::Procedure(tokens.clone()))
             }
 
-            Token::Pop => {
-                data.pop();
-            }
-
-            Token::Rot => {
-                let (a, b, c) = (
-                    data.pop().unwrap(),
-                    data.pop().unwrap(),
-                    data.pop().unwrap(),
-                );
-
-                data.push(b);
-                data.push(a);
-                data.push(c);
-            }
-
-            Token::Swap => {
-                let (top, over) =
-                    (data.pop().unwrap(), data.pop().unwrap());
-
-                data.push(top);
-                data.push(over)
-            }
-
             Token::Clear => data.clear(),
-
-            Token::Dup => data.push(data.last().cloned().unwrap()),
-
-            Token::Over => data.push(data[data.len() - 2].to_owned()),
 
             Token::Not => {
                 let p = data.pop().unwrap();
-
                 data.push(!p)
             }
 
@@ -268,9 +239,16 @@ pub fn process_tokens<'a>(
                                 .to_string()
                             }
 
-                            "natural" => {
+                            "logic" => {
                                 include_str!(
-                                    "../../stdlib/natural.maeel"
+                                    "../../stdlib/logic.maeel"
+                                )
+                                .to_string()
+                            }
+
+                            "stack" => {
+                                include_str!(
+                                    "../../stdlib/stack.maeel"
                                 )
                                 .to_string()
                             }
