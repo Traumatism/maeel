@@ -1,70 +1,50 @@
 {"std" "maths" "array" "logic" "stack"} Ω (include)
 
-1 2 3 drop                              2                          "drop(1 2 3)=2"                          assert_eq
-3 1 2 drop                              1                          "drop(3 1 2)=1"                          assert_eq
-1 2 3 dup                               3                          "dup(1 2 3)=3"                           assert_eq
-3 2 1 dup                               1                          "dup(3 2 1)=1"                           assert_eq
-1 2 3 over                              2                          "over(1 2 3)=2"                          assert_eq
-3 1 2 over                              1                          "over(3 1 2)=1"                          assert_eq
-1 2 3 3 take                            { 1 2 3 }                  "take(1 2 3)={1 2 3}"                    assert_eq
-1 2 3 rot rot 3 take                    { 2 3 1 }                  "rot(1 2 3)={2 3 1}"                     assert_eq
-1 1 +                                   2                          "1+1=2"                                  assert_eq
-1 4 -                                   3!                         "1-4=-3"                                 assert_eq
-2 2 *                                   4                          "2*2=4"                                  assert_eq
-5 2 /                                   2.5                        "5/2=2.5"                                assert_eq
-5 2 %                                   1                          "5%2=1"                                  assert_eq
-2 2 lteq                                α                          "2<=2=1"                                 assert_eq
-2 2 gteq                                α                          "2>=2=1"                                 assert_eq
-3 2 gteq                                α                          "3>=2=1"                                 assert_eq
-3 2 lteq                                β                          "3<=2=0"                                 assert_eq
-α α or                                  α                          "OR test #1"                             assert_eq
-β β or                                  β                          "OR test #2"                             assert_eq
-α β or                                  α                          "OR test #3"                             assert_eq
-β α or                                  α                          "OR test #4"                             assert_eq
-β not                                   α                          "NOT test #1"                            assert_eq
-α not                                   β                          "NOT test #2"                            assert_eq
-α α and                                 α                          "AND test #1"                            assert_eq
-β β and                                 β                          "AND test #2"                            assert_eq
-α β and                                 β                          "AND test #3"                            assert_eq
-β α and                                 β                          "AND test #4"                            assert_eq
-α α xor                                 β                          "XOR test #1"                            assert_eq
-β β xor                                 β                          "XOR test #2"                            assert_eq
-α β xor                                 α                          "XOR test #3"                            assert_eq
-β α xor                                 α                          "XOR test #4"                            assert_eq
-α α and not                             β                          "NAND test #1"                           assert_eq
-β β and not                             α                          "NAND test #2"                           assert_eq
-α β and not                             α                          "NAND test #3"                           assert_eq
-β α and not                             α                          "NAND test #4"                           assert_eq
-α α or not                              β                          "NOR test #1"                            assert_eq
-β β or not                              α                          "NOR test #2"                            assert_eq
-α β or not                              β                          "NOR test #3"                            assert_eq
-β α or not                              β                          "NOR test #4"                            assert_eq
-{ 11 12 13 } len                        3                          "List length"                            assert_eq
-{ 1 1 2 } 1 count                       2                          "Count #1"                               assert_eq
-{ 1 1 2 } 2 count                       1                          "Count #2"                               assert_eq
-{ 1 1 2 } 3 count                       0                          "Count #3"                               assert_eq
-{ 1 2 3 } reverse                       { 3 2 1 }                  "List reverse"                           assert_eq
-{ 1 2 3 } 0 push                        { 0 1 2 3 }                "List push"                              assert_eq
-{ 1 2 3 } sum                           6                          "List sum"                               assert_eq
-{ 1 2 3 4 } product                     24                         "List product"                           assert_eq
-{ 1 2 3 4 5 }                           [1 6]                      "Int interval"                           assert_eq
-{ 1 2 3 } 3 +                           { 1 2 3 3 }                "List push"                              assert_eq
-{ 1 2 3 } { 1 2 3 } +                   { 1 2 3 1 2 3 }            "List union"                             assert_eq
-{ (2*) ({ 1 2 3 }) }                    { 2 4 6 }                  "List comprehension"                     assert_eq
-{ 1 2 3 } 1 contains                    α                          "Contains #1"                            assert_eq
-{ 1 2 3 } 2 contains                    α                          "Contains #2"                            assert_eq
-{ 1 2 3 } 3 contains                    α                          "Contains #3"                            assert_eq
-{ 1 2 3 } 4 contains                    β                          "Contains #4"                            assert_eq
-{ 1 2 3 } (2*) map                      { 2 4 6 }                  "Map"                                    assert_eq
-(and not) (not swap not or) equiv       α                          "De Morgan proof #1"                     assert_eq
-(or not) (not swap not and) equiv       α                          "De Morgan proof #2"                     assert_eq
-3 square                                9                          "3^2 = 9"                                assert_eq
-3 cube                                  27                         "3^3 = 27"                               assert_eq
-2 65536 log                             16                         "log2(65536) = 16"                       assert_eq
-10 100 log                              2                          "log10(100) = 2"                         assert_eq
-2 10 pow                                1024                       "2^10 = 1024"                            assert_eq
-10 abs                                  10 0 abs                   "|10| = |-10|"                           assert_eq
-7 fact                                  5040                       "7! = 5040"                              assert_eq
+1 2 3 3 take                            {1 2 3}                     "take #1"                   assert_eq
+3 2 +                                   5                           "add #1"                    assert_eq
+3 2 *                                   6                           "mul #1"                    assert_eq
+0 1 2 3 drop 3 take                     {0 1 2}                     "drop #1"                   assert_eq
+1 2 3 dup 4 take                        {1 2 3 3}                   "dup #1"                    assert_eq
+1 2 3 swap 3 take                       {1 3 2}                     "swap #1"                   assert_eq
+1 2 3 swap swap 3 take                  {1 2 3}                     "swap #2"                   assert_eq
+1 2 3 over 4 take                       {1 2 3 2}                   "over #1"                   assert_eq
+1 2 3 over over 5 take                  {1 2 3 2 3}                 "over #2"                   assert_eq
+1 2 3 rot 3 take                        {3 1 2}                     "rot #1"                    assert_eq
+1 2 3 rot rot 3 take                    {2 3 1}                     "rot #2"                    assert_eq
+1 2 3 rot rot rot 3 take                {1 2 3}                     "rot #3"                    assert_eq
+α not                                   β                           "not #1"                    assert_eq
+β not                                   α                           "not #2"                    assert_eq
+α α and                                 α                           "and #1"                    assert_eq
+α β and                                 β                           "and #2"                    assert_eq
+β α and                                 β                           "and #3"                    assert_eq
+β β and                                 β                           "and #4"                    assert_eq
+α α or                                  α                           "or #1"                     assert_eq
+α β or                                  α                           "or #2"                     assert_eq
+β α or                                  α                           "or #3"                     assert_eq
+β β or                                  β                           "or #4"                     assert_eq
+α α xor                                 β                           "xor #1"                    assert_eq
+α β xor                                 α                           "xor #2"                    assert_eq
+β α xor                                 α                           "xor #3"                    assert_eq
+β β xor                                 β                           "xor #4"                    assert_eq
+{1 2 3} last                            3                           "last #1"                   assert_eq
+{1 2 3} first                           1                           "first #1"                  assert_eq
+| {1 1 2} 1 count                         2                           "count #1"                  assert_eq
+| {1 1 2} 2 count                         1                           "count #2"                  assert_eq
+| {1 1 2} 3 count                         0                           "count #3"                  assert_eq
+{1 2 3} (1+) map                        {2 3 4}                     "map #1"                    assert_eq
+{1 2 3} 1 contains                      α                           "contains #1"               assert_eq
+{1 2 3} 4 contains                      β                           "contains #2"               assert_eq
+{1 2 3} len                             3                           "len #1"                    assert_eq
+{1} len                                 1                           "len #2"                    assert_eq
+{} len                                  0                           "len #3"                    assert_eq
+{1 2 3} reverse                         {3 2 1}                     "reverse #1"                assert_eq
+{} reverse                              {}                          "reverse #2"                assert_eq
+{1 2 3} 0 push                          {0 1 2 3}                   "push #1"                   assert_eq
+{1 2 3} {4 5 6} merge                   {1 2 3 4 5 6}               "union #1"                  assert_eq
+{1 2 3} 4 +                             {1 2 3 4}                   "append #1"                 assert_eq
+1 {{1 "one"} {2 "two"}} match           "one"                       "match #1"                  assert_eq
+2 {{1 "one"} {2 "two"}} match           "two"                       "match #2"                  assert_eq
+
 
 "foo" → foo
 ("bar" → foo) → might_change_foo

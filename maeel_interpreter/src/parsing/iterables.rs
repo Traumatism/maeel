@@ -1,7 +1,4 @@
 use super::super::{
-    process_tokens,
-    next,
-    ProceduresRegistry,
     Stack,
     VariablesRegistry,
 };
@@ -39,7 +36,6 @@ pub fn parse_array<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
-    procs: &'a mut ProceduresRegistry,
 )
 {
     let mut array = Vec::default();
@@ -49,7 +45,8 @@ pub fn parse_array<'a>(
             Token::ArrayEnd => break,
 
             Token::ArrayStart => {
-                panic!()
+                parse_array(tokens, data, globals);
+                array.push(data.pop().unwrap())
             }
 
             Token::Str(value) => array.push(VMType::Str(value)),
@@ -70,37 +67,7 @@ pub fn parse_array<'a>(
             }
 
             Token::Block(expr) => {
-                let generator = process_tokens(
-                    &mut next!(tokens, "block").iter(),
-                    data,
-                    globals,
-                    procs,
-                )
-                .unwrap()
-                .pop();
-
-                let Some(VMType::Array(xs)) = generator else {
-                    panic!()
-                };
-
-                for element in xs {
-                    let mut tmp_data = vec![element];
-
-                    let output = process_tokens(
-                        &mut expr.iter(),
-                        &mut tmp_data,
-                        globals,
-                        procs,
-                    )
-                    .unwrap()
-                    .pop();
-
-                    if output.is_none() {
-                        continue
-                    }
-
-                    array.push(output.unwrap());
-                }
+                array.push(VMType::Procedure(expr));
             }
 
             _ => panic!(),

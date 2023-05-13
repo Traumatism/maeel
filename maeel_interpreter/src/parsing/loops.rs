@@ -26,8 +26,14 @@ pub fn parse_while<'a>(
 
     // This is why we need to push P(x) at the end of the code block
     while let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(&mut tokens.iter(), data, globals, procs)
-            .unwrap();
+        process_tokens(
+            "while_loop",
+            &mut tokens.iter(),
+            data,
+            globals,
+            procs,
+        )
+        .unwrap();
     }
 }
 
@@ -42,14 +48,42 @@ pub fn parse_for<'a>(
     // Code block to execute for each value of L
     let tokens = next!(tokens, "block");
 
-    if let Some(VMType::Array(xs)) = data.pop() {
-        for element in xs {
-            data.push(element);
+    match data.pop() {
+        Some(VMType::Array(xs)) => {
+            for element in xs {
+                data.push(element);
 
-            process_tokens(&mut tokens.iter(), data, globals, procs)
+                process_tokens(
+                    "for_loop",
+                    &mut tokens.iter(),
+                    data,
+                    globals,
+                    procs,
+                )
                 .unwrap();
+            }
         }
-    } else {
-        panic!() // An array must be on the stack's top
+
+        Some(VMType::Str(string)) => {
+            let xs = string
+                .chars()
+                .map(String::from)
+                .collect::<Vec<String>>();
+
+            for element in xs {
+                data.push(VMType::Str(element));
+
+                process_tokens(
+                    "for_loop",
+                    &mut tokens.iter(),
+                    data,
+                    globals,
+                    procs,
+                )
+                .unwrap();
+            }
+        }
+
+        data => panic!("{data:?}"),
     }
 }

@@ -1,0 +1,34 @@
+{"std" "array" "maths" "convert" "logic" "stack"} Ω(include)
+
+| MiniMaeel interpreter
+λ interpret [program stack] (
+    | Interpreter constants part
+    {{"a" (+)} {"s" (-)} {"m" (*)} {"d" (/)} {"e" (=)}} @OP_MAP
+
+    | Interpreter part
+    program string2array Ω (
+        @op
+
+        | Grab 'Stack' two top elements
+        stack first @a
+        stack second @b
+
+        | Remove them from 'Stack' and update 'Stack'
+        stack pop last pop last @stack
+
+        | Push a and b on the stack
+        a b
+
+        | Convert the operator into a function (and execute it)
+        op OP_MAP match &
+
+        | Push the output to 'Stack' and update 'Stack'
+        stack swap push @stack
+        clear
+    )
+
+    stack
+
+)
+
+"amade" {5 5 3 100 10 13} interpret println

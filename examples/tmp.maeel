@@ -1,1 +1,8 @@
-()
+"logic" include
+"std" include
+
+{{1 "one"} {2 "two"} {3 "three"}} → match_map
+
+1 match_map match println
+2 match_map match println
+3 match_map match println
