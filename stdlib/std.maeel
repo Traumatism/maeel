@@ -5,8 +5,7 @@
     should_be
     _content
 ] (
-    λ p [_content] (_content print drop)
-    _content p ": " p should_be value =
-    dup ⇒ ("OK\n" p)
-    not ⇒ ("FAIL (" p should_be p ", " p value p ")\n" p)
+    _content print drop ": " print drop should_be value =
+    dup ⇒ ("OK\n" print drop)
+    not ⇒ ("FAIL (" print drop should_be print drop ", " print drop value print drop ")\n" print drop)
 )

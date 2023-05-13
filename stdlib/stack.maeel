@@ -12,3 +12,5 @@
 
 | Rotate the three stack top elements
 λ rot [a b c] (c a b)
+
+λ clear [] (ζ)

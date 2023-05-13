@@ -1,4 +1,18 @@
 "stack" include
+"array" include
+
+
+λ match [value mp] (
+    {} mp Ω (
+        dup
+        0 get → element
+        1 get → fn
+
+        element value = ⇒ (fn +)
+    )
+
+    last
+)
 
 λ xor [] (over over * not rot + *)
 

@@ -211,19 +211,6 @@ impl Add for VMType
             (VMType::Bool(false), VMType::Bool(false)) => {
                 VMType::Bool(false)
             }
-            (VMType::Array(a), VMType::Array(b)) => {
-                let mut new = Vec::default();
-
-                for ea in a {
-                    new.push(ea)
-                }
-
-                for eb in b {
-                    new.push(eb)
-                }
-
-                VMType::Array(new)
-            }
 
             (other, VMType::Array(mut array))
             | (VMType::Array(mut array), other) => {

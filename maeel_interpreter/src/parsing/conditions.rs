@@ -25,7 +25,13 @@ pub fn parse_if<'a>(
     let tokens = next!(tokens, "block");
 
     if let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(&mut tokens.iter(), data, globals, procs)
-            .unwrap();
+        process_tokens(
+            "if",
+            &mut tokens.iter(),
+            data,
+            globals,
+            procs,
+        )
+        .unwrap();
     }
 }

@@ -18,6 +18,7 @@ fn main() -> Result<()>
 
     // Interpret/parse the tokens
     process_tokens(
+        "main",
         &mut lex_into_tokens(&content).iter(),
         &mut Vec::default(),
         &mut HashMap::default(),

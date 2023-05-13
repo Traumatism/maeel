@@ -1,17 +1,28 @@
 "std" include
 "stack" include
 
-| Get the last element of an array
+λ get [] (Γ)
+
+| Gwt the last element of an array
 λ last [xs] (xs xs len 1- Γ)
 
 | Get the first element of an array
-λ first [xs] (xs 0 Γ)
+λ first [] (0Γ)
+
+| Get the second element of an array
+λ second [] (1Γ)
+
+| Get the third element of an array
+λ third [] (3Γ)
+
+| Merge two arrays
+λ merge [xs ys] (∅ xs Ω (+) ys Ω (+))
 
 | Get how many times an element appears in an array
 λ count [xs element] ({ (element = ⇒ (1)) (xs) } sum)
 
 | Apply fn(x) for each x of xs
-λ map [xs fn] ({ (fn&) (xs) })
+λ map [xs fn] (∅ xs Ω (fn&+))
 
 | Check if an array contains an element
 λ contains [xs element] (
@@ -28,9 +39,6 @@
 | Returns the length of an array.
 λ len [] (0 swap Ω(drop 1+))
 
-| Returns an array of arrays with {idx element}.
-λ enumerate [] (0→i ∅ swap Ω(i 1 take + 1 take + i 1+ →i))
-
 | Returns a reversed copy of an array.
 λ reverse [xs] (∅→ys xs len dup 1 gteq ω(1- dup xs swap Γ ys+ →ys dup 1 gteq) ys)
 
@@ -41,7 +49,7 @@
 λ pop [xs] (
     ∅→ys
     xs len→xs_len
-    xs 0Γ1 take →first_element
+    xs 0Γ 1 take →first_element
     1 dup xs_len< ω(xs over Γ ys+ →ys 1+ dup xs_len <)
-    first_element ys 1 take +
+    ys first_element +
 )

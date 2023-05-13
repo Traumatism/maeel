@@ -72,6 +72,7 @@ macro_rules! parse_identifiers_list {
 /// The `process_tokens` function processes a sequence of tokens and executes the corresponding
 /// operations on a stack of values, global variables, and procedures.
 pub fn process_tokens<'a>(
+    caller: &'a str,
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
@@ -87,6 +88,7 @@ pub fn process_tokens<'a>(
                 match data.pop() {
                     Some(VMType::Procedure(tokens)) => {
                         process_tokens(
+                            "anon_procedure_call",
                             &mut tokens.iter(),
                             data,
                             &mut globals.clone(),
@@ -96,6 +98,7 @@ pub fn process_tokens<'a>(
                     _ => panic!(),
                 }
             }
+
             Token::ProcStart => {
                 parsing::procedures::parse_proc(tokens, procs);
             }
@@ -124,7 +127,7 @@ pub fn process_tokens<'a>(
 
             Token::ArrayStart => {
                 parsing::iterables::parse_array(
-                    tokens, data, globals, procs,
+                    tokens, data, globals,
                 );
             }
 
@@ -188,12 +191,43 @@ pub fn process_tokens<'a>(
             Token::Clear => data.clear(),
 
             Token::Get => {
-                handle_get(data);
+                match (data.pop(), data.pop()) {
+                    (
+                        Some(VMType::Integer(index)),
+                        Some(VMType::Array(array)),
+                    ) => {
+                        data.push(
+                            array
+                                .get(index as usize)
+                                .expect(caller)
+                                .clone(),
+                        );
+                    }
+
+                    (
+                        Some(VMType::Integer(index)),
+                        Some(VMType::Str(string)),
+                    ) => {
+                        data.push(VMType::Str(
+                            string
+                                .chars()
+                                .map(String::from)
+                                .collect::<Vec<String>>()
+                                .get(index as usize)
+                                .expect(caller)
+                                .clone(),
+                        ));
+                    }
+
+                    o => panic!("{o:?}"),
+                }
             }
 
             Token::Identifier(identifier) => {
                 match identifier.as_str() {
                     "print" => print!("{}", data.last().unwrap()),
+
+                    "dbg" => println!("{:?}", data),
 
                     "eval" => {
                         let Some(VMType::Str(code)) = data.pop() else {
@@ -201,6 +235,7 @@ pub fn process_tokens<'a>(
                         };
 
                         process_tokens(
+                            "eval",
                             &mut maeel_lexer::lex_into_tokens(&code)
                                 .iter(),
                             data,
@@ -241,6 +276,13 @@ pub fn process_tokens<'a>(
                                 .to_string()
                             }
 
+                            "convert" => {
+                                include_str!(
+                                    "../../stdlib/convert.maeel"
+                                )
+                                .to_string()
+                            }
+
                             "array" => {
                                 include_str!(
                                     "../../stdlib/array.maeel"
@@ -260,6 +302,7 @@ pub fn process_tokens<'a>(
                         };
 
                         process_tokens(
+                            "include",
                             &mut maeel_lexer::lex_into_tokens(
                                 &content,
                             )
@@ -290,6 +333,7 @@ pub fn process_tokens<'a>(
                         }
 
                         process_tokens(
+                            "procedure_call",
                             &mut procs
                                 .get(identifier)
                                 .expect(identifier)
@@ -312,23 +356,4 @@ pub fn process_tokens<'a>(
     }
 
     Ok(data)
-}
-
-/// Parses and executes a code block if a certain condition is true.
-fn handle_get(data: &mut Stack)
-{
-    match (data.pop(), data.pop()) {
-        (
-            Some(VMType::Integer(index)),
-            Some(VMType::Array(array)),
-        ) => {
-            data.push(
-                array
-                    .get(index as usize)
-                    .unwrap()
-                    .clone(),
-            );
-        }
-        _ => panic!(),
-    }
 }
