@@ -1,3 +1,4 @@
+| MiniMaeel, a programming language made with maeel
 {"std" "array" "maths" "convert" "logic" "stack"} Ω(include)
 
 | MiniMaeel interpreter
