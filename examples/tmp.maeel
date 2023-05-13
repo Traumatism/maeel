@@ -1,5 +1,4 @@
-"maths" include
+"unixrand" include
 
-100 @n
 
-"/dev/urandom" n read (n %) map println
+1000 1000 unix_random_numbers println

@@ -1,0 +1,49 @@
+{"std" "logic" "array" "maths"} Ω (include)
+
+"'hello world':abcd:" @text
+
+"Base text: " print text println clear
+
+{} @tokens
+
+β @lexing_string
+"" @current_string_buffer
+
+β @lexing_identifier
+"" @current_identifier_buffer
+
+text Ω (
+    @char
+
+    lexing_identifier @next_lexing_identifier
+    lexing_string @next_lexing_identifier
+
+    char "'" = lexing_string β = and ⇒ (α @next_lexing_string)
+
+    char "'" = lexing_string α = and ⇒ (
+        tokens {0 current_string_buffer} push println @tokens
+        "" @current_string_buffer
+        β @next_lexing_string
+    )
+
+    char "'" = not lexing_string α = and ⇒ (
+        current_string_buffer char + @current_string_buffer
+    )
+
+    char ":" = lexing_identifier β = and ⇒ (α @next_lexing_identifier)
+
+    char ":" = lexing_identifier α = and ⇒ (
+        tokens {1 current_identifier_buffer} println push @tokens
+        "" @current_identifier_buffer
+        β @next_lexing_identifier
+    )
+
+    char ":" = not lexing_identifier α = and ⇒ (
+        current_identifier_buffer char + @current_identifier_buffer
+    )
+
+    next_lexing_string @lexing_string
+    next_lexing_identifier @lexing_identifier
+)
+
+"Tokenized: " print tokens println clear

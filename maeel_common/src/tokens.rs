@@ -6,8 +6,8 @@ pub enum Token
 {
     Block(Vec<Token>),
     Str(String),
-    Integer(i64),
     Identifier(String),
+    Integer(i64),
     Float(f64),
     Bool(bool),
 
@@ -30,8 +30,10 @@ pub enum Token
 
     ArrayStart,
     ArrayEnd,
+
     BlockStart,
     BlockEnd,
+
     IStart,
     IEnd,
 
