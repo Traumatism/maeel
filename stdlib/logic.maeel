@@ -3,11 +3,10 @@
 
 
 λ match [value mp] (
-    {} mp Ω (
-        dup
-        0 get → element
-        1 get → fn
+    {}
 
+    mp Ω (
+        dup 0 get swap 1 get @fn @element
         element value = ⇒ (fn +)
     )
 
@@ -25,11 +24,11 @@
 λ then [val fn] (val ⇒ (fn&))
 
 λ equiv [f1 f2] (
-    ∅ ∅ → result_f1 → result_f2
+    {} dup @result_f1 @result_f2
     { α β } dup * dup
 
-    Ω(dup 0Γ swap 1Γ f1& result_f1+ →result_f1)
-    Ω(dup 0Γ swap 1Γ f2& result_f2+ →result_f2)
+    Ω (dup 0Γ swap 1Γ f1& result_f1+ →result_f1)
+    Ω (dup 0Γ swap 1Γ f2& result_f2+ →result_f2)
 
     result_f1 result_f2 =
 )

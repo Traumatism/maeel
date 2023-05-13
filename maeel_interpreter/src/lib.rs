@@ -1,3 +1,5 @@
+#![allow(clippy::read_zero_byte_vec)]
+
 mod parsing;
 
 use maeel_common::{
@@ -6,7 +8,10 @@ use maeel_common::{
 };
 
 use std::collections::HashMap;
-use std::io::Result;
+use std::io::{
+    Result,
+    Read,
+};
 use std::fs::read_to_string;
 use std::slice::Iter;
 
@@ -228,6 +233,28 @@ pub fn process_tokens<'a>(
                     "print" => print!("{}", data.last().unwrap()),
 
                     "dbg" => println!("{:?}", data),
+
+                    "read" => {
+                        let (Some(VMType::Integer(bytes)), Some(VMType::Str(path))) = (data.pop(), data.pop()) else {
+                            panic!()
+                        };
+
+                        assert!(bytes >= 0);
+
+                        let mut file = std::fs::File::open(path)?;
+
+                        let mut buf = vec![0u8; bytes as usize];
+
+                        file.read_exact(&mut buf)?;
+
+                        data.push(VMType::Array(
+                            buf.iter()
+                                .map(|byte| {
+                                    VMType::Integer(*byte as i64)
+                                })
+                                .collect(),
+                        ));
+                    }
 
                     "eval" => {
                         let Some(VMType::Str(code)) = data.pop() else {

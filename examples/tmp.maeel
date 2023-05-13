@@ -1,8 +1,5 @@
-"logic" include
-"std" include
+"maths" include
 
-{{1 "one"} {2 "two"} {3 "three"}} → match_map
+100 @n
 
-1 match_map match println
-2 match_map match println
-3 match_map match println
+"/dev/urandom" n read (n %) map println
