@@ -296,6 +296,13 @@ pub fn process_tokens<'a>(
                                 .to_string()
                             }
 
+                            "unixrand" => {
+                                include_str!(
+                                    "../../stdlib/unixrand.maeel"
+                                )
+                                .to_string()
+                            }
+
                             "stack" => {
                                 include_str!(
                                     "../../stdlib/stack.maeel"

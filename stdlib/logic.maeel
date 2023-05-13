@@ -1,34 +1,42 @@
 "stack" include
 "array" include
 
-
 λ match [value mp] (
-    {}
-
-    mp Ω (
-        dup 0 get swap 1 get @fn @element
-        element value = ⇒ (fn +)
-    )
-
-    last
+    {} mp Ω (dup first swap second @fn value = ⇒ (fn +)) last
 )
 
-λ xor [] (over over * not rot + *)
+λ xor [a b] (
+    {a b} {
+        {{α α} β} {{β β} β}
+        {{β α} α} {{α β} α}
+    } match
+)
 
-λ and [] (*)
+λ and [a b] (
+    {a b} {
+        {{α α} α} {{β β} β}
+        {{β α} β} {{α β} β}
+    } match
+)
 
-λ or [] (+)
+λ or [a b] (
+    {a b} {
+        {{α α} α} {{β β} β}
+        {{β α} α} {{α β} α}
+    } match
+)
 
-λ not [a] (a α = ⇒ (β) a β = ⇒ (α))
+λ not [a] (a {{α β} {β α}} match)
 
 λ then [val fn] (val ⇒ (fn&))
 
-λ equiv [f1 f2] (
+λ binequiv [f1 f2] (
     {} dup @result_f1 @result_f2
+
     { α β } dup * dup
 
-    Ω (dup 0Γ swap 1Γ f1& result_f1+ →result_f1)
-    Ω (dup 0Γ swap 1Γ f2& result_f2+ →result_f2)
+    Ω (dup first swap second f1& result_f1+ →result_f1)
+    Ω (dup first swap second f2& result_f2+ →result_f2)
 
     result_f1 result_f2 =
 )
