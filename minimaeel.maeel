@@ -5,7 +5,7 @@
 λ interpret [program stack] (
     | Interpreter constants part
     {{"a" (+)} {"s" (-)} {"m" (*)} {"d" (/)} {"e" (=)}} @OP_MAP
-
+ 
     | Interpreter part
     program string2array Ω (
         @op

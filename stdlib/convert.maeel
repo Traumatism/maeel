@@ -1,5 +1,3 @@
 λ string2array [str] ({} str Ω (+))
 
 λ array2string [xs] ("" xs Ω (+))
-
-λ array2iterator [xs] ({0 xs})

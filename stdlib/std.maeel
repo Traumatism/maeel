@@ -1,11 +1,42 @@
-λ println [] (print "\n" print drop)
+"array" include
+"convert" include
+"logic" include
 
-λ assert_eq [
-    value
-    should_be
-    _content
-] (
-    _content print drop ": " print drop should_be value =
-    dup ⇒ ("OK\n" print drop)
-    not ⇒ ("FAIL (" print drop should_be print drop ", " print drop value print drop ")\n" print drop)
+λ format [str] (
+    str len @ length
+    ""      @ output
+    0       @ sp
+
+    sp length < ω (
+        str sp get @char
+
+        char "%" =     ⇒ (output swap + @output)
+        char "%" = not ⇒ (output char + @output)
+
+        sp 1 + dup @sp length <
+    )
+
+    output
+)
+
+λ puts [content] (
+    content print drop
+)
+
+λ putsln [content] (
+    content puts
+    "\n"    puts
+)
+
+λ println [content] (
+    content print
+    "\n"    print drop
+)
+
+λ assert_eq [value should_be content] (
+    content "%: " format puts
+
+    should_be value =
+    dup ⇒ ("OK\n" puts)
+    not ⇒ (value should_be "FAIL (%, %)\n" format puts)
 )
