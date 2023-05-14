@@ -1,4 +1,15 @@
-"unixrand" include
+"std" include
+"array" include
 
+{
+    {"17" "Victor"}
+    {"16" "Thomas"}
+    {"16" "Raph"}
+    {"89" "Mme Poudelet"}
+} @ persons
 
-1000 1000 unix_random_numbers println
+persons Ω (
+    dup first swap second
+    "Name: % Age: %" format putsln
+)
+

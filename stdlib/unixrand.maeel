@@ -1,5 +1,5 @@
 "array" include
 
-λ unix_random_numbers [n max] (
-    "/dev/random" n read (max + max 1 + %) map
+λ unix_random_numbers [n mod] (
+    "/dev/random" n read (mod %) map
 )

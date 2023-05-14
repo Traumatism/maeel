@@ -1,8 +1,12 @@
 "stack" include
 "array" include
 
-λ match [value mp] (
-    {} mp Ω (dup first swap second @fn value = ⇒ (fn +)) last
+λ match [] (
+    swap @value {} swap Ω (
+        dup first swap second @fn value = ⇒ (fn +)
+    )
+
+    last
 )
 
 λ xor [a b] (
@@ -29,14 +33,3 @@
 λ not [a] (a {{α β} {β α}} match)
 
 λ then [val fn] (val ⇒ (fn&))
-
-λ binequiv [f1 f2] (
-    {} dup @result_f1 @result_f2
-
-    { α β } dup * dup
-
-    Ω (dup first swap second f1& result_f1+ →result_f1)
-    Ω (dup first swap second f2& result_f2+ →result_f2)
-
-    result_f1 result_f2 =
-)

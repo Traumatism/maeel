@@ -1,4 +1,3 @@
-"std" include
 "stack" include
 
 λ get [] (Γ)
@@ -39,13 +38,13 @@
 )
 
 | Returns the length of an array.
-λ len [] (0 swap Ω(drop 1+))
+λ len [] (0 swap Ω (drop 1+))
 
 | Returns a reversed copy of an array.
 λ reverse [xs] (
     {} @ys
-    xs len dup 1 gteq ω(
-        1- dup xs swap Γ ys+ @ys dup 1 gteq
+    xs len dup 1 over over > rot = + ω (
+        1- dup xs swap Γ ys+ @ys dup 1 over over > rot = +
     ) ys
 )
 
@@ -54,9 +53,9 @@
 
 | Split an array and its first element.
 λ pop [xs] (
-    {}→ys
-    xs len→xs_len
-    xs 0Γ 1 take →first_element
-    1 dup xs_len< ω(xs over Γ ys+ →ys 1+ dup xs_len <)
+    {} @ys
+    xs len @xs_len
+    xs first 1 take @first_element
+    1 dup xs_len< ω(xs over get ys+ @ys 1+ dup xs_len <)
     ys first_element +
 )
