@@ -1,2 +1,2 @@
 [workspace]
-members = ["maeel_main", "maeel_common", "maeel_lexer", "maeel_interpreter"]
+members = ["main", "common", "lexer", "interpreter"]
