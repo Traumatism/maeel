@@ -1,5 +1,5 @@
-use maeel_interpreter::process_tokens;
-use maeel_lexer::lex_into_tokens;
+use interpreter::process_tokens;
+use lexer::lex_into_tokens;
 
 use std::collections::HashMap;
 use std::env::args;

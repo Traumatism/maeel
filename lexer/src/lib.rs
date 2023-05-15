@@ -1,4 +1,4 @@
-use maeel_common::tokens::Token;
+use common::tokens::Token;
 
 /// Transform a single character into a token
 macro_rules! lex_single_char {

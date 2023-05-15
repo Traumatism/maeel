@@ -2,7 +2,7 @@
 
 mod parsing;
 
-use maeel_common::{
+use common::{
     tokens::Token,
     vmtypes::VMType,
 };
@@ -263,8 +263,7 @@ pub fn process_tokens<'a>(
 
                         process_tokens(
                             "eval",
-                            &mut maeel_lexer::lex_into_tokens(&code)
-                                .iter(),
+                            &mut lexer::lex_into_tokens(&code).iter(),
                             data,
                             globals,
                             procs,
@@ -337,10 +336,8 @@ pub fn process_tokens<'a>(
 
                         process_tokens(
                             "include",
-                            &mut maeel_lexer::lex_into_tokens(
-                                &content,
-                            )
-                            .iter(),
+                            &mut lexer::lex_into_tokens(&content)
+                                .iter(),
                             &mut Vec::default(),
                             globals,
                             procs,

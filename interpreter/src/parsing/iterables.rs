@@ -3,7 +3,7 @@ use super::super::{
     VariablesRegistry,
 };
 
-use maeel_common::{
+use common::{
     tokens::Token,
     vmtypes::VMType,
 };
