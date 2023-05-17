@@ -1,4 +1,4 @@
-{"std" "maths" "array" "logic" "stack"} Ω (include)
+"std" include
 
 1 2 3 3 take                            {1 2 3}                     "take #1"                   assert_eq
 3 2 +                                   5                           "add #1"                    assert_eq
@@ -26,12 +26,16 @@
 α β xor                                 α                           "xor #2"                    assert_eq
 β α xor                                 α                           "xor #3"                    assert_eq
 β β xor                                 β                           "xor #4"                    assert_eq
+α pom 2 take                            {α β}                       "plus or minus #1"          assert_eq
 {1 2 3} last                            3                           "last #1"                   assert_eq
 {1 2 3} first                           1                           "first #1"                  assert_eq
 {1 1 2} 1 count                         2                           "count #1"                  assert_eq
 {1 1 2} 2 count                         1                           "count #2"                  assert_eq
 {1 1 2} 3 count                         0                           "count #3"                  assert_eq
 {1 2 3} (1+) map                        {2 3 4}                     "map #1"                    assert_eq
+{1 2 3 4} (even) filter                 {2 4}                       "filter #1"                 assert_eq
+[1 12] (odd) filter                     {1 3 5 7 9 11}              "filter #2"                 assert_eq
+{1 2 3 4 5} (+) 0 reduce                15                          "reduce #1"                 assert_eq
 {1 2 3} 1 contains                      α                           "contains #1"               assert_eq
 {1 2 3} 4 contains                      β                           "contains #2"               assert_eq
 {1 2 3} len                             3                           "len #1"                    assert_eq
@@ -41,19 +45,29 @@
 {} reverse                              {}                          "reverse #2"                assert_eq
 {1 2 3} 0 push                          {0 1 2 3}                   "push #1"                   assert_eq
 {1 2 3} pop                             {1 {2 3}}                   "pop #1"                    assert_eq
-{1 2 3} {4 5 6} merge                   {1 2 3 4 5 6}               "union #1"                  assert_eq
+{1 2 3} {4 5 6} merge                   {1 2 3 4 5 6}               "merge #1"                  assert_eq
+{4 5 6} {1 2 3} merge                   {4 5 6 1 2 3}               "merge #2"                  assert_eq
 {1 2 3} 4 +                             {1 2 3 4}                   "append #1"                 assert_eq
+4 {1 2 3} +                             {1 2 3 4}                   "append #2"                 assert_eq
 1 {{1 "one"} {2 "two"}} match           "one"                       "match #1"                  assert_eq
 2 {{1 "one"} {2 "two"}} match           "two"                       "match #2"                  assert_eq
+"hello" string2array                    {"h" "e" "l" "l" "o"}       "string2array #1"           assert_eq
+{"h" "e" "l" "l" "o"} array2string      "hello"                     "array2string #1"           assert_eq
+α bool2string                           "true"                      "bool2string #1"            assert_eq
+β bool2string                           "false"                     "bool2string #2"            assert_eq
+2 16 pow                                65536                       "pow #1"                    assert_eq
+10 2 pow                                100                         "pow #2"                    assert_eq
+2 65536 log                             16                          "log #1"                    assert_eq
+10 100 log                              2                           "log #2"                    assert_eq
+7 fact                                  5040                        "factorial #1"              assert_eq
 
 
-"foo" → foo
-("bar" → foo) → might_change_foo
-might_change_foo&
+"foo" @ foo
+λmight_change_foo_a("bar" @ foo)
+("bar" @ foo) @ might_change_foo_b
 
-foo "foo" "Function (anonymous) side effect" assert_eq
-
-λ might_change_foo [] ("bar" → foo)
-might_change_foo
-
+might_change_foo_a
 foo "foo" "Function (named) side effect" assert_eq
+
+might_change_foo_b&
+foo "foo" "Function (anonymous) side effect" assert_eq

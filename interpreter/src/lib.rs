@@ -281,48 +281,6 @@ pub fn process_tokens<'a>(
                                     .to_string()
                             }
 
-                            "maths" => {
-                                include_str!(
-                                    "../../stdlib/maths.maeel"
-                                )
-                                .to_string()
-                            }
-
-                            "logic" => {
-                                include_str!(
-                                    "../../stdlib/logic.maeel"
-                                )
-                                .to_string()
-                            }
-
-                            "unixrand" => {
-                                include_str!(
-                                    "../../stdlib/unixrand.maeel"
-                                )
-                                .to_string()
-                            }
-
-                            "stack" => {
-                                include_str!(
-                                    "../../stdlib/stack.maeel"
-                                )
-                                .to_string()
-                            }
-
-                            "convert" => {
-                                include_str!(
-                                    "../../stdlib/convert.maeel"
-                                )
-                                .to_string()
-                            }
-
-                            "array" => {
-                                include_str!(
-                                    "../../stdlib/array.maeel"
-                                )
-                                .to_string()
-                            }
-
                             _ => {
                                 let file_name = format!(
                                     "{}.maeel",

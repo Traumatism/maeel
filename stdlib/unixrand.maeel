@@ -1,5 +1,0 @@
-"array" include
-
-λ unix_random_numbers [n mod] (
-    "/dev/random" n read (mod %) map
-)

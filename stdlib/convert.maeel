@@ -1,3 +1,0 @@
-λ string2array [str] ({} str Ω (+))
-
-λ array2string [xs] ("" xs Ω (+))
