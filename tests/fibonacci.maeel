@@ -1,0 +1,10 @@
+"std" include
+
+λ fib [n] (
+    n 1 lteq
+
+    dup ⇒ (n swap)
+    not ⇒ (n 1 - fib n 2 - fib +)
+)
+
+[1 10] (fib) map println

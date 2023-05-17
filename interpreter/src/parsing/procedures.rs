@@ -16,26 +16,32 @@ pub fn parse_proc<'a>(
     // Procedure name
     let name = next!(tokens, "identifier");
 
-    assert_eq!(Some(&Token::IStart), tokens.next());
+    let procedure_block = match tokens.next() {
+        Some(Token::Block(procedure_block)) => {
+            procedure_block.clone()
+        }
+        Some(Token::IStart) => {
+            // Procedure block
+            let mut procedure_block = Vec::default();
 
-    // Procedure block
-    let mut procedure_block = Vec::default();
+            let mut id_list = parse_identifiers_list!(tokens);
 
-    let mut id_list = parse_identifiers_list!(tokens);
+            id_list.reverse();
 
-    id_list.reverse();
+            id_list
+                .iter()
+                .for_each(|identifier| {
+                    procedure_block.append(&mut vec![
+                        Token::Let,
+                        Token::Identifier(identifier.clone()),
+                    ])
+                });
 
-    id_list
-        .iter()
-        .for_each(|identifier| {
-            procedure_block.append(&mut vec![
-                Token::Let,
-                Token::Identifier(identifier.clone()),
-            ])
-        });
-
-    // Finally append real procedure tokens
-    procedure_block.append(&mut next!(tokens, "block"));
+            procedure_block.append(&mut next!(tokens, "block"));
+            procedure_block
+        }
+        _ => panic!(),
+    };
 
     procs.insert(name, procedure_block);
 }
