@@ -1,0 +1,103 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "maeel",
+	"scopeName": "source.maeel",
+	"fileTypes": [
+		"maeel"
+	],
+	"patterns": [
+		{
+			"match": "\\|.*\\n",
+			"name": "comment.line.maeel"
+		},
+		{
+			"begin": "(\\[)",
+			"end": "(\\])",
+			"beginCaptures": {
+				"1": {
+					"name": "punctuation.definition.arguments.begin.maeel"
+				}
+			},
+			"endCaptures": {
+				"1": {
+					"name": "punctuation.definition.arguments.end.maeel"
+				}
+			},
+			"patterns": [
+				{
+					"name": "variable.parameter.function.maeel",
+					"match": "([a-zA-Z_][a-zA-Z0-9_]*)"
+				},
+				{
+					"name": "constant.numeric.maeel",
+					"match": "([0-9]+)"
+				}
+			]
+		},
+		{
+			"match": "(λ)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
+			"captures": {
+				"1": {
+					"name": "keyword.control.maeel"
+				},
+				"0": {
+					"name": "entity.name.function.maeel"
+				}
+			}
+		},
+		{
+			"name": "keyword.control.maeel",
+			"match": "(Ω|⟹|⇒|ω)"
+		},
+		{
+			"match": "(→|⟶|@)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
+			"captures": {
+				"1": {
+					"name": "keyword.operator.assignment.maeel"
+				},
+				"0": {
+					"name": "variable.name"
+				}
+			}
+		},
+		{
+			"name": "keyword.operator.range.maeel",
+			"match": "(\\[[0-9]+ [0-9]+\\])"
+		},
+		{
+			"name": "keyword.operator.arithmetic.maeel",
+			"match": "(\\-|\\+|\\*|\/|%|!)"
+		},
+		{
+			"name": "keyword.operator.comparison.maeel",
+			"match": "(=|<|>)"
+		},
+		{
+			"name": "support.function.maeel",
+			"match": "(&|\\bprint\\b|\\binclude\\b)"
+		},
+		{
+			"name": "constant.language.boolean.maeel",
+			"match": "(α|β)"
+		},
+		{
+			"name": "constant.numeric.maeel",
+			"match": "([0-9]+(\\.?[0-9]+)?!?)"
+		},
+		{
+			"name": "entity.name",
+			"match": "([a-zA-Z_][a-zA-Z0-9_]*)"
+		},
+		{
+			"name": "string.quoted.double.maeel",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.maeel",
+					"match": "\\\\(?:[0\"\\abfnrtv]|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{4})"
+				}
+			]
+		}
+	]
+}
