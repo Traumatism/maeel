@@ -20,24 +20,19 @@
 λ rot [a b c] (c a b)
 
 | Clear the stack
-λ clear [] (ζ)
+λ clear (ζ)
 
 | Gather user input
-λ unix_input (
-    {}
+λ unix_input ({} α ω ("/dev/stdin" 1 read first dup @_+ _ 10= not))
 
-    α ω (
-        "/dev/stdin" 1 read first dup @_+_ 10= not
-    )
-)
-
-λ panic ("PANIC: %" putsln 1 0 %)
+| Print a message and exit
+λ panic ("PANIC: %" format putsln 1 0 %)
 
 | Format string
 λ format [str] (
-    str len @ length
-    ""      @ output
-    0       @ sp
+    str len @length
+    "" @output
+    0 @sp
 
     sp length < ω (
         str sp get @char
@@ -60,10 +55,7 @@
 
 λ assert_eq [value should_be content] (
     should_be value = dup bool2string content
-
-    "% (%)" format putsln
-
-    not ⇒ ("" panic)
+    "% (%)" format putsln not ⇒ ("" panic)
 )
 
 | Get the n'th element of an array
@@ -85,40 +77,28 @@
 λ merge [xs ys] ({} xs Ω (+) ys Ω (+))
 
 | Get how many times an element appears in an array
-λ count [xs element] (
-    xs (element = dup ⇒ (1 swap) not ⇒ (0)) map sum
-)
+λ count [xs element] (xs (element = dup ⇒ (1 swap) not ⇒ (0)) map sum)
 
 | Apply fn(x) for each x of xs
 λ map [fn] ({} swap Ω (fn& +))
 
 | Return only elements for which f(e) returns true
-λ filter [xs pred] (
-    {} @out
-    xs Ω (dup pred& ⇒ (out swap + @out))
-    out
-)
+λ filter [xs pred] ({} @out xs Ω (dup pred& ⇒ (out swap + @out)) out)
 
 | Accumulate a result
 λ reduce [xs fn init] (init xs Ω (swap fn&))
 
 | Check if an array contains an element
-λ contains [xs element] (
-    0 @i β α ω (xs i get element = ⇒ (α) i inc @i i xs len <)
-)
+λ contains [xs element] (0 @i β α ω (xs i get element = ⇒ (α) i inc @i i xs len <))
 
 | Take n elements from the stack and put them into an array
-λ take [n] (
-    {} @xs
-    0 dup n < ω (swap xs + @xs inc dup n <)
-    xs reverse
-)
+λ take [n] ({} @xs 0 dup n < ω (swap xs + @xs inc dup n <) xs reverse)
 
 | Increase
-λ inc (1 +)
+λ inc (1+)
 
 | Decrease
-λ dec (1 -)
+λ dec (1-)
 
 | Returns the length of an array.
 λ len (0 swap Ω (drop inc))
@@ -127,8 +107,7 @@
 λ reverse [xs] (
     {} @ys
     xs len dup 1 over over > rot = + ω (
-        dec dup xs swap get
-        ys+ @ys dup 1 over over > rot = +
+        dec dup xs swap get ys+ @ys dup 1 over over > rot = +
     ) ys
 )
 
@@ -140,7 +119,7 @@
     {} @ys
     xs len @xs_len
     xs first 1 take @first_element
-    1 dup xs_len< ω (xs over get ys+ @ys inc dup xs_len<)
+    1 dup xs_len < ω (xs over get ys+ @ys inc dup xs_len <)
     ys first_element +
 )
 
@@ -166,59 +145,28 @@
 )
 
 | XOR gate
-λ xor (
-    2 take {
-        {{α α} β} {{β β} β}
-        {{β α} α} {{α β} α}
-    } match
-)
+λ xor (2 take {{{α α} β} {{β β} β} {{β α} α} {{α β} α}} match)
 
 | AND gate
-λ and (
-    2 take {
-        {{α α} α} {{β β} β}
-        {{β α} β} {{α β} β}
-    } match
-)
+λ and (2 take {{{α α} α} {{β β} β} {{β α} β} {{α β} β}} match)
 
 | OR gate
-λ or (
-    2 take {
-        {{α α} α} {{β β} β}
-        {{β α} α} {{α β} α}
-    } match
-)
+λ or (2 take {{{α α} α} {{β β} β} {{β α} α} {{α β} α}} match)
 
 | NOT gate
 λ not ({{α β} {β α}} match)
 
 | Get n!
-λ fact [n] (
-    1 0 dup n < ω (
-        inc swap over * swap dup n <
-    ) drop
-)
+λ fact [n] (1 0 dup n < ω (inc swap over * swap dup n <) drop)
 
 | Get sqrt(a)
-λ sqrt [a] (
-    a 0.5 * @y
-    0 0 α ω (
-        a y / y + 0.5 * @y inc dup 5<
-    ) drop2 y
-)
+λ sqrt [a] (a 0.5 * @y 0 0 α ω (a y / y + 0.5 * @y inc dup 5<) drop2 y)
 
 | Get log(base) n
-λ log [base n] (
-    0 n base gteq ω (
-        inc n base / @n
-        n base gteq
-    )
-)
+λ log [base n] (0 n base gteq ω (inc n base / dup @n base gteq))
 
 | Get base^exp
-λ pow [base exp] (
-    base exp 0 = not ω (base * exp dec dup @exp 0 = not) base /
-)
+λ pow [base exp] (base exp 0 = not ω (base * exp dec dup @exp 0 = not) base /)
 
 | Sum all the elements of an array
 λ sum ((+) 0 reduce)
@@ -236,7 +184,7 @@
 λ pom (dup not)
 
 | Invert a number
-λ inverse (1 /)
+λ inverse (1 swap /)
 
 | x^2
 λ square (dup *)
@@ -254,6 +202,6 @@
 λ odd (2 divides not)
 
 | Get a list of n random numbers
-λ unix_random_numbers [n mod] (
-    "/dev/random" n read (mod %) map
-)
+λ unix_random_numbers [n mod] ("/dev/random" n read (mod %) map)
+
+λ range [start end] ({} start end < ω (start + start inc @start start end <))

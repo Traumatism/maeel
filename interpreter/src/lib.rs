@@ -126,10 +126,6 @@ pub fn process_tokens<'a>(
                 );
             }
 
-            Token::IStart => {
-                parsing::iterables::parse_interval(tokens, data);
-            }
-
             Token::ArrayStart => {
                 parsing::iterables::parse_array(
                     tokens, data, globals,
@@ -336,7 +332,10 @@ pub fn process_tokens<'a>(
                 }
             }
 
-            Token::BlockStart | Token::ArrayEnd | Token::IEnd => {
+            Token::BlockStart
+            | Token::ArrayEnd
+            | Token::IStart
+            | Token::IEnd => {
                 panic!()
             }
 

@@ -48,7 +48,9 @@ impl Display for VMType
                     write!(f, "{}", x)?;
                 }
 
-                write!(f, "}}")
+                write!(f, "}}")?;
+
+                Ok(())
             }
         }
     }

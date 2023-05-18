@@ -10,7 +10,7 @@ flowchart LR
     Interpreter-.-Common
 ```
 
-Maeel is a {concatenating, esoteric, stack-based, interpreted} programming language.
+Maeel is a {concatenating, stack-based, interpreted} programming language.
 
 Important concepts:
 
