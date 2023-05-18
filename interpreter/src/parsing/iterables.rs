@@ -10,27 +10,6 @@ use common::{
 
 use std::slice::Iter;
 
-pub fn parse_interval<'a>(
-    tokens: &'a mut Iter<Token>,
-    data: &'a mut Stack,
-)
-{
-    let (
-        Some(Token::Integer(start)),
-        Some(Token::Integer(end))
-    ) = (tokens.next(), tokens.next()) else {
-        panic!()
-    };
-
-    assert_eq!(Some(&Token::IEnd), tokens.next());
-
-    data.push(VMType::Array(
-        (*start..*end)
-            .map(VMType::Integer)
-            .collect(),
-    ));
-}
-
 /// Parses and executes a code block if a certain condition is true.
 pub fn parse_array<'a>(
     tokens: &'a mut Iter<Token>,
