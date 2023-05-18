@@ -3,14 +3,8 @@
 | Recursive fibonacci
 λ fib [n] (
     n 1 lteq
-
-    | n<1 | n=1
-    dup ⇒ (n swap)
-
-    | n>1
-    not ⇒ (n dup dec fib swap dec dec fib +)
+        dup ⇒ (n swap)
+        not ⇒ (n dup dec fib swap dec dec fib +)
 )
-
-λ appromixate_phi (dup inc fib swap fib /)
 
 1 20 range (fib) map puts
