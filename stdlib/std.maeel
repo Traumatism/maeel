@@ -88,7 +88,7 @@
     {} @ys
     xs len dup 1 over2 > rot = + ω (
         dec dup xs swap get ys+ @ys dup 1 over2 > rot = +
-    ) ys swap drop
+    ) ys
 )
 
 λ push [x] ({x} swap Ω (+))
