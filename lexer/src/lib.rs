@@ -1,38 +1,5 @@
 use common::tokens::Token;
 
-/// Transform a single character into a token
-macro_rules! lex_single_char {
-    ($character:expr) => {
-        match $character {
-            '-' => Token::Sub,
-            '+' => Token::Add,
-            '*' => Token::Mul,
-            '/' => Token::Div,
-            '%' => Token::Mod,
-            '&' => Token::Call,
-            'ζ' => Token::Clear,
-            '→' | '⟶' | '@' => Token::Let,
-            'λ' => Token::ProcStart,
-            '⟹' | '⇒' => Token::If,
-            'ω' => Token::While,
-            'Ω' => Token::For,
-            'α' => Token::Bool(true),
-            'β' => Token::Bool(false),
-            '(' => Token::BlockStart,
-            ')' => Token::BlockEnd,
-            '{' => Token::ArrayStart,
-            '}' => Token::ArrayEnd,
-            '[' => Token::IStart,
-            ']' => Token::IEnd,
-            'Γ' => Token::Get,
-            '=' => Token::Eq,
-            '<' => Token::Lt,
-            '>' => Token::Gt,
-            character => panic!("{character}"),
-        }
-    };
-}
-
 fn extract_blocks(tokens: &[Token]) -> Vec<Token>
 {
     let mut output = Vec::new();
@@ -259,7 +226,35 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
             }
 
             // Lex a symbol
-            _ => tokens.push(lex_single_char!(character)),
+            _ => {
+                tokens.push(match character {
+                    '-' => Token::Sub,
+                    '+' => Token::Add,
+                    '*' => Token::Mul,
+                    '/' => Token::Div,
+                    '%' => Token::Mod,
+                    '&' => Token::Call,
+                    'ζ' => Token::Clear,
+                    '→' | '⟶' | '@' => Token::Let,
+                    'λ' => Token::ProcStart,
+                    '⟹' | '⇒' => Token::If,
+                    'ω' => Token::While,
+                    'Ω' => Token::For,
+                    'α' => Token::Bool(true),
+                    'β' => Token::Bool(false),
+                    '(' => Token::BlockStart,
+                    ')' => Token::BlockEnd,
+                    '{' => Token::ArrayStart,
+                    '}' => Token::ArrayEnd,
+                    '[' => Token::IStart,
+                    ']' => Token::IEnd,
+                    'Γ' => Token::Get,
+                    '=' => Token::Eq,
+                    '<' => Token::Lt,
+                    '>' => Token::Gt,
+                    character => panic!("{character}"),
+                })
+            }
         }
     }
 
