@@ -1,61 +1,18 @@
-# Overview
+## Introduction
 
-Maeel is an interpreted programming language built on top of Rust.
+maeel is a functionnal stack-oriented programming language that uses concatenation to parse instructions.
 
-## Concatenative and stack oriented
 
-Maeel use a concatenative syntax to understand what programmer want.
-Instructions are read from left to right and should be written using reverse
-polish notation. It also uses a stack.
-
-Traditional programming language: `(5*2)+4`
-
-In, maeel, it would written: `5 2 * 4 +`
-
-- push 5
-- push 2
-- multiply (=> push 5*2)
-- push 4
-- add (=> push 10+4)
-
-## Variables?
-
-Unfortunatly, you can't do everything using only basic stack functions. That why maeel also has a variable system.
-Assignment are fully dynamic:
+### Example
 
 ```
-4 → four
-44 → four
+"std" include
+
+2 3 + putsln
 ```
 
-- push 4
-- assign the STV (stack top value) to four
-- push 44
-- reassign the STV to four
+> First, we push the string `"std"` and then applies the `include` function. The include function takes the stack top element (must be a string, in this case), include the tokens and re-process it (=gather the functions...). Note that now the string `"std"` is not on the stack anymore, has it have been pop by the `include` function.
 
-There is also way to declare code block specific (=private) variables: simply add a _ at the begin of the variable name.
+> Then, we push integers `2` and `3` on the stack and apply the `+` binary operator. The `+` operator pops stack 2-topmosts values and push their sum.
 
-## Functionnal!
-
-Maeel uses only functions with no side effects: no structures, no classes.
-They are defined with the lambda letter followed by parameters, and code block.
-
-```
-λ foo [bar] (
-    bar print
-)
-
-"Hello, world\n" foo
-```
-
-Since stack is shared between functions, you can also declare non-args functions!
-
-```
-λ foo [] (print)
-
-"Hello, world\n" foo
-```
-
-## Looooops
-
-Maeel for/while loops implementation is pretty bad.
+> Finally, we use `putsln` (from `std` library) that pops the stack topmost value to stdout (To not be confused with `println` that just print the element without popping it).
