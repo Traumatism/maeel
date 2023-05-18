@@ -45,12 +45,22 @@ Finally, we re-assign `foo` with the value of `bar` and `putsln` it (will output
 
 maeel has many stack self-hosted (=implemented in it-self) functions.
 
-> $drop: (\lambda, \dots) \mapsto (\dots)$
+### $drop: (\lambda, \dots) \mapsto (\dots)$
 
-> $dup: (\lambda, \dots) \mapsto (\lambda, \lambda, \dots)$
+> Remove the stack's top element
 
-> $swap: (\lambda_0, \lambda_1, \dots) \mapsto (\lambda_1, \lambda_0, \dots)$
+### $dup: (\lambda, \dots) \mapsto (\lambda, \lambda, \dots)$
 
-> $rot: (\lambda_0, \lambda_1, \lambda_2, \dots) \mapsto (\lambda_2, \lambda_0, \lambda_1, \dots)$
+> Duplicate the stack's top element
 
-> $over: (\lambda_0, \lambda_1, \dots) \mapsto (\lambda_1, \lambda_0, \lambda_1, \dots)$
+### $swap: (\lambda_0, \lambda_1, \dots) \mapsto (\lambda_1, \lambda_0, \dots)$
+
+> Exchange the stack's two top elements
+
+### $rot: (\lambda_0, \lambda_1, \lambda_2, \dots) \mapsto (\lambda_2, \lambda_0, \lambda_1, \dots)$
+
+> Move the element under the element under the top element on the top of the stack
+
+### $over: (\lambda_0, \lambda_1, \dots) \mapsto (\lambda_1, \lambda_0, \lambda_1, \dots)$
+
+> Duplicate the element under the top element on the top of the stack
