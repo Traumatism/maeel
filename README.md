@@ -1,4 +1,4 @@
-# $$\text{The maeel programming language}$$
+# $$\fbox{\text{The maeel programming language}}$$
 
 [Documentation is here](docs/README.md)
 
