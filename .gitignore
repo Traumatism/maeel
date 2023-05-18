@@ -5,3 +5,9 @@ maeel
 maeel.tmp
 Cargo.lock
 *.tex
+*.pdf
+*.log
+*.fls
+*.gz
+*.aux
+*.fdb_latexmk

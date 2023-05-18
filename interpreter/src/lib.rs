@@ -1,5 +1,3 @@
-#![allow(clippy::read_zero_byte_vec)]
-
 mod parsing;
 
 use common::{
@@ -155,6 +153,10 @@ pub fn process_tokens<'a>(
 
             Token::Add => {
                 perform_binary_op!(data, +)
+            }
+
+            Token::Sub => {
+                perform_binary_op!(data, -)
             }
 
             Token::Mul => {

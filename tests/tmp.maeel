@@ -1,0 +1,3 @@
+"std" include
+
+{"a" "b"} square puts

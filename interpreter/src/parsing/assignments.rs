@@ -34,6 +34,6 @@ pub fn parse_assignment<'a>(
             };
         }
 
-        _ => panic!(),
+        o => panic!("{o:?}"),
     }
 }
