@@ -1,35 +1,34 @@
 | MiniMaeel, a programming language made with maeel
-{"std" "array" "maths" "convert" "logic" "stack"} Ω(include)
+
+"std" include
 
 | MiniMaeel interpreter
 λ interpret [program stack] (
     | Interpreter constants part
     {{"a" (+)} {"s" (-)} {"m" (*)} {"d" (/)} {"e" (=)}} @OP_MAP
- 
+
     | Interpreter part
     program string2array Ω (
-        @op
+        dup " " = not ⇒ (
+            @op
 
-        | Grab 'Stack' two top elements
-        stack first @a
-        stack second @b
+            | Grab 'Stack' two top elements
+            stack first @a
+            stack second @b
 
-        | Remove them from 'Stack' and update 'Stack'
-        stack pop last pop last @stack
+            stack pop last pop last @stack  | Remove them from 'Stack' and update 'Stack'
+            a b                             | Push a and b on the stack
+            op OP_MAP match &               | Convert the operator into a function (and execute it)
+            stack swap push @stack          | Push the output to 'Stack' and update 'Stack'
 
-        | Push a and b on the stack
-        a b
-
-        | Convert the operator into a function (and execute it)
-        op OP_MAP match &
-
-        | Push the output to 'Stack' and update 'Stack'
-        stack swap push @stack
-        clear
+            clear
+        )
     )
 
     stack
-
 )
 
-"amade" {5 5 3 100 10 13} interpret println
+"   a m   a  d  e "
+{ 5 5 3 100 10 13 }
+
+interpret puts
