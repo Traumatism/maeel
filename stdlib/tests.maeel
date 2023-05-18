@@ -34,7 +34,7 @@
 {1 1 2} 3 count                         0                           "count #3"                  assert_eq
 {1 2 3} (1+) map                        {2 3 4}                     "map #1"                    assert_eq
 {1 2 3 4} (even) filter                 {2 4}                       "filter #1"                 assert_eq
-[1 12] (odd) filter                     {1 3 5 7 9 11}              "filter #2"                 assert_eq
+1 12 range (odd) filter                 {1 3 5 7 9 11}              "filter #2"                 assert_eq
 {1 2 3 4 5} (+) 0 reduce                15                          "reduce #1"                 assert_eq
 {1 2 3} 1 contains                      α                           "contains #1"               assert_eq
 {1 2 3} 4 contains                      β                           "contains #2"               assert_eq

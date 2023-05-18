@@ -1,34 +1,33 @@
-| Drop the stack top element
 λ drop (@_)
 
-| Drop the 2 stack top elements
-λ drop2 (drop drop)
-
-| Drop the 3 stack top elements
-λ drop3 (drop drop2)
-
-| Duplicate the stack top element
 λ dup [a] (a a)
 
-| Swap the two stack top elements
 λ swap [a b] (b a)
 
-| Push the element over the stack top element
 λ over [a b] (a b a)
 
-| Rotate the three stack top elements
 λ rot [a b c] (c a b)
 
-| Clear the stack
+λ drop2 (drop drop)
+
+λ drop3 (drop drop2)
+
+λ dup2 (dup dup)
+
+λ dup3 (dup dup2)
+
+λ over2 (over over)
+
+λ over3 (over over2)
+
+λ rot2 (rot rot)
+
 λ clear (ζ)
 
-| Gather user input
-λ unix_input ({} α ω ("/dev/stdin" 1 read first dup @_+ _ 10= not))
+λ unix_input ({} α ω ("/dev/stdin" 1 read first dup @_ + _ 10 = not))
 
-| Print a message and exit
 λ panic ("PANIC: %" format putsln 1 0 %)
 
-| Format string
 λ format [str] (
     str len @length
     "" @output
@@ -44,13 +43,10 @@
     output
 )
 
-| Pop and print out data
 λ puts (print drop)
 
-| Puts but with a newline
 λ putsln ("%\n" format puts)
 
-| Putsln but doesn't pop
 λ println ("%\n" format print)
 
 λ assert_eq [value should_be content] (
@@ -58,150 +54,104 @@
     "% (%)" format putsln not ⇒ ("" panic)
 )
 
-| Get the n'th element of an array
 λ get [] (Γ)
 
-| Get the first element of an array
 λ first [] (0 get)
 
-| Get the second element of an array
 λ second [] (1 get)
 
-| Get the third element of an array
 λ third [] (3 get)
 
-| Get the last element of an array
-λ last [xs] (xs xs len 1 - get)
+λ last (dup len dec get)
 
-| Merge two arrays
-λ merge [xs ys] ({} xs Ω (+) ys Ω (+))
+λ merge ({} rot2 Ω (+) swap Ω (+))
 
-| Get how many times an element appears in an array
-λ count [xs element] (xs (element = dup ⇒ (1 swap) not ⇒ (0)) map sum)
+λ count [xs x] (xs (x = dup ⇒ (1 swap) not ⇒ (0)) map sum)
 
-| Apply fn(x) for each x of xs
 λ map [fn] ({} swap Ω (fn& +))
 
-| Return only elements for which f(e) returns true
 λ filter [xs pred] ({} @out xs Ω (dup pred& ⇒ (out swap + @out)) out)
 
-| Accumulate a result
 λ reduce [xs fn init] (init xs Ω (swap fn&))
 
-| Check if an array contains an element
-λ contains [xs element] (0 @i β α ω (xs i get element = ⇒ (α) i inc @i i xs len <))
+λ contains [xs x] (0 @i β α ω (xs i get x = ⇒ (drop α) i inc @i i xs len <))
 
-| Take n elements from the stack and put them into an array
-λ take [n] ({} @xs 0 dup n < ω (swap xs + @xs inc dup n <) xs reverse)
+λ take [n] ({} @xs 0 dup n < ω (swap xs + @xs inc dup n <) xs reverse rot drop2)
 
-| Increase
 λ inc (1+)
 
-| Decrease
 λ dec (1-)
 
-| Returns the length of an array.
 λ len (0 swap Ω (drop inc))
 
-| Returns a reversed copy of an array.
 λ reverse [xs] (
     {} @ys
-    xs len dup 1 over over > rot = + ω (
-        dec dup xs swap get ys+ @ys dup 1 over over > rot = +
-    ) ys
+    xs len dup 1 over2 > rot = + ω (
+        dec dup xs swap get ys+ @ys dup 1 over2 > rot = +
+    ) ys swap drop
 )
 
-| Push an element at the begin of an array.
-λ push [element] ({element} swap Ω (+))
+λ push [x] ({x} swap Ω (+))
 
-| Split an array and its first element.
 λ pop [xs] (
     {} @ys
     xs len @xs_len
-    xs first 1 take @first_element
+    xs first 1 take @y
     1 dup xs_len < ω (xs over get ys+ @ys inc dup xs_len <)
-    ys first_element +
+    ys y + swap drop
 )
 
-| Convert a string into an array of chars
 λ string2array ({} swap Ω (+))
 
-| Convert an array into a string
 λ array2string ("" swap Ω (+))
 
-| Convert a boolean into a string
 λ bool2string ({{α "true"} {β "false"}} match)
 
-| Perform literal matching
 λ match (
-    swap @value {} swap Ω (
-        dup first swap second @fn
-        value = ⇒ (fn+)
-    )
-
-    dup len 0 = ⇒ ("Unknown case!" panic)
-
-    last
+    swap @value {} swap Ω (dup first swap second @fn value = ⇒ (fn+))
+    dup len null ⇒ ("Unknown case!" panic) last
 )
 
-| XOR gate
 λ xor (2 take {{{α α} β} {{β β} β} {{β α} α} {{α β} α}} match)
 
-| AND gate
 λ and (2 take {{{α α} α} {{β β} β} {{β α} β} {{α β} β}} match)
 
-| OR gate
 λ or (2 take {{{α α} α} {{β β} β} {{β α} α} {{α β} α}} match)
 
-| NOT gate
 λ not ({{α β} {β α}} match)
 
-| Get n!
 λ fact [n] (1 0 dup n < ω (inc swap over * swap dup n <) drop)
 
-| Get sqrt(a)
 λ sqrt [a] (a 0.5 * @y 0 0 α ω (a y / y + 0.5 * @y inc dup 5<) drop2 y)
 
-| Get log(base) n
 λ log [base n] (0 n base gteq ω (inc n base / dup @n base gteq))
 
-| Get base^exp
-λ pow [base exp] (base exp 0 = not ω (base * exp dec dup @exp 0 = not) base /)
+λ pow [base exp] (base exp null not ω (base * exp dec dup @exp null not) base /)
 
-| Sum all the elements of an array
 λ sum ((+) 0 reduce)
 
-| Multiply all the elements of an array
 λ product ((*) 1 reduce)
 
-| <= operator
-λ lteq (over over < rot = +)
+λ lteq (over2 < rot = +)
 
-| >= operator
-λ gteq (over over > rot = +)
+λ gteq (over2 > rot = +)
 
-| Plus or minus
 λ pom (dup not)
 
-| Invert a number
 λ inverse (1 swap /)
 
-| x^2
 λ square (dup *)
 
-| x^3
 λ cube (dup square *)
 
-| n is congruent to 0 mod m
-λ divides (% 0 =)
+λ divides (% null)
 
-| n is congruent to 0 mod 2
+λ null (0 =)
+
 λ even (2 divides)
 
-| n is congruent to 1 mod 2
 λ odd (2 divides not)
 
-| Get a list of n random numbers
 λ unix_random_numbers [n mod] ("/dev/random" n read (mod %) map)
 
 λ range [start end] ({} start end < ω (start + start inc @start start end <))
