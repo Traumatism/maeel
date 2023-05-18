@@ -41,3 +41,16 @@ As an other example, we push `2` and `bar` content (`123`), pop them, push their
 
 Finally, we re-assign `foo` with the value of `bar` and `putsln` it (will output `246`).
 
+# Stack functions
+
+maeel has many stack self-hosted (=implemented in it-self) functions.
+
+> $drop: (\lambda, \dots) \mapsto (\dots)$
+
+> $dup: (\lambda, \dots) \mapsto (\lambda, \lambda, \dots)$
+
+> $swap: (\lambda_0, \lambda_1, \dots) \mapsto (\lambda_1, \lambda_0, \dots)$
+
+> $rot: (\lambda_0, \lambda_1, \lambda_2, \dots) \mapsto (\lambda_2, \lambda_0, \lambda_1, \dots)$
+
+> $over: (\lambda_0, \lambda_1, \dots) \mapsto (\lambda_1, \lambda_0, \lambda_1, \dots)$
