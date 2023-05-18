@@ -8,9 +8,7 @@
     dup ⇒ (n swap)
 
     | n>1
-    not ⇒ (
-        n dup dec fib swap dec dec fib +
-    )
+    not ⇒ (n dup dec fib swap dec dec fib +)
 )
 
 λ appromixate_phi (dup inc fib swap fib /)
