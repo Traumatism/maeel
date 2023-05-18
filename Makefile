@@ -6,7 +6,7 @@ install:
 
 vscode:
 	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && \
-	cp -r maeel_syntax_highlighting ~/.vscode/extensions/maeel-syntax-highlighting
+	cp -r ide ~/.vscode/extensions/maeel-syntax-highlighting
 
 test:
 	cargo build -q && mv target/debug/maeel ./maeel.tmp && \
