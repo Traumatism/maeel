@@ -1,157 +1,159 @@
-λ drop (@_)
+fun drop (-> _)
 
-λ dup [a] (a a)
+fun dup [a] (a a)
 
-λ swap [a b] (b a)
+fun swap [a b] (b a)
 
-λ over [a b] (a b a)
+fun over [a b] (a b a)
 
-λ rot [a b c] (c a b)
+fun rot [a b c] (c a b)
 
-λ drop2 (drop drop)
+fun drop2 (drop drop)
 
-λ drop3 (drop drop2)
+fun drop3 (drop drop2)
 
-λ dup2 (dup dup)
+fun dup2 (dup dup)
 
-λ dup3 (dup dup2)
+fun dup3 (dup dup2)
 
-λ over2 (over over)
+fun over2 (over over)
 
-λ over3 (over over2)
+fun over3 (over over2)
 
-λ rot2 (rot rot)
+fun rot2 (rot rot)
 
-λ clear (ζ)
+fun clear (ζ)
 
-λ unix_input ({} α ω ("/dev/stdin" 1 read first dup @_ + _ 10 = not))
+fun unix_input ({} α ω ("/dev/stdin" 1 read first dup -> _ + _ 10 = not))
 
-λ panic ("PANIC: %" format putsln 1 0 %)
+fun panic ("PANIC: %" format putsln 1 0 %)
 
-λ format [str] (
-    str len @length
-    "" @output
-    0 @sp
+fun format [str] (
+    str len -> length
+    "" -> output
+    0 -> sp
 
-    sp length < ω (
-        str sp get @char
-        char "%" =     ⇒ (output swap+ @output)
-        char "%" = not ⇒ (output char+ @output)
-        sp 1 + dup @sp length <
+    sp length < while (
+        str sp get -> char
+        char "%" =     => (output swap+ -> output)
+        char "%" = not => (output char+ -> output)
+        sp 1 + dup -> sp length <
     )
 
     output
 )
 
-λ puts (print drop)
+fun puts (print drop)
 
-λ putsln ("%\n" format puts)
+fun putsln ("%\n" format puts)
 
-λ println ("%\n" format print)
+fun println ("%\n" format print)
 
-λ assert_eq [value should_be content] (
+fun assert_eq [value should_be content] (
     should_be value = dup bool2string content
-    "% (%)" format putsln not ⇒ ("" panic)
+    "% (%)" format putsln not => ("" panic)
 )
 
-λ get [] (Γ)
+fun get [] (Γ)
 
-λ first [] (0 get)
+fun first [] (0 get)
 
-λ second [] (1 get)
+fun second [] (1 get)
 
-λ third [] (3 get)
+fun third [] (3 get)
 
-λ last (dup len dec get)
+fun last (dup len dec get)
 
-λ merge ({} rot2 Ω (+) swap Ω (+))
+fun merge ({} rot2 for (+) swap for (+))
 
-λ count [xs x] (xs (x = dup ⇒ (1 swap) not ⇒ (0)) map sum)
+fun count [xs x] (xs (x = dup => (1 swap) not => (0)) map sum)
 
-λ map [fn] ({} swap Ω (fn& +))
+fun map [fn] ({} swap for (fn& +))
 
-λ filter [xs pred] ({} @out xs Ω (dup pred& ⇒ (out swap + @out)) out)
+fun filter [xs pred] ({} -> out xs for (dup pred& => (out swap + -> out)) out)
 
-λ reduce [xs fn init] (init xs Ω (swap fn&))
+fun reduce [xs fn init] (init xs for (swap fn&))
 
-λ contains [xs x] (0 @i β α ω (xs i get x = ⇒ (drop α) i inc @i i xs len <))
+fun contains [xs x] (0 -> i β α while (xs i get x = => (drop α) i inc -> i i xs len <))
 
-λ take [n] ({} @xs 0 dup n < ω (swap xs + @xs inc dup n <) xs reverse rot drop2)
+fun take [n] ({} -> xs 0 dup n < while (swap xs + -> xs inc dup n <) xs reverse rot drop2)
 
-λ inc (1+)
+fun inc (1+)
 
-λ dec (1-)
+fun dec (1-)
 
-λ len (0 swap Ω (drop inc))
+fun len (0 swap for (drop inc))
 
-λ reverse [xs] (
-    {} @ys
-    xs len dup 1 over2 > rot = + ω (
-        dec dup xs swap get ys+ @ys dup 1 over2 > rot = +
+fun reverse [xs] (
+    {} -> ys
+    xs len dup 1 over2 > rot = + while (
+        dec dup xs swap get ys+ -> ys dup 1 over2 > rot = +
     ) ys
 )
 
-λ push [x] ({x} swap Ω (+))
+fun push [x] ({x} swap for (+))
 
-λ pop [xs] (
-    {} @ys
-    xs len @xs_len
-    xs first 1 take @y
-    1 dup xs_len < ω (xs over get ys+ @ys inc dup xs_len <)
+fun pop [xs] (
+    {} -> ys
+    xs len -> xs_len
+    xs first 1 take -> y
+    1 dup xs_len < while (xs over get ys+ -> ys inc dup xs_len <)
     ys y + swap drop
 )
 
-λ string2array ({} swap Ω (+))
+fun string2array ({} swap for (+))
 
-λ array2string ("" swap Ω (+))
+fun array2string ("" swap for (+))
 
-λ bool2string ({{α "true"} {β "false"}} match)
+fun bool2string ({{α "true"} {β "false"}} match)
 
-λ match (
-    swap @value {} swap Ω (dup first swap second @fn value = ⇒ (fn+))
-    dup len null ⇒ ("Unknown case!" panic) last
+fun match (
+    swap -> value
+    {} swap
+    for (dup first swap second -> fn value = => (fn+))
+    dup len null => ("Unknown case!" panic) last
 )
 
-λ xor (2 take {{{α α} β} {{β β} β} {{β α} α} {{α β} α}} match)
+fun xor (2 take {{{α α} β} {{β β} β} {{β α} α} {{α β} α}} match)
 
-λ and (2 take {{{α α} α} {{β β} β} {{β α} β} {{α β} β}} match)
+fun and (2 take {{{α α} α} {{β β} β} {{β α} β} {{α β} β}} match)
 
-λ or (2 take {{{α α} α} {{β β} β} {{β α} α} {{α β} α}} match)
+fun or (2 take {{{α α} α} {{β β} β} {{β α} α} {{α β} α}} match)
 
-λ not ({{α β} {β α}} match)
+fun not ({{α β} {β α}} match)
 
-λ fact [n] (1 0 dup n < ω (inc swap over * swap dup n <) drop)
+fun fact [n] (1 0 dup n < while (inc swap over * swap dup n <) drop)
 
-λ sqrt [a] (a 0.5 * @y 0 0 α ω (a y / y + 0.5 * @y inc dup 5<) drop2 y)
+fun sqrt [a] (a 0.5 * -> y 0 0 α while (a y / y + 0.5 * -> y inc dup 5<) drop2 y)
 
-λ log [base n] (0 n base gteq ω (inc n base / dup @n base gteq))
+fun log [base n] (0 n base gteq while (inc n base / dup -> n base gteq))
 
-λ pow [base exp] (base exp null not ω (base * exp dec dup @exp null not) base /)
+fun pow [base exp] (base exp null not while (base * exp dec dup -> exp null not) base /)
 
-λ sum ((+) 0 reduce)
+fun sum ((+) 0 reduce)
 
-λ product ((*) 1 reduce)
+fun product ((*) 1 reduce)
 
-λ lteq (over2 < rot = +)
+fun lteq (over2 < rot = +)
 
-λ gteq (over2 > rot = +)
+fun gteq (over2 > rot = +)
 
-λ pom (dup not)
+fun pom (dup not)
 
-λ inverse (1 swap /)
+fun inverse (1 swap /)
 
-λ square (dup *)
+fun square (dup *)
 
-λ cube (dup square *)
+fun cube (dup square *)
 
-λ divides (% null)
+fun divides (% null)
 
-λ null (0 =)
+fun null (0 =)
 
-λ even (2 divides)
+fun even (2 divides)
 
-λ odd (2 divides not)
+fun odd (2 divides not)
 
-λ unix_random_numbers [n mod] ("/dev/random" n read (mod %) map)
+fun unix_random_numbers [n mod] ("/dev/random" n read (mod %) map)
 
-λ range [start end] ({} start end < ω (start + start inc @start start end <))
+fun range [start end] ({} start end < while (start + start inc -> start start end <))

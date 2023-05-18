@@ -62,7 +62,9 @@
 7 fact                                  5040                        "factorial #1"              assert_eq
 
 "foo" @ foo
-λmight_change_foo_a("bar" @ foo)
+
+fun might_change_foo_a ("bar" @ foo)
+
 ("bar" @ foo) @ might_change_foo_b
 
 might_change_foo_a

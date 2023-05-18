@@ -4,31 +4,30 @@ use common::tokens::Token;
 macro_rules! lex_single_char {
     ($character:expr) => {
         match $character {
-            '!' => vec![Token::Integer(-1), Token::Mul],
-            '-' => vec![Token::Integer(-1), Token::Mul, Token::Add],
-            '+' => vec![Token::Add],
-            '*' => vec![Token::Mul],
-            '/' => vec![Token::Div],
-            '%' => vec![Token::Mod],
-            '&' => vec![Token::Call],
-            'ζ' => vec![Token::Clear],
-            '→' | '⟶' | '@' => vec![Token::Let],
-            'λ' => vec![Token::ProcStart],
-            '⟹' | '⇒' => vec![Token::If],
-            'ω' => vec![Token::While],
-            'Ω' => vec![Token::For],
-            'α' => vec![Token::Bool(true)],
-            'β' => vec![Token::Bool(false)],
-            '(' => vec![Token::BlockStart],
-            ')' => vec![Token::BlockEnd],
-            '{' => vec![Token::ArrayStart],
-            '}' => vec![Token::ArrayEnd],
-            '[' => vec![Token::IStart],
-            ']' => vec![Token::IEnd],
-            'Γ' => vec![Token::Get],
-            '=' => vec![Token::Eq],
-            '<' => vec![Token::Lt],
-            '>' => vec![Token::Gt],
+            '-' => Token::Sub,
+            '+' => Token::Add,
+            '*' => Token::Mul,
+            '/' => Token::Div,
+            '%' => Token::Mod,
+            '&' => Token::Call,
+            'ζ' => Token::Clear,
+            '→' | '⟶' | '@' => Token::Let,
+            'λ' => Token::ProcStart,
+            '⟹' | '⇒' => Token::If,
+            'ω' => Token::While,
+            'Ω' => Token::For,
+            'α' => Token::Bool(true),
+            'β' => Token::Bool(false),
+            '(' => Token::BlockStart,
+            ')' => Token::BlockEnd,
+            '{' => Token::ArrayStart,
+            '}' => Token::ArrayEnd,
+            '[' => Token::IStart,
+            ']' => Token::IEnd,
+            'Γ' => Token::Get,
+            '=' => Token::Eq,
+            '<' => Token::Lt,
+            '>' => Token::Gt,
             character => panic!("{character}"),
         }
     };
@@ -206,7 +205,15 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                     }
                 );
 
-                tokens.push(Token::Identifier(content))
+                let token = match content.as_str() {
+                    "fun" => Token::ProcStart,
+                    "while" => Token::While,
+                    "for" => Token::For,
+                    "then" => Token::If,
+                    _ => Token::Identifier(content),
+                };
+
+                tokens.push(token)
             }
 
             // Lex integers
@@ -231,12 +238,28 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                 );
             }
 
-            // Lex a symbol
-            _ => {
-                lex_single_char!(character)
-                    .iter()
-                    .for_each(|token| tokens.push(token.clone()))
+            '=' => {
+                match characters.peek() {
+                    Some('>') => {
+                        tokens.push(Token::If);
+                        characters.next();
+                    }
+                    _ => tokens.push(Token::Eq),
+                }
             }
+
+            '-' => {
+                match characters.peek() {
+                    Some('>') => {
+                        tokens.push(Token::Let);
+                        characters.next();
+                    }
+                    _ => tokens.push(Token::Sub),
+                }
+            }
+
+            // Lex a symbol
+            _ => tokens.push(lex_single_char!(character)),
         }
     }
 

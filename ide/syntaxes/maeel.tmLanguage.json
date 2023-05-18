@@ -35,7 +35,7 @@
 			]
 		},
 		{
-			"match": "(λ)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
+			"match": "(λ|fun)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
 			"captures": {
 				"1": {
 					"name": "keyword.control.maeel"
@@ -47,7 +47,7 @@
 		},
 		{
 			"name": "keyword.control.maeel",
-			"match": "(Ω|⟹|⇒|ω)"
+			"match": "(Ω|⟹|⇒|=>|\\->|ω|\\bwhile\\b|\\bfor\\b|\\bthen\\b)"
 		},
 		{
 			"match": "(→|⟶|@)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",

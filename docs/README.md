@@ -49,27 +49,3 @@ Then, we push the content of `foo` (`"hello"`) on the stack and `putsln` it.
 As an other example, we push `2` and `bar` content (`123`), pop them, push their product and `putsln` it
 
 Finally, we re-assign `foo` with the value of `bar` and `putsln` it (will output `246`).
-
-# Stack functions
-
-maeel has many stack self-hosted (=implemented in it-self) functions.
-
-### $drop: (\lambda, \dots) \mapsto (\dots)$
-
-> Remove the stack's top element
-
-### $dup: (\lambda, \dots) \mapsto (\lambda, \lambda, \dots)$
-
-> Duplicate the stack's top element
-
-### $swap: (\lambda_0, \lambda_1, \dots) \mapsto (\lambda_1, \lambda_0, \dots)$
-
-> Exchange the stack's two top elements
-
-### $rot: (\lambda_0, \lambda_1, \lambda_2, \dots) \mapsto (\lambda_2, \lambda_0, \lambda_1, \dots)$
-
-> Move the element under the element under the top element on the top of the stack
-
-### $over: (\lambda_0, \lambda_1, \dots) \mapsto (\lambda_1, \lambda_0, \lambda_1, \dots)$
-
-> Duplicate the element under the top element on the top of the stack
