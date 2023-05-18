@@ -1,6 +1,6 @@
 ## Introduction
 
-maeel is a functionnal stack-oriented programming language that uses concatenation to parse instructions.
+maeel is a functional stack-oriented programming language that uses concatenation to parse instructions.
 
 ### Example
 
