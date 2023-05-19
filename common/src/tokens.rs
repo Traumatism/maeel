@@ -1,12 +1,12 @@
 #[derive(Clone, Debug, PartialEq)]
-pub enum Token
-{
+pub enum Token {
     Block(Vec<Token>),
     Str(String),
     Identifier(String),
     Integer(i64),
     Float(f64),
     Bool(bool),
+    CompilerInstruction(String),
     Call,
     Add,
     Sub,

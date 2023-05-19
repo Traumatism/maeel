@@ -1,12 +1,6 @@
-use super::super::{
-    Stack,
-    VariablesRegistry,
-};
+use super::super::{Stack, VariablesRegistry};
 
-use common::{
-    tokens::Token,
-    vmtypes::VMType,
-};
+use common::{tokens::Token, vmtypes::VMType};
 
 use std::slice::Iter;
 
@@ -15,8 +9,7 @@ pub fn parse_array<'a>(
     tokens: &'a mut Iter<Token>,
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
-)
-{
+) {
     let mut array = Vec::default();
 
     loop {
@@ -30,20 +23,16 @@ pub fn parse_array<'a>(
 
             Token::Str(value) => array.push(VMType::Str(value)),
 
-            Token::Integer(value) => {
-                array.push(VMType::Integer(value))
-            }
+            Token::Integer(value) => array.push(VMType::Integer(value)),
 
             Token::Float(value) => array.push(VMType::Float(value)),
 
             Token::Bool(value) => array.push(VMType::Bool(value)),
 
-            Token::Identifier(identifier) => {
-                match globals.get(&identifier) {
-                    Some(value) => array.push(value.clone()),
-                    None => panic!(),
-                }
-            }
+            Token::Identifier(identifier) => match globals.get(&identifier) {
+                Some(value) => array.push(value.clone()),
+                None => panic!(),
+            },
 
             Token::Block(expr) => {
                 array.push(VMType::Procedure(expr));

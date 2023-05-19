@@ -1,15 +1,6 @@
-use super::super::{
-    process_tokens,
-    next,
-    Stack,
-    ProceduresRegistry,
-    VariablesRegistry,
-};
+use super::super::{next, process_tokens, ProceduresRegistry, Stack, VariablesRegistry};
 
-use common::{
-    tokens::Token,
-    vmtypes::VMType,
-};
+use common::{tokens::Token, vmtypes::VMType};
 
 use std::slice::Iter;
 
@@ -19,21 +10,13 @@ pub fn parse_while<'a>(
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
     procs: &'a mut ProceduresRegistry,
-)
-{
+) {
     // Code block to execute while P(x) is true
     let tokens = next!(tokens, "block");
 
     // This is why we need to push P(x) at the end of the code block
     while let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(
-            "while_loop",
-            &mut tokens.iter(),
-            data,
-            globals,
-            procs,
-        )
-        .unwrap();
+        process_tokens("while_loop", &mut tokens.iter(), data, globals, procs).unwrap();
     }
 }
 
@@ -43,8 +26,7 @@ pub fn parse_for<'a>(
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
     procs: &'a mut ProceduresRegistry,
-)
-{
+) {
     // Code block to execute for each value of L
     let tokens = next!(tokens, "block");
 
@@ -53,34 +35,17 @@ pub fn parse_for<'a>(
             for element in xs {
                 data.push(element);
 
-                process_tokens(
-                    "for_loop",
-                    &mut tokens.iter(),
-                    data,
-                    globals,
-                    procs,
-                )
-                .unwrap();
+                process_tokens("for_loop", &mut tokens.iter(), data, globals, procs).unwrap();
             }
         }
 
         Some(VMType::Str(string)) => {
-            let xs = string
-                .chars()
-                .map(String::from)
-                .collect::<Vec<String>>();
+            let xs = string.chars().map(String::from).collect::<Vec<String>>();
 
             for element in xs {
                 data.push(VMType::Str(element));
 
-                process_tokens(
-                    "for_loop",
-                    &mut tokens.iter(),
-                    data,
-                    globals,
-                    procs,
-                )
-                .unwrap();
+                process_tokens("for_loop", &mut tokens.iter(), data, globals, procs).unwrap();
             }
         }
 

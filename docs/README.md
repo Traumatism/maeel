@@ -32,13 +32,13 @@ maeel is using a dynamic model for variables management.
 ### Example
 
 ```
-"hello" @foo
-123 @bar
+"hello" -> foo
+123 -> bar
 
 foo putsln
 2 bar * putsln
 
-bar @foo
+bar -> foo
 
 foo putsln
 ```

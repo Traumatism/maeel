@@ -1,83 +1,381 @@
-fun drop         (-> _)
-fun dup  [a]     (a a)
-fun swap [a b]   (b a)
-fun over [a b]   (a b a)
-fun rot  [a b c] (c a b)
+fun drop
+(
+    -> _
+)
 
-fun drop2 (drop drop)
-fun drop3 (drop drop2)
-fun dup2  (dup dup)
-fun dup3  (dup dup2)
-fun over2 (over over)
-fun over3 (over over2)
-fun rot2  (rot rot)
+fun dup [a]
+(
+    a a
+)
 
-fun format  ("" -> o for (-> char char "%" = => (o swap +) char "%" = not => (o char +) -> o) o)
-fun puts    (print drop)
-fun putsln  ("%\n" format puts)
-fun println ("%\n" format print)
+fun swap [a b]
+(
+    b a
+)
 
-fun map    [fn]         ({} swap for (fn& +))
-fun filter [pred]       ({} -> ys for (dup pred& => (ys swap + -> ys)) ys)
-fun reduce [xs fn init] (init xs for (swap fn&))
+fun over [a b]
+(
+    a b a
+)
 
-fun match (swap -> value {} swap for (dup first swap second -> fn value = => (fn+)) dup len null => ("Unknown case!" panic) last)
+fun rot [a b c]
+(
+    c a b
+)
 
-fun xor (2 take {{{α α} β} {{β β} β} {{β α} α} {{α β} α}} match)
-fun and (2 take {{{α α} α} {{β β} β} {{β α} β} {{α β} β}} match)
-fun or  (2 take {{{α α} α} {{β β} β} {{β α} α} {{α β} α}} match)
-fun not ({{α β} {β α}} match)
+fun drop2 (
+    drop drop
+)
 
-fun panic ("PANIC: %" format putsln 1 0 %)
+fun drop3
+(
+    drop drop2
+)
 
-fun unix_input ({} α while ("/dev/stdin" 1 read first dup -> _ + _ 10 = not))
+fun dup2
+(
+    dup dup
+)
 
-fun unix_random_numbers [n mod] ("/dev/random" n read (mod %) map)
+fun dup3
+(
+    dup dup2
+)
 
-fun assert_eq (rot = dup bool2string rot2 "% (%)" format putsln not => ("" panic))
+fun over2
+(
+    over over
+)
 
-fun sum     ((+) 0 reduce)
-fun product ((*) 1 reduce)
-fun null    (0=)
-fun inc     (1+)
-fun dec     (1-)
-fun divides (% null)
-fun even    (2 divides)
-fun odd     (2 divides not)
-fun pom     (dup not)
-fun inverse (1 swap /)
-fun square  (dup *)
-fun cube    (dup square *)
-fun lteq    (over2 < rot = +)
-fun gteq    (over2 > rot = +)
+fun over3
+(
+    over over2
+)
 
-fun len    (0 swap for (drop inc))
-fun first  (0 get)
-fun second (1 get)
-fun third  (3 get)
-fun last   (dup len dec get)
+fun rot2
+(
+    rot rot
+)
 
-fun merge ({} rot2 for (+) swap for (+))
-fun count [xs x] (xs (x = dup => (1 swap) not => (0)) map sum)
-fun contains [xs x] (0 -> i β α while (xs i get x = => (drop α) i inc -> i i xs len <))
-fun reverse [xs] ({} -> ys xs len dup 1 gteq while (dec dup xs swap get ys+ -> ys dup 1 gteq) ys)
-fun pop [xs] ({} -> ys xs len -> xs_len xs first 1 take -> y 1 dup xs_len < while (xs over get ys+ -> ys inc dup xs_len <) ys y + swap drop)
-fun push [x] ({x} swap for (+))
-fun take [n] ({} -> xs 0 dup n < while (swap xs + -> xs inc dup n <) xs reverse rot drop2)
+fun format
+(
+    | Output string
+    "" -> o
 
-fun string2array ({} swap for (+))
-fun array2string ("" swap for (+))
-fun bool2string ({{α "true"} {β "false"}} match)
+    for
+    (
+        -> char
 
-fun fact [n] (
+        | If the char is a %, push the
+        | stack top element (and drop it)
+        char "%" =     => (o swap +)
+
+        | Otherwise, push the char
+        char "%" = not => (o char +) -> o
+    )
+
+    o
+)
+
+fun puts
+(
+    print drop
+)
+
+fun putsln
+(
+    "%\n" format puts
+)
+
+fun println
+(
+    "%\n" format print
+)
+
+fun map [fn]
+(
+    {} swap for (fn& +)
+)
+
+fun filter [p]
+(
+    {} -> ys
+
+    for
+    (
+        | If P(x) is true, push x to ys
+        dup p& => (ys swap + -> ys)
+    )
+
+    ys
+)
+
+fun reduce [xs fn init]
+(
+    init xs for (swap fn&)
+)
+
+fun match
+(
+    swap -> value
+
+    {} swap for
+    (
+        dup first swap second -> fn value = => (fn+)
+    )
+
+    dup len null => ("Unknown case!" panic)
+
+    last
+)
+
+fun xor [p q]
+(
+    {p q}
+
+    | XOR logic gate truth table
+    {{{α α} β} {{β β} β} {{β α} α} {{α β} α}}
+
+    match
+)
+
+fun and [p q]
+(
+    {p q}
+
+    | AND logic gate truth table
+    {{{α α} α} {{β β} β} {{β α} β} {{α β} β}}
+
+    match
+)
+
+fun or [p q]
+(
+    {p q}
+
+    | OR logic gate truth table
+    {{{α α} α} {{β β} β} {{β α} α} {{α β} α}}
+    match
+)
+
+fun not
+(
+    | NOT logic gate truth table
+    {{α β} {β α}}
+    match
+)
+
+fun panic
+(
+    "PANIC: %" format putsln
+    1 0 %
+)
+
+fun unix_input
+(
+    {} α while
+    (
+        "/dev/stdin" 1 read first dup -> byte
+        + byte 10 = not
+    )
+)
+
+fun unix_random_numbers [n mod]
+(
+    | Read n bytes from /dev/random
+    "/dev/random" n read
+
+    | Get their modulo
+    (mod %) map
+)
+
+fun assert_eq
+(
+    rot = dup bool2string rot2
+    "% (%)" format putsln
+    not => ("" panic)
+)
+
+fun sum
+((+) 0 reduce)
+
+fun product
+((*) 1 reduce)
+
+fun null
+(0 =)
+
+fun inc
+(1 +)
+
+
+fun dec
+(1 -)
+
+fun divides
+(% null)
+
+fun even
+(2 divides)
+
+fun odd
+(2 divides not)
+
+fun pom
+(dup not)
+
+fun inverse
+(1 swap /)
+
+fun square
+(dup *)
+
+fun cube
+(dup square *)
+
+fun lteq
+(
+    over2 < rot = or
+)
+
+fun gteq
+(
+    over2 > rot = or
+)
+
+fun len
+(
+    0 swap for (drop inc)
+)
+
+fun first
+(
+    0 get
+)
+
+fun second
+(
+    1 get
+)
+
+fun third
+(
+    3 get
+)
+
+fun last
+(
+    dup len dec get
+)
+
+fun merge
+(
+    {}
+    rot2 for (+)
+    swap for (+)
+)
+
+fun count [xs x]
+(
+    xs (x = dup => (1 swap) not => (0)) map sum
+)
+
+fun contains [xs x]
+(
+    xs len -> xs_len 0 -> i β α while
+    (
+        xs i get x = => (drop α)
+        i inc -> i
+        i xs_len <
+    )
+)
+
+fun reverse [xs]
+(
+    {} -> ys
+
+    xs len dup 1 gteq while
+    (
+        dec dup xs swap get ys+ -> ys
+        dup 1 gteq
+    )
+
+    drop ys
+)
+
+fun pop [xs]
+(
+    {} -> ys
+    xs len -> xs_len
+    xs first take1 -> y 1
+
+    dup xs_len < while
+    (
+        xs over get ys+ -> ys inc dup xs_len <
+    )
+
+    ys y + swap drop
+)
+
+fun push [x]
+(
+    {x} swap for (+)
+)
+
+fun take [n]
+(
+    {} -> xs
+
+    0 n range for
+    (
+        drop xs + -> xs
+    )
+
+    xs reverse
+)
+
+fun take1 [a]
+(
+    {a}
+)
+
+fun take2 [a b]
+(
+    {a b}
+)
+
+fun take3 [a b c]
+(
+    {a b c}
+)
+
+fun string2array 
+(
+    {} swap
+    for (+)
+)
+
+fun array2string 
+(
+    "" swap
+    for (+)
+)
+
+fun bool2string
+(
+    {{α "true"} {β "false"}}
+    match
+)
+
+fun fact [n]
+(
     1 n inc range product
 )
 
-fun sqrt [x] (
-    0 5 range
-    (dup x swap/ swap+ 2/ swap drop)
-    x 2/
-    reduce
+| Square root approximation
+fun sqrt [x]
+(
+    0 5 range (dup x swap/ swap+ 2/ swap drop) x 2/ reduce
 )
 
 fun log  [base n]
