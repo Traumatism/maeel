@@ -1,7 +1,6 @@
 use common::tokens::Token;
 
-fn extract_blocks(tokens: &[Token]) -> Vec<Token>
-{
+fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
 
@@ -30,9 +29,7 @@ fn extract_blocks(tokens: &[Token]) -> Vec<Token>
                             depth += 1
                         }
 
-                        Some(token) => {
-                            block_tokens.push(token.clone())
-                        }
+                        Some(token) => block_tokens.push(token.clone()),
                     }
                 }
 
@@ -49,11 +46,7 @@ fn extract_blocks(tokens: &[Token]) -> Vec<Token>
 macro_rules! take_with_predicate {
     ($character:expr, $characters:expr, $p:expr) => {{
         let content = std::iter::once($character)
-            .chain(
-                $characters
-                    .clone()
-                    .take_while($p),
-            )
+            .chain($characters.clone().take_while($p))
             .collect::<String>();
 
         // Apply changes to the iterator
@@ -75,8 +68,7 @@ macro_rules! take_with_predicate {
 /// Returns:
 ///
 /// A vector of `Token`s, which are the result of lexing the input `code` string.
-pub fn lex_into_tokens(code: &str) -> Vec<Token>
-{
+pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut depth = 0;
     let mut tokens = Vec::default();
     let mut characters = code.chars().peekable();
@@ -87,11 +79,26 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
             '|' => {
                 for character in characters.by_ref() {
                     if character != '\n' {
-                        continue
+                        continue;
                     }
 
-                    break
+                    break;
                 }
+            }
+
+            '\'' => {
+                let mut instruction = String::new();
+
+                for character in characters.by_ref() {
+                    if character != '\'' {
+                        instruction.push(character);
+                        continue;
+                    }
+
+                    break;
+                }
+
+                tokens.push(Token::CompilerInstruction(instruction))
             }
 
             // Ignore white-spaces
@@ -120,42 +127,37 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                     .take_while(|&character| character != '"')
                     .collect();
 
-                let mut content =
-                    String::with_capacity(content_vec.len());
+                let mut content = String::with_capacity(content_vec.len());
 
                 while index < content_vec.len() {
                     let character = content_vec[index];
 
                     index += 1;
 
-                    content.push(
-                        if character == '\\' {
-                            if let Some(next_character) =
-                                content_vec.get(index)
-                            {
-                                index += 1;
+                    content.push(if character == '\\' {
+                        if let Some(next_character) = content_vec.get(index) {
+                            index += 1;
 
-                                match next_character {
-                                    'n' => '\n',
-                                    'r' => '\r',
-                                    't' => '\t',
-                                    '\\' => '\\',
-                                    '"' => '"',
-                                    _ => {
-                                        panic!(
-                                            "Invalid escape \
+                            match next_character {
+                                'n' => '\n',
+                                'r' => '\r',
+                                't' => '\t',
+                                '\\' => '\\',
+                                '"' => '"',
+                                _ => {
+                                    panic!(
+                                        "Invalid escape \
                                              sequence: \\{}",
-                                            next_character
-                                        )
-                                    }
+                                        next_character
+                                    )
                                 }
-                            } else {
-                                panic!("Incomplete escape sequence");
                             }
                         } else {
-                            character
-                        },
-                    )
+                            panic!("Incomplete escape sequence");
+                        }
+                    } else {
+                        character
+                    })
                 }
 
                 tokens.push(Token::Str(content))
@@ -163,14 +165,9 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
 
             // Lex identifiers
             'a'..='z' | 'A'..='Z' | '_' => {
-                let content = take_with_predicate!(
-                    character,
-                    characters,
-                    |&character| {
-                        character.is_alphanumeric()
-                            || character == '_'
-                    }
-                );
+                let content = take_with_predicate!(character, characters, |&character| {
+                    character.is_alphanumeric() || character == '_'
+                });
 
                 let token = match content.as_str() {
                     "fun" => Token::ProcStart,
@@ -187,75 +184,61 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
 
             // Lex integers
             '0'..='9' => {
-                let content = take_with_predicate!(
-                    character,
-                    characters,
-                    |&character| {
-                        character.is_ascii_digit()
-                            || character == '.'
-                            || character == '_'
-                    }
-                );
+                let content = take_with_predicate!(character, characters, |&character| {
+                    character.is_ascii_digit() || character == '.' || character == '_'
+                });
 
-                tokens.push(
-                    if content.contains('.') {
-                        assert_eq!(content.matches('.').count(), 1);
-                        Token::Float(content.parse().unwrap())
-                    } else {
-                        Token::Integer(content.parse().unwrap())
-                    },
-                );
+                tokens.push(if content.contains('.') {
+                    assert_eq!(content.matches('.').count(), 1);
+                    Token::Float(content.parse().unwrap())
+                } else {
+                    Token::Integer(content.parse().unwrap())
+                });
             }
 
-            '=' => {
-                match characters.peek() {
-                    Some('>') => {
-                        tokens.push(Token::If);
-                        characters.next();
-                    }
-                    _ => tokens.push(Token::Eq),
+            '=' => match characters.peek() {
+                Some('>') => {
+                    tokens.push(Token::If);
+                    characters.next();
                 }
-            }
+                _ => tokens.push(Token::Eq),
+            },
 
-            '-' => {
-                match characters.peek() {
-                    Some('>') => {
-                        tokens.push(Token::Let);
-                        characters.next();
-                    }
-                    _ => tokens.push(Token::Sub),
+            '-' => match characters.peek() {
+                Some('>') => {
+                    tokens.push(Token::Let);
+                    characters.next();
                 }
-            }
+                _ => tokens.push(Token::Sub),
+            },
 
             // Lex a symbol
-            _ => {
-                tokens.push(match character {
-                    '-' => Token::Sub,
-                    '+' => Token::Add,
-                    '*' => Token::Mul,
-                    '/' => Token::Div,
-                    '%' => Token::Mod,
-                    '&' => Token::Call,
-                    'ζ' => Token::Clear,
-                    '→' | '⟶' | '@' => Token::Let,
-                    'λ' => Token::ProcStart,
-                    '⟹' | '⇒' => Token::If,
-                    'ω' => Token::While,
-                    'Ω' => Token::For,
-                    'α' => Token::Bool(true),
-                    'β' => Token::Bool(false),
-                    '(' => Token::BlockStart,
-                    ')' => Token::BlockEnd,
-                    '{' => Token::ArrayStart,
-                    '}' => Token::ArrayEnd,
-                    '[' => Token::IStart,
-                    ']' => Token::IEnd,
-                    '=' => Token::Eq,
-                    '<' => Token::Lt,
-                    '>' => Token::Gt,
-                    character => panic!("{character}"),
-                })
-            }
+            _ => tokens.push(match character {
+                '-' => Token::Sub,
+                '+' => Token::Add,
+                '*' => Token::Mul,
+                '/' => Token::Div,
+                '%' => Token::Mod,
+                '&' => Token::Call,
+                'ζ' => Token::Clear,
+                '→' | '⟶' | '@' => Token::Let,
+                'λ' => Token::ProcStart,
+                '⟹' | '⇒' => Token::If,
+                'ω' => Token::While,
+                'Ω' => Token::For,
+                'α' => Token::Bool(true),
+                'β' => Token::Bool(false),
+                '(' => Token::BlockStart,
+                ')' => Token::BlockEnd,
+                '{' => Token::ArrayStart,
+                '}' => Token::ArrayEnd,
+                '[' => Token::IStart,
+                ']' => Token::IEnd,
+                '=' => Token::Eq,
+                '<' => Token::Lt,
+                '>' => Token::Gt,
+                character => panic!("{character}"),
+            }),
         }
     }
 

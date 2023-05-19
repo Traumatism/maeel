@@ -1,15 +1,6 @@
-use super::super::{
-    process_tokens,
-    next,
-    ProceduresRegistry,
-    Stack,
-    VariablesRegistry,
-};
+use super::super::{next, process_tokens, ProceduresRegistry, Stack, VariablesRegistry};
 
-use common::{
-    tokens::Token,
-    vmtypes::VMType,
-};
+use common::{tokens::Token, vmtypes::VMType};
 
 use std::slice::Iter;
 
@@ -19,19 +10,11 @@ pub fn parse_if<'a>(
     data: &'a mut Stack,
     globals: &'a mut VariablesRegistry,
     procs: &'a mut ProceduresRegistry,
-)
-{
+) {
     // Code block to execute if, and only if P(x) is true
     let tokens = next!(tokens, "block");
 
     if let Some(VMType::Bool(true)) = data.pop() {
-        process_tokens(
-            "if",
-            &mut tokens.iter(),
-            data,
-            globals,
-            procs,
-        )
-        .unwrap();
+        process_tokens("if", &mut tokens.iter(), data, globals, procs).unwrap();
     }
 }
