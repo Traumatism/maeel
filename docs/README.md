@@ -46,6 +46,6 @@ foo putsln
 First, we push the string `"hello"` that we put into the `foo` variable (`"hello"` is not on the stack anymore, but it is now stored in foo). We also put the integer `123` into `bar`.
 
 Then, we push the content of `foo` (`"hello"`) on the stack and `putsln` it.
-As an other example, we push `2` and `bar` content (`123`), pop them, push their product and `putsln` it
+As another example, we push `2` and `bar` content (`123`), pop them, push their product and `putsln` it
 
 Finally, we re-assign `foo` with the value of `bar` and `putsln` it (will output `246`).

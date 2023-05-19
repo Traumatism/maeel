@@ -22,25 +22,21 @@ fun over3 (over over2)
 
 fun rot2 (rot rot)
 
-fun clear (ζ)
-
 fun unix_input ({} α ω ("/dev/stdin" 1 read first dup -> _ + _ 10 = not))
 
 fun panic ("PANIC: %" format putsln 1 0 %)
 
 fun format [str] (
-    str len -> length
-    "" -> output
-    0 -> sp
+    str len 0 "" -> o -> sp -> i
 
-    sp length < while (
+    sp i < while (
         str sp get -> char
-        char "%" =     => (output swap+ -> output)
-        char "%" = not => (output char+ -> output)
-        sp 1 + dup -> sp length <
+        char "%" =     => (o swap+ -> o)
+        char "%" = not => (o char+ -> o)
+        sp 1 + dup -> sp i <
     )
 
-    output
+    o
 )
 
 fun puts (print drop)
@@ -53,8 +49,6 @@ fun assert_eq [value should_be content] (
     should_be value = dup bool2string content
     "% (%)" format putsln not => ("" panic)
 )
-
-fun get [] (Γ)
 
 fun first [] (0 get)
 
@@ -70,7 +64,7 @@ fun count [xs x] (xs (x = dup => (1 swap) not => (0)) map sum)
 
 fun map [fn] ({} swap for (fn& +))
 
-fun filter [xs pred] ({} -> out xs for (dup pred& => (out swap + -> out)) out)
+fun filter [xs pred] ({} -> ys xs for (dup pred& => (ys swap + -> ys)) ys)
 
 fun reduce [xs fn init] (init xs for (swap fn&))
 
@@ -86,8 +80,8 @@ fun len (0 swap for (drop inc))
 
 fun reverse [xs] (
     {} -> ys
-    xs len dup 1 over2 > rot = + while (
-        dec dup xs swap get ys+ -> ys dup 1 over2 > rot = +
+    xs len dup 1 gteq while (
+        dec dup xs swap get ys+ -> ys dup 1 gteq
     ) ys
 )
 
@@ -122,13 +116,13 @@ fun or (2 take {{{α α} α} {{β β} β} {{β α} α} {{α β} α}} match)
 
 fun not ({{α β} {β α}} match)
 
-fun fact [n] (1 0 dup n < while (inc swap over * swap dup n <) drop)
+fun fact [n] (1 n inc range product)
 
-fun sqrt [a] (a 0.5 * -> y 0 0 α while (a y / y + 0.5 * -> y inc dup 5<) drop2 y)
+fun sqrt [x] (x / 2 -> y 0 0 α while (x y / y + 2 / -> y inc dup 5 <) drop2 y)
 
 fun log [base n] (0 n base gteq while (inc n base / dup -> n base gteq))
 
-fun pow [base exp] (base exp null not while (base * exp dec dup -> exp null not) base /)
+fun pow [base exp] ({} 0 exp range for (drop base +) product)
 
 fun sum ((+) 0 reduce)
 
@@ -146,9 +140,9 @@ fun square (dup *)
 
 fun cube (dup square *)
 
-fun divides (% null)
-
 fun null (0 =)
+
+fun divides (% null)
 
 fun even (2 divides)
 
@@ -156,4 +150,10 @@ fun odd (2 divides not)
 
 fun unix_random_numbers [n mod] ("/dev/random" n read (mod %) map)
 
-fun range [start end] ({} start end < while (start + start inc -> start start end <))
+fun range [start end] (
+    {} start end < while (
+        start +
+        start inc -> start
+        start end <
+    )
+)

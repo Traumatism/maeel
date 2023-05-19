@@ -254,20 +254,6 @@ pub fn process_tokens<'a>(
                         ));
                     }
 
-                    "eval" => {
-                        let Some(VMType::Str(code)) = data.pop() else {
-                            panic!()
-                        };
-
-                        process_tokens(
-                            "eval",
-                            &mut lexer::lex_into_tokens(&code).iter(),
-                            data,
-                            globals,
-                            procs,
-                        )?;
-                    }
-
                     "include" => {
                         let Some(VMType::Str(target)) = data.pop() else {
                             panic!()

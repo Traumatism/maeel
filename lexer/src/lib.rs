@@ -176,7 +176,9 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                     "fun" => Token::ProcStart,
                     "while" => Token::While,
                     "for" => Token::For,
+                    "get" => Token::Get,
                     "then" => Token::If,
+                    "clear" => Token::Clear,
                     _ => Token::Identifier(content),
                 };
 
@@ -248,7 +250,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token>
                     '}' => Token::ArrayEnd,
                     '[' => Token::IStart,
                     ']' => Token::IEnd,
-                    'Γ' => Token::Get,
                     '=' => Token::Eq,
                     '<' => Token::Lt,
                     '>' => Token::Gt,
