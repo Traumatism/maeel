@@ -1,4 +1,3 @@
-
 fun drop         (-> _)
 fun dup  [a]     (a a)
 fun swap [a b]   (b a)
@@ -70,9 +69,50 @@ fun string2array ({} swap for (+))
 fun array2string ("" swap for (+))
 fun bool2string ({{α "true"} {β "false"}} match)
 
-fun fact [n]        (1 n inc range product)
-fun sqrt [x]        (x / 2 -> y 0 0 α while (x y / y + 2 / -> y inc dup 5 <) drop2 y)
-fun log  [base n]   (0 n base gteq while (inc n base / dup -> n base gteq))
-fun pow  [base exp] ({} 0 exp range for (drop base +) product)
+fun fact [n] (
+    1 n inc range product
+)
 
-fun range [start end] ({} start end < while (start + start inc -> start start end <))
+fun sqrt [x] (
+    0 5 range
+    (dup x swap/ swap+ 2/ swap drop)
+    x 2/
+    reduce
+)
+
+fun log  [base n]
+(
+    0 | Counter
+
+    n base gteq while
+    (
+        | Increase the counter
+        inc
+
+        | Put n/base into n
+        n base / dup -> n 
+
+        | if n <= base, then continue
+        base gteq 
+    )
+)
+
+fun pow [base exp]
+(
+    | Generate a list of size 'exp' with only 'base'
+    | and multiply all these 'base' togather
+    0 exp range (drop base) map product
+)
+
+fun range [start end]
+(
+    {}  | Output list
+    start end < while
+    (
+        | Push 'start' to the output list
+        | and increase 'start' value
+        start + start inc -> start
+
+        start end <
+    )
+)
