@@ -26,10 +26,8 @@ impl std::fmt::Display for VMType {
                     if i > 0 {
                         write!(f, " ")?;
                     }
-
                     write!(f, "{}", x)?;
                 }
-
                 write!(f, "}}")?;
 
                 Ok(())
@@ -109,7 +107,7 @@ impl std::ops::Add for VMType {
                 array.push(other);
                 VMType::Array(array)
             }
-            (..) => panic!(),
+            (a, b) => panic!("{a} {b}"),
         }
     }
 }
@@ -323,6 +321,7 @@ pub fn process_tokens<'a>(
             Token::Float(content) => data.push(VMType::Float(*content)),
             Token::Integer(content) => data.push(VMType::Integer(*content)),
             Token::Block(tokens) => data.push(VMType::Function(tokens.clone())),
+
             Token::Get => match (data.pop(), data.pop()) {
                 (Some(VMType::Integer(index)), Some(VMType::Array(array))) => {
                     data.push(array.get(index as usize).unwrap().clone());
@@ -343,6 +342,7 @@ pub fn process_tokens<'a>(
 
             Token::Identifier(identifier) => match identifier.as_str() {
                 "print" => print!("{}", data.last().unwrap()),
+
                 "read" => {
                     let (Some(VMType::Integer(bytes)), Some(VMType::String(path))) = (data.pop(), data.pop()) else {
                         panic!()
@@ -448,13 +448,11 @@ pub enum Token {
 fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
-
     while let Some(token) = tokens_iter.next() {
         output.push(match token {
             Token::BlockStart => {
                 let mut depth = 1_u8;
                 let mut block_tokens = Vec::new();
-
                 while depth > 0 {
                     match tokens_iter.next() {
                         Some(Token::BlockEnd) => {
@@ -469,14 +467,11 @@ fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
                         None => break,
                     }
                 }
-
                 Token::Block(extract_blocks(&block_tokens))
             }
-
             token => token.clone(),
         })
     }
-
     output
 }
 
@@ -485,11 +480,9 @@ macro_rules! take_with_predicate {
         let content = std::iter::once($character)
             .chain($characters.clone().take_while($p))
             .collect::<String>();
-
         (1..content.len()).for_each(|_| {
             $characters.next().unwrap();
         });
-
         content
     }};
 }
@@ -506,43 +499,31 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     if character != '\n' {
                         continue;
                     }
-
                     break;
                 }
             }
-
             '\'' => {
                 let mut instruction = String::new();
-
                 for character in characters.by_ref() {
                     if character != '\'' {
                         instruction.push(character);
                         continue;
                     }
-
                     break;
                 }
-
                 tokens.push(Token::Instruction(instruction))
             }
-
             ' ' | '\n' => continue,
-
             '(' => {
                 tokens.push(Token::BlockStart);
-
                 depth += 1;
             }
-
             ')' => {
                 tokens.push(Token::BlockEnd);
-
                 depth -= 1;
             }
-
             '"' => {
                 let mut index = 0;
-
                 let content_vec: Vec<char> = characters
                     .by_ref()
                     .take_while(|&character| character != '"')
@@ -552,13 +533,10 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 while index < content_vec.len() {
                     let character = content_vec[index];
-
                     index += 1;
-
                     content.push(if character == '\\' {
                         if let Some(next_character) = content_vec.get(index) {
                             index += 1;
-
                             match next_character {
                                 'n' => '\n',
                                 'r' => '\r',
@@ -583,13 +561,12 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 tokens.push(Token::Str(content))
             }
-
             'a'..='z' | 'A'..='Z' | '_' => {
                 let content = take_with_predicate!(character, characters, |&character| {
                     character.is_alphanumeric() || character == '_'
                 });
 
-                let token = match content.as_str() {
+                tokens.push(match content.as_str() {
                     "fun" => Token::ProcStart,
                     "while" => Token::While,
                     "for" => Token::For,
@@ -597,16 +574,12 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     "then" => Token::If,
                     "clear" => Token::Clear,
                     _ => Token::Identifier(content),
-                };
-
-                tokens.push(token)
+                });
             }
-
             '0'..='9' => {
                 let content = take_with_predicate!(character, characters, |&character| {
                     character.is_ascii_digit() || character == '.' || character == '_'
                 });
-
                 tokens.push(if content.contains('.') {
                     assert_eq!(content.matches('.').count(), 1);
                     Token::Float(content.parse().unwrap())
@@ -614,7 +587,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     Token::Integer(content.parse().unwrap())
                 });
             }
-
             '=' => match characters.peek() {
                 Some('>') => {
                     tokens.push(Token::If);
@@ -651,7 +623,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             }),
         }
     }
-
     assert_eq!(depth, 0);
     extract_blocks(tokens.as_slice())
 }
