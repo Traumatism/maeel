@@ -1,23 +1,31 @@
+| Drop the stack top value
 fun drop
 (
     -> _
 )
 
+| Duplicate the stack top value
 fun dup [a]
 (
     a a
 )
 
+| Swap the two stack top values
 fun swap [a b]
 (
     b a
 )
 
+| Push the value over the stack top value
+| on the stack
 fun over [a b]
 (
     a b a
 )
 
+| Push the value over the value over the
+| stack top value on the stack after swaping
+| the two stack top values
 fun rot [a b c]
 (
     c a b
@@ -173,10 +181,16 @@ fun panic
 
 fun unix_input
 (
-    {} α while
+    {}
+
+    α while
     (
-        "/dev/stdin" 1 read first dup -> byte
-        + byte 10 = not
+        | Read one byte from /dev/stdin
+        | and add it to output array
+        "/dev/stdin" 1 read first dup rot +
+
+        | Stop if char is \n
+        swap 10 = not
     )
 )
 
@@ -277,12 +291,16 @@ fun merge
 
 fun count [xs x]
 (
-    xs (x = dup => (1 swap) not => (0)) map sum
+    xs
+    (x = dup => (1 swap) not => (0))
+    map
+    sum
 )
 
 fun contains [xs x]
 (
-    xs len -> xs_len 0 -> i β α while
+    xs len -> xs_len 0 -> i β α
+    while
     (
         xs i get x = => (drop α)
         i inc -> i
@@ -317,9 +335,11 @@ fun pop [xs]
     ys y + swap drop
 )
 
-fun push [x]
+fun push
 (
-    {x} swap for (+)
+    take1
+    swap
+    for (+)
 )
 
 fun take [n]
