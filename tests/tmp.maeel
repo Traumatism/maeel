@@ -1,8 +1,11 @@
-| Swap the two stack top values
-fun swap a b
-(
-    b a
+"std" include
+
+fun fib n (
+    n 1 lteq
+        dup => (1 swap)
+        not => (n 1- fib n 2- fib +)
 )
 
-3 1 swap print
+1 10 range (fib) map -> fibonacci_numbers
 
+fibonacci_numbers puts
