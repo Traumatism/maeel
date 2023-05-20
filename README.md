@@ -1,4 +1,4 @@
-# $\fbox{The maeel programming language}$
+# $$\fbox{The maeel programming language}$$
 
 ![](./preview.png)
 

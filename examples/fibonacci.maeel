@@ -2,7 +2,9 @@
 
 fun fib n
 (
-    n 1 lteq dup => (1 swap) not => (n 1 - fib n 2 - fib +)
+    n 1 lteq
+        dup => (1 swap)
+        not => (n 1 - fib n 2 - fib +)
 )
 
 1 10 range (fib) map -> fibonacci_numbers;
