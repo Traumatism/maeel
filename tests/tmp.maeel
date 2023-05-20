@@ -1,3 +1,8 @@
-"std" include
+| Swap the two stack top values
+fun swap a b
+(
+    b a
+)
 
-unix_input
+3 1 swap print
+
