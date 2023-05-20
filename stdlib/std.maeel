@@ -253,27 +253,27 @@ fun pom
 
 fun inverse
 (
-    1 swap /
+    1 swap/
 )
 
 fun square
 (
-    dup *
+    dup*
 )
 
 fun cube
 (
-    dup square *
+    dup square*
 )
 
 fun lteq
 (
-    over2 < rot = or
+    over2< rot= or
 )
 
 fun gteq
 (
-    over2 > rot = or
+    over2> rot= or
 )
 
 fun len
@@ -311,7 +311,7 @@ fun merge
 fun count xs x
 (
     xs
-    (x = dup => (1 swap) not => (0))
+    (x= dup => (1 swap) not => (0))
     map
     sum
 )
@@ -320,6 +320,7 @@ fun contains xs x
 (
     xs len -> xs_len
     0 -> i
+
     β α while
     (
         xs i get x = => (drop α)
@@ -423,7 +424,7 @@ fun sqrt x
 
 fun log base n
 (
-    0 | Counter
+    0
 
     n base gteq while
     (
