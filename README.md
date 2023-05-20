@@ -1,4 +1,6 @@
-# $$\fbox{The maeel programming language}$$
+# $\fbox{The maeel programming language}$
+
+![](./preview.png)
 
 [Documentation is here](docs/README.md)
 
