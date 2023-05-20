@@ -6,7 +6,7 @@ use std::io::Result;
 pub enum VMType {
     Float(f64),
     Integer(i64),
-    Str(String),
+    String(String),
     Bool(bool),
     Array(Vec<VMType>),
     Function(Vec<Token>),
@@ -18,7 +18,7 @@ impl std::fmt::Display for VMType {
             VMType::Function(tokens) => write!(f, "{:?}", tokens),
             VMType::Float(x) => write!(f, "{}", x),
             VMType::Integer(x) => write!(f, "{}", x),
-            VMType::Str(x) => write!(f, "{}", x),
+            VMType::String(x) => write!(f, "{}", x),
             VMType::Bool(x) => write!(f, "{}", x),
             VMType::Array(xs) => {
                 write!(f, "{{")?;
@@ -54,7 +54,7 @@ impl PartialOrd for VMType {
 impl PartialEq for VMType {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (VMType::Str(a), VMType::Str(b)) => a == b,
+            (VMType::String(a), VMType::String(b)) => a == b,
             (VMType::Array(a), VMType::Array(b)) => a == b,
             (VMType::Float(a), VMType::Integer(b)) => *a == (*b as f64),
             (VMType::Integer(a), VMType::Float(b)) => (*a as f64) == *b,
@@ -100,7 +100,7 @@ impl std::ops::Add for VMType {
 
     fn add(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
-            (VMType::Str(a), VMType::Str(b)) => VMType::Str(a + &b),
+            (VMType::String(a), VMType::String(b)) => VMType::String(a + &b),
             (VMType::Integer(a), VMType::Integer(b)) => VMType::Integer(a + b),
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a + b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 + b),
@@ -170,22 +170,6 @@ macro_rules! perform_binary_op {
     }};
 }
 
-macro_rules! parse_identifiers_list {
-    ($tokens:expr) => {{
-        let mut identifiers = Vec::default();
-
-        loop {
-            match $tokens.next() {
-                Some(Token::Identifier(field)) => identifiers.push(field.clone()),
-                Some(Token::IEnd) => break,
-                _ => panic!(),
-            }
-        }
-
-        identifiers
-    }};
-}
-
 pub fn parse_array<'a>(
     tokens: &'a mut std::slice::Iter<Token>,
     data: &'a mut Vec<VMType>,
@@ -200,7 +184,7 @@ pub fn parse_array<'a>(
                 parse_array(tokens, data, globals);
                 array.push(data.pop().unwrap())
             }
-            Token::Str(value) => array.push(VMType::Str(value)),
+            Token::Str(value) => array.push(VMType::String(value)),
             Token::Bool(value) => array.push(VMType::Bool(value)),
             Token::Float(value) => array.push(VMType::Float(value)),
             Token::Block(expr) => array.push(VMType::Function(expr)),
@@ -238,28 +222,39 @@ pub fn process_tokens<'a>(
             Token::ProcStart => {
                 let name = next!(tokens, "identifier");
 
-                let function_block = match tokens.next() {
-                    Some(Token::Block(function_block)) => function_block.clone(),
-                    Some(Token::IStart) => {
-                        let mut function_block = Vec::default();
+                let mut final_block = Vec::default();
+                let mut parameters = Vec::default();
+                let mut function_block = Vec::default();
 
-                        parse_identifiers_list!(tokens)
-                            .iter()
-                            .rev()
-                            .for_each(|identifier| {
-                                function_block.append(&mut vec![
-                                    Token::Let,
-                                    Token::Identifier(identifier.clone()),
-                                ])
-                            });
+                loop {
+                    let next_token = tokens.next();
 
-                        function_block.append(&mut next!(tokens, "block"));
-                        function_block
+                    match next_token {
+                        Some(Token::Block(block)) => {
+                            for token in block {
+                                function_block.push(token.clone());
+                            }
+                            break;
+                        }
+
+                        Some(Token::Identifier(_)) => {
+                            parameters.push(next_token.unwrap().clone());
+                        }
+
+                        _ => panic!(),
                     }
-                    _ => panic!(),
-                };
+                }
 
-                functions.insert(name, function_block);
+                parameters.reverse();
+
+                for parameter in parameters {
+                    final_block.push(Token::Let);
+                    final_block.push(parameter)
+                }
+
+                final_block.append(&mut function_block);
+
+                functions.insert(name, final_block);
             }
 
             Token::While => {
@@ -281,9 +276,9 @@ pub fn process_tokens<'a>(
                         }
                     }
 
-                    Some(VMType::Str(string)) => {
+                    Some(VMType::String(string)) => {
                         for element in string.chars().map(String::from).collect::<Vec<String>>() {
-                            data.push(VMType::Str(element));
+                            data.push(VMType::String(element));
                             process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
                         }
                     }
@@ -323,7 +318,7 @@ pub fn process_tokens<'a>(
             Token::Div => perform_binary_op!(data, /),
             Token::Mod => perform_binary_op!(data, %),
             Token::Clear => data.clear(),
-            Token::Str(content) => data.push(VMType::Str(content.clone())),
+            Token::Str(content) => data.push(VMType::String(content.clone())),
             Token::Bool(content) => data.push(VMType::Bool(*content)),
             Token::Float(content) => data.push(VMType::Float(*content)),
             Token::Integer(content) => data.push(VMType::Integer(*content)),
@@ -332,8 +327,8 @@ pub fn process_tokens<'a>(
                 (Some(VMType::Integer(index)), Some(VMType::Array(array))) => {
                     data.push(array.get(index as usize).unwrap().clone());
                 }
-                (Some(VMType::Integer(index)), Some(VMType::Str(string))) => {
-                    data.push(VMType::Str(
+                (Some(VMType::Integer(index)), Some(VMType::String(string))) => {
+                    data.push(VMType::String(
                         string
                             .chars()
                             .map(String::from)
@@ -349,7 +344,7 @@ pub fn process_tokens<'a>(
             Token::Identifier(identifier) => match identifier.as_str() {
                 "print" => print!("{}", data.last().unwrap()),
                 "read" => {
-                    let (Some(VMType::Integer(bytes)), Some(VMType::Str(path))) = (data.pop(), data.pop()) else {
+                    let (Some(VMType::Integer(bytes)), Some(VMType::String(path))) = (data.pop(), data.pop()) else {
                         panic!()
                     };
 
@@ -367,9 +362,9 @@ pub fn process_tokens<'a>(
                 }
 
                 "include" => {
-                    let Some(VMType::Str(target)) = data.pop() else {
-                            panic!()
-                        };
+                    let Some(VMType::String(target)) = data.pop() else {
+                        panic!()
+                    };
 
                     let content = match target.as_str() {
                         "std" => include_str!("../stdlib/std.maeel").to_string(),
@@ -408,7 +403,7 @@ pub fn process_tokens<'a>(
                 }
             },
 
-            Token::BlockStart | Token::ArrayEnd | Token::IStart | Token::IEnd => {
+            Token::BlockStart | Token::ArrayEnd => {
                 panic!()
             }
 
@@ -445,8 +440,6 @@ pub enum Token {
     ArrayEnd,
     BlockStart,
     BlockEnd,
-    IStart,
-    IEnd,
     If,
     For,
     While,
@@ -651,8 +644,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 ')' => Token::BlockEnd,
                 '{' => Token::ArrayStart,
                 '}' => Token::ArrayEnd,
-                '[' => Token::IStart,
-                ']' => Token::IEnd,
                 '=' => Token::Eq,
                 '<' => Token::Lt,
                 '>' => Token::Gt,

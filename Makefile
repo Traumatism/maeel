@@ -1,5 +1,14 @@
-build: cargo build -q --release && mv target/release/maeel ./maeel
-install: cargo install --path maeel_main
-vscode: rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && cp -r ide ~/.vscode/extensions/maeel-syntax-highlighting
-test: cargo build -q && mv target/debug/maeel ./maeel.tmp && ./maeel.tmp stdlib/tests.maeel || rm maeel.tmp
-clean: rm ./maeel ./maeel.tmp Cargo.lock || rm -r target
+build:
+	cargo build -q --release && mv target/release/maeel ./maeel
+
+install:
+	cargo install
+
+vscode:
+	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && cp -r ide ~/.vscode/extensions/maeel-syntax-highlighting
+
+test:
+	cargo build -q && mv target/debug/maeel ./maeel.tmp && ./maeel.tmp stdlib/tests.maeel || rm maeel.tmp
+
+clean: 
+	rm ./maeel ./maeel.tmp Cargo.lock || rm -r target

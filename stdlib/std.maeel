@@ -5,20 +5,20 @@ fun drop
 )
 
 | Duplicate the stack top value
-fun dup [a]
+fun dup a
 (
     a a
 )
 
 | Swap the two stack top values
-fun swap [a b]
+fun swap a b
 (
     b a
 )
 
 | Push the value over the stack top value
 | on the stack
-fun over [a b]
+fun over a b
 (
     a b a
 )
@@ -26,7 +26,7 @@ fun over [a b]
 | Push the value over the value over the
 | stack top value on the stack after swaping
 | the two stack top values
-fun rot [a b c]
+fun rot a b c
 (
     c a b
 )
@@ -85,27 +85,33 @@ fun format
     o
 )
 
+| Print and drop the stack top value
 fun puts
 (
     print drop
 )
 
+| Print and drop the stack top value
+| with a newline
 fun putsln
 (
     "%\n" format puts
 )
 
+| Print the stack top value with a newline
 fun println
 (
     "%\n" format print
 )
 
-fun map [fn]
+| Return { fn(x) | x in xs }
+fun map fn
 (
     {} swap for (fn& +)
 )
 
-fun filter [p]
+| Return ( x if p(x) | x in xs )
+fun filter p
 (
     {} -> ys
 
@@ -118,7 +124,7 @@ fun filter [p]
     ys
 )
 
-fun reduce [xs fn init]
+fun reduce xs fn init
 (
     init xs for (swap fn&)
 )
@@ -137,7 +143,7 @@ fun match
     last
 )
 
-fun xor [p q]
+fun xor p q
 (
     {p q}
 
@@ -147,17 +153,16 @@ fun xor [p q]
     match
 )
 
-fun and [p q]
+fun and p q
 (
     {p q}
 
     | AND logic gate truth table
     {{{α α} α} {{β β} β} {{β α} β} {{α β} β}}
-
     match
 )
 
-fun or [p q]
+fun or p q
 (
     {p q}
 
@@ -194,7 +199,7 @@ fun unix_input
     )
 )
 
-fun unix_random_numbers [n mod]
+fun unix_random_numbers n mod
 (
     | Read n bytes from /dev/random
     "/dev/random" n read
@@ -227,25 +232,39 @@ fun dec
 (1 -)
 
 fun divides
-(% null)
+(
+    % null
+)
 
 fun even
-(2 divides)
+(
+    2 divides
+)
 
 fun odd
-(2 divides not)
+(
+    2 divides not
+)
 
 fun pom
-(dup not)
+(
+    dup not
+)
 
 fun inverse
-(1 swap /)
+(
+    1 swap /
+)
 
 fun square
-(dup *)
+(
+    dup *
+)
 
 fun cube
-(dup square *)
+(
+    dup square *
+)
 
 fun lteq
 (
@@ -289,7 +308,7 @@ fun merge
     swap for (+)
 )
 
-fun count [xs x]
+fun count xs x
 (
     xs
     (x = dup => (1 swap) not => (0))
@@ -297,10 +316,11 @@ fun count [xs x]
     sum
 )
 
-fun contains [xs x]
+fun contains xs x
 (
-    xs len -> xs_len 0 -> i β α
-    while
+    xs len -> xs_len
+    0 -> i
+    β α while
     (
         xs i get x = => (drop α)
         i inc -> i
@@ -308,7 +328,7 @@ fun contains [xs x]
     )
 )
 
-fun reverse [xs]
+fun reverse xs
 (
     {} -> ys
 
@@ -321,7 +341,7 @@ fun reverse [xs]
     drop ys
 )
 
-fun pop [xs]
+fun pop xs
 (
     {} -> ys
     xs len -> xs_len
@@ -342,7 +362,7 @@ fun push
     for (+)
 )
 
-fun take [n]
+fun take n
 (
     {} -> xs
 
@@ -354,17 +374,17 @@ fun take [n]
     xs reverse
 )
 
-fun take1 [a]
+fun take1 a
 (
     {a}
 )
 
-fun take2 [a b]
+fun take2 a b
 (
     {a b}
 )
 
-fun take3 [a b c]
+fun take3 a b c
 (
     {a b c}
 )
@@ -387,18 +407,21 @@ fun bool2string
     match
 )
 
-fun fact [n]
+fun fact n
 (
     1 n inc range product
 )
 
 | Square root approximation
-fun sqrt [x]
+fun sqrt x
 (
-    0 5 range (dup x swap/ swap+ 2/ swap drop) x 2/ reduce
+    0 5 range
+    (dup x swap/ swap+ 2/ swap drop)
+    x 2/
+    reduce
 )
 
-fun log  [base n]
+fun log base n
 (
     0 | Counter
 
@@ -415,14 +438,14 @@ fun log  [base n]
     )
 )
 
-fun pow [base exp]
+fun pow base exp
 (
     | Generate a list of size 'exp' with only 'base'
     | and multiply all these 'base' togather
     0 exp range (drop base) map product
 )
 
-fun range [start end]
+fun range start end
 (
     {}  | Output list
     start end < while
