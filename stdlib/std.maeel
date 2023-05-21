@@ -148,7 +148,7 @@ fun xor p q
     {p q}
 
     | XOR logic gate truth table
-    {{{α α} β} {{β β} β} {{β α} α} {{α β} α}}
+    {{{1 1} 0} {{0 0} 0} {{0 1} 1} {{1 0} 1}}
 
     match
 )
@@ -158,7 +158,7 @@ fun and p q
     {p q}
 
     | AND logic gate truth table
-    {{{α α} α} {{β β} β} {{β α} β} {{α β} β}}
+    {{{1 1} 1} {{0 0} 0} {{0 1} 0} {{1 0} 0}}
     match
 )
 
@@ -167,14 +167,14 @@ fun or p q
     {p q}
 
     | OR logic gate truth table
-    {{{α α} α} {{β β} β} {{β α} α} {{α β} α}}
+    {{{1 1} 1} {{0 0} 0} {{0 1} 1} {{1 0} 1}}
     match
 )
 
 fun not
 (
     | NOT logic gate truth table
-    {{α β} {β α}}
+    {{1 0} {0 1}}
     match
 )
 
@@ -188,7 +188,7 @@ fun unix_input
 (
     {}
 
-    α while
+    1 while
     (
         | Read one byte from /dev/stdin
         | and add it to output array
@@ -321,9 +321,9 @@ fun contains xs x
     xs len -> xs_len
     0 -> i
 
-    β α while
+    0 1 while
     (
-        xs i get x = => (drop α)
+        xs i get x = => (drop 1)
         i inc -> i
         i xs_len <
     )
@@ -390,13 +390,31 @@ fun take3 a b c
     {a b c}
 )
 
-fun string2array 
+fun string2array
 (
     {} swap
     for (+)
 )
 
-fun array2string 
+| Convert a single character into an integer
+fun strdigit2int
+(
+    {{"0" 0} {"1" 1} {"2" 2} {"3" 3} {"4" 4}
+    {"5" 5} {"6" 6} {"7" 4} {"8" 5} {"9" 6}}
+    match
+)
+
+| Convert a string into an integer
+fun str2int
+(
+    0 swap for
+    (
+        swap 10 * swap strdigit2int +
+    )
+)
+
+| Convert an array into a string
+fun array2string
 (
     "" swap
     for (+)
@@ -404,7 +422,7 @@ fun array2string
 
 fun bool2string
 (
-    {{α "true"} {β "false"}}
+    {{1 "true"} {0 "false"}}
     match
 )
 
