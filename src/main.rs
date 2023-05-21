@@ -7,7 +7,6 @@ pub enum VMType {
     Float(f64),
     Integer(i64),
     String(String),
-    Bool(bool),
     Array(Vec<VMType>),
     Function(Vec<Token>),
 }
@@ -19,7 +18,6 @@ impl std::fmt::Display for VMType {
             VMType::Float(x) => write!(f, "{}", x),
             VMType::Integer(x) => write!(f, "{}", x),
             VMType::String(x) => write!(f, "{}", x),
-            VMType::Bool(x) => write!(f, "{}", x),
             VMType::Array(xs) => {
                 write!(f, "{{")?;
                 for (i, x) in xs.iter().enumerate() {
@@ -58,7 +56,6 @@ impl PartialEq for VMType {
             (VMType::Integer(a), VMType::Float(b)) => (*a as f64) == *b,
             (VMType::Integer(a), VMType::Integer(b)) => a == b,
             (VMType::Float(a), VMType::Float(b)) => a == b,
-            (VMType::Bool(a), VMType::Bool(b)) => a == b,
             _ => false,
         }
     }
@@ -164,7 +161,7 @@ macro_rules! perform_binary_op {
 
     ($data:expr, $operator:tt, $vmtype:expr) => {{
         let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap());
-        $data.push($vmtype(b $operator a))
+        $data.push($vmtype((b $operator a) as i64))
     }};
 }
 
@@ -176,18 +173,17 @@ pub fn parse_array<'a>(
     let mut array = Vec::default();
 
     loop {
-        match tokens.next().unwrap().clone() {
+        match tokens.next().unwrap() {
             Token::ArrayEnd => break,
             Token::ArrayStart => {
                 parse_array(tokens, data, globals);
                 array.push(data.pop().unwrap())
             }
-            Token::Str(value) => array.push(VMType::String(value)),
-            Token::Bool(value) => array.push(VMType::Bool(value)),
-            Token::Float(value) => array.push(VMType::Float(value)),
-            Token::Block(expr) => array.push(VMType::Function(expr)),
-            Token::Integer(value) => array.push(VMType::Integer(value)),
-            Token::Identifier(identifier) => match globals.get(&identifier) {
+            Token::Str(value) => array.push(VMType::String(value.clone())),
+            Token::Float(value) => array.push(VMType::Float(*value)),
+            Token::Block(expr) => array.push(VMType::Function(expr.clone())),
+            Token::Integer(value) => array.push(VMType::Integer(*value)),
+            Token::Identifier(identifier) => match globals.get(identifier) {
                 Some(value) => array.push(value.clone()),
                 None => panic!(),
             },
@@ -208,8 +204,6 @@ pub fn process_tokens<'a>(
 
     while let Some(token) = tokens.next() {
         match token {
-            Token::Instruction(_) => todo!(),
-
             Token::Call => match data.pop() {
                 Some(VMType::Function(tokens)) => {
                     process_tokens(&mut tokens.iter(), data, &mut globals.clone(), functions)?;
@@ -258,7 +252,7 @@ pub fn process_tokens<'a>(
             Token::While => {
                 let tokens = next!(tokens, "block");
 
-                while let Some(VMType::Bool(true)) = data.pop() {
+                while let Some(VMType::Integer(1)) = data.pop() {
                     process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
                 }
             }
@@ -288,7 +282,7 @@ pub fn process_tokens<'a>(
             Token::If => {
                 let tokens = next!(tokens, "block");
 
-                if let Some(VMType::Bool(true)) = data.pop() {
+                if let Some(VMType::Integer(1)) = data.pop() {
                     process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
                 }
             }
@@ -307,9 +301,9 @@ pub fn process_tokens<'a>(
                 o => panic!("{o:?}"),
             },
 
-            Token::Gt => perform_binary_op!(data, >, VMType::Bool),
-            Token::Lt => perform_binary_op!(data, <, VMType::Bool),
-            Token::Eq => perform_binary_op!(data, ==, VMType::Bool),
+            Token::Gt => perform_binary_op!(data, >, VMType::Integer),
+            Token::Lt => perform_binary_op!(data, <, VMType::Integer),
+            Token::Eq => perform_binary_op!(data, ==, VMType::Integer),
             Token::Add => perform_binary_op!(data, +),
             Token::Sub => perform_binary_op!(data, -),
             Token::Mul => perform_binary_op!(data, *),
@@ -317,7 +311,6 @@ pub fn process_tokens<'a>(
             Token::Mod => perform_binary_op!(data, %),
             Token::Clear => data.clear(),
             Token::Str(content) => data.push(VMType::String(content.clone())),
-            Token::Bool(content) => data.push(VMType::Bool(*content)),
             Token::Float(content) => data.push(VMType::Float(*content)),
             Token::Integer(content) => data.push(VMType::Integer(*content)),
             Token::Block(tokens) => data.push(VMType::Function(tokens.clone())),
@@ -421,8 +414,6 @@ pub enum Token {
     Identifier(String),
     Integer(i64),
     Float(f64),
-    Bool(bool),
-    Instruction(String),
     Call,
     Add,
     Sub,
@@ -501,17 +492,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     }
                     break;
                 }
-            }
-            '\'' => {
-                let mut instruction = String::new();
-                for character in characters.by_ref() {
-                    if character != '\'' {
-                        instruction.push(character);
-                        continue;
-                    }
-                    break;
-                }
-                tokens.push(Token::Instruction(instruction))
             }
             ' ' | '\n' => continue,
             '(' => {
@@ -610,8 +590,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 '/' => Token::Div,
                 '%' => Token::Mod,
                 '&' => Token::Call,
-                'α' => Token::Bool(true),
-                'β' => Token::Bool(false),
                 '(' => Token::BlockStart,
                 ')' => Token::BlockEnd,
                 '{' => Token::ArrayStart,

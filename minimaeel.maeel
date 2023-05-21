@@ -17,8 +17,8 @@ fun interpret program stack (
             stack second -> b
 
             stack pop last pop last -> stack  | Remove them from 'Stack' and update 'Stack'
-            a b                             | Push a and b on the stack
-            op OP_MAP match &               | Convert the operator into a function (and execute it)
+            a b                               | Push a and b on the stack
+            op OP_MAP match &                 | Convert the operator into a function (and execute it)
             stack swap push -> stack          | Push the output to 'Stack' and update 'Stack'
 
             clear
