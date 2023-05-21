@@ -233,7 +233,7 @@ pub fn process_tokens<'a>(
                             parameters.push(next_token.unwrap().clone());
                         }
 
-                        _ => panic!(),
+                        other => panic!("{other:?}"),
                     }
                 }
 
