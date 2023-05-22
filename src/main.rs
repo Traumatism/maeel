@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::io::Read;
 use std::io::Result;
+use std::ops::AddAssign;
 
 #[derive(Clone)]
 pub enum VMType {
@@ -26,7 +27,7 @@ impl std::fmt::Display for VMType {
                         write!(f, " ").unwrap();
                     }
 
-                    write!(f, "{}", x).unwrap();
+                    write!(f, "{}", &x).unwrap();
                 });
 
                 write!(f, "}}")
@@ -43,7 +44,8 @@ impl PartialOrd for VMType {
             (VMType::Integer(a), VMType::Float(b)) | (VMType::Float(b), VMType::Integer(a)) => {
                 Some(b.total_cmp(&(*a as f64)))
             }
-            (..) => panic!(),
+
+            (a, b) => panic!("Cannot compare {a} and {b}"),
         }
     }
 }
@@ -57,6 +59,7 @@ impl PartialEq for VMType {
             (VMType::Integer(a), VMType::Float(b)) => (*a as f64) == *b,
             (VMType::Integer(a), VMType::Integer(b)) => a == b,
             (VMType::Float(a), VMType::Float(b)) => a == b,
+
             _ => false,
         }
     }
@@ -71,7 +74,8 @@ impl std::ops::Sub for VMType {
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a - b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 - b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a - b as f64),
-            (..) => panic!(),
+
+            (a, b) => panic!("Cannot substract {a} and {b}"),
         }
     }
 }
@@ -86,7 +90,8 @@ impl std::ops::Mul for VMType {
             (VMType::Float(b), VMType::Integer(a)) | (VMType::Integer(a), VMType::Float(b)) => {
                 VMType::Float(b * a as f64)
             }
-            (..) => panic!(),
+
+            (a, b) => panic!("Cannot multiply {a} and {b}"),
         }
     }
 }
@@ -105,7 +110,8 @@ impl std::ops::Add for VMType {
                 xs.push(other);
                 VMType::Array(xs)
             }
-            (..) => panic!(),
+
+            (a, b) => panic!("Cannot add {a} and {b}"),
         }
     }
 }
@@ -119,7 +125,8 @@ impl std::ops::Rem for VMType {
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a % b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 % b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a % b as f64),
-            (..) => panic!(),
+
+            (a, b) => panic!("Cannot divide {a} and {b}"),
         }
     }
 }
@@ -133,7 +140,8 @@ impl std::ops::Div for VMType {
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a / b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 / b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a / b as f64),
-            (..) => panic!(),
+
+            (a, b) => panic!("Cannot divide {a} and {b}"),
         }
     }
 }
@@ -142,25 +150,34 @@ macro_rules! next {
     ($tokens:expr, "identifier") => {{
         match $tokens.next().unwrap() {
             Token::Identifier(value) => value.clone(),
-            _ => panic!(),
+            other => panic!("Expected identifier, got {other:?}"),
         }
     }};
+
     ($tokens:expr, "block") => {{
         match $tokens.next().unwrap() {
             Token::Block(block) => block.to_vec(),
-            _ => panic!(),
+            other => panic!("Expected code block, got {other:?}"),
         }
     }};
 }
 
 macro_rules! perform_binary_op {
     ($data:expr, $operator:tt) => {{
-        let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap());
+        let (a, b) = (
+            $data.pop().expect("Binary operation expect 2 values on the stack"),
+            $data.pop().expect("Binary operation expect 2 values on the stack")
+        );
+
         $data.push(b $operator a)
     }};
 
     ($data:expr, $operator:tt, $vmtype:expr) => {{
-        let (a, b) = ($data.pop().unwrap(), $data.pop().unwrap());
+        let (a, b) = (
+            $data.pop().expect("Binary operation expect 2 values on the stack"),
+            $data.pop().expect("Binary operation expect 2 values on the stack")
+        );
+
         $data.push($vmtype((b $operator a) as i64))
     }};
 }
@@ -203,17 +220,23 @@ pub fn parse_xs<'a>(
                     }
 
                     // Both in locals and globals
-                    (Some(_), Some(_)) => panic!(),
+                    (Some(_), Some(_)) => {
+                        panic!("{identifier} is both in globals and locals, bruh!")
+                    }
 
                     // Must be in functions
                     (..) => {}
                 }
 
                 xs.push(VMType::Function(
-                    functions.get(identifier).expect(identifier).clone(),
+                    functions
+                        .get(identifier)
+                        .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
+                        .clone(),
                 ));
             }
-            _ => panic!(),
+
+            other => panic!("Found unexpected token while parsing array: {other:?}"),
         }
     }
 
@@ -221,8 +244,9 @@ pub fn parse_xs<'a>(
 }
 
 pub fn process_tokens<'a>(
-    tokens: &'a mut std::slice::Iter<Token>,  /* Program tokens */
-    data: &'a mut Vec<VMType>,                /* Program data stack */
+    current_line: &'a mut usize,
+    tokens: &'a mut std::slice::Iter<Token>, /* Program tokens */
+    data: &'a mut Vec<VMType>,               /* Program data stack */
     globals: &'a mut HashMap<String, VMType>, /* Global variables */
     functions: &'a mut HashMap<String, Vec<Token>>, /* Global functions */
 ) -> Result<&'a mut Vec<VMType>> {
@@ -230,12 +254,21 @@ pub fn process_tokens<'a>(
 
     while let Some(token) = tokens.next() {
         match token {
+            Token::Newline => current_line.add_assign(1),
+
             // Call anonymous functions
             Token::Call => match data.pop() {
                 Some(VMType::Function(tokens)) => {
-                    process_tokens(&mut tokens.iter(), data, &mut globals.clone(), functions)?;
+                    process_tokens(
+                        current_line,
+                        &mut tokens.iter(),
+                        data,
+                        &mut globals.clone(),
+                        functions,
+                    )?;
                 }
-                _ => panic!(),
+                Some(other) => panic!("Cannot call {other}"),
+                None => panic!("Nothing to call"),
             },
 
             // Parse a function definition
@@ -284,7 +317,8 @@ pub fn process_tokens<'a>(
                 let tokens = next!(tokens, "block");
 
                 while let Some(VMType::Integer(1)) = data.pop() {
-                    process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
+                    process_tokens(current_line, &mut tokens.iter(), data, globals, functions)
+                        .unwrap();
                 }
             }
 
@@ -298,18 +332,34 @@ pub fn process_tokens<'a>(
                     Some(VMType::Array(xs)) => {
                         xs.iter().for_each(|x| {
                             data.push(x.clone());
-                            process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
+                            process_tokens(
+                                current_line,
+                                &mut tokens.iter(),
+                                data,
+                                globals,
+                                functions,
+                            )
+                            .unwrap();
                         });
                     }
 
                     Some(VMType::String(string)) => {
                         string.chars().for_each(|x| {
                             data.push(VMType::String(String::from(x)));
-                            process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
+                            process_tokens(
+                                current_line,
+                                &mut tokens.iter(),
+                                data,
+                                globals,
+                                functions,
+                            )
+                            .unwrap();
                         });
                     }
 
-                    _ => panic!(),
+                    Some(other) => panic!("{current_line}: {other} is not indexable!"),
+
+                    None => panic!("{current_line}: Nothing to index!"),
                 }
             }
 
@@ -320,7 +370,8 @@ pub fn process_tokens<'a>(
 
                 // Check if stack top value is a TRUE value
                 if let Some(VMType::Integer(1)) = data.pop() {
-                    process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
+                    process_tokens(current_line, &mut tokens.iter(), data, globals, functions)
+                        .unwrap();
                 }
             }
 
@@ -333,11 +384,11 @@ pub fn process_tokens<'a>(
                     match name.chars().collect::<Vec<char>>().first() {
                         Some('_') => locals.insert(name.clone(), data.pop().unwrap()),
                         Some(_) => globals.insert(name.clone(), data.pop().unwrap()),
-                        None => panic!(),
+                        None => panic!("{current_line}: Variable name is missing!"),
                     };
                 }
-
-                _ => panic!(),
+                Some(other) => panic!("{current_line}: Can't assign a value to a(n) {other:?}!"),
+                None => panic!("{current_line}: Nothing to assign to!"),
             },
 
             // Process the 'is greater than' binary operation
@@ -387,16 +438,15 @@ pub fn process_tokens<'a>(
 
                 (Some(VMType::Integer(index)), Some(VMType::String(string))) => {
                     data.push(VMType::String(
-                        string
-                            .chars()
-                            .map(String::from)
-                            .collect::<Vec<String>>()
-                            .get(index as usize)
-                            .unwrap()
-                            .clone(),
+                        string.chars().nth(index as usize).unwrap().to_string(),
                     ));
                 }
-                _ => panic!(),
+
+                (Some(other), Some(VMType::Integer(_))) => {
+                    panic!("{current_line}: {other} is not indexable!")
+                }
+
+                (..) => panic!("{current_line}: Nothing to index!"),
             },
 
             Token::Identifier(identifier) => match identifier.as_str() {
@@ -432,10 +482,11 @@ pub fn process_tokens<'a>(
 
                         // Read file to include
                         _ => std::fs::read_to_string(format!("{}.maeel", target.replace('.', "/")))
-                            .expect("Failed to include file"),
+                            .unwrap_or_else(|_| panic!("{current_line}: Failed to include file")),
                     };
 
                     process_tokens(
+                        current_line,
                         &mut lex_into_tokens(&content).iter(),
                         &mut Vec::default(), // don't copy the data
                         globals,             // give a ref to the globals
@@ -458,7 +509,9 @@ pub fn process_tokens<'a>(
                         }
 
                         // Both in locals and globals
-                        (Some(_), Some(_)) => panic!(),
+                        (Some(_), Some(_)) => {
+                            panic!("{current_line}: {identifier} isn't in scope!")
+                        }
 
                         // Must be in functions
                         (..) => {}
@@ -466,6 +519,7 @@ pub fn process_tokens<'a>(
 
                     // Execute the function
                     process_tokens(
+                        current_line,
                         /* Extract function tokens */
                         &mut functions.get(identifier).expect(identifier).clone().iter(),
                         data,                   // give a ref to the data
@@ -489,6 +543,7 @@ pub fn process_tokens<'a>(
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
+    Newline,            // \n
     Block(Vec<Token>),  // (...)
     Str(String),        // "..."
     Identifier(String), // abc
@@ -519,10 +574,11 @@ pub enum Token {
 fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
     let mut output = Vec::new();
     let mut tokens_iter = tokens.iter();
+
     while let Some(token) = tokens_iter.next() {
         output.push(match token {
             Token::BlockStart => {
-                let mut depth = 1_u8;
+                let mut depth = 1;
                 let mut block_tokens = Vec::new();
 
                 while depth > 0 {
@@ -586,7 +642,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             }
 
             // Whitespaces are ignored
-            ' ' | '\n' => continue,
+            ' ' => continue,
 
             '(' => {
                 tokens.push(Token::BlockStart);
@@ -708,6 +764,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 '=' => Token::Eq,
                 '<' => Token::Lt,
                 '>' => Token::Gt,
+                '\n' => Token::Newline,
                 character => panic!("{character}"),
             }),
         }
@@ -731,6 +788,7 @@ fn main() -> Result<()> {
 
     // Initial run
     process_tokens(
+        &mut 1,
         &mut lex_into_tokens(&content).iter(),
         &mut Vec::default(),     // data stack
         &mut HashMap::default(), // globals (variables)
