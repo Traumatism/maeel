@@ -407,12 +407,21 @@ pub fn process_tokens<'a>(
             Token::Assignment => match tokens.next() {
                 Some(Token::Identifier(name)) => {
                     match name.chars().collect::<Vec<char>>().first() {
+                        // Variable name does start with _ <=> Local variable
                         Some('_') => locals.insert(name.clone(), data.pop().unwrap()),
+
+                        // Variable name does not start with _ <=> Global variable
                         Some(_) => globals.insert(name.clone(), data.pop().unwrap()),
+
+                        // No variable name provided
                         None => panic!("Variable name is missing!"),
                     };
                 }
+
+                // We want an identifier to assign value to
                 Some(other) => panic!("Can't assign a value to a(n) {other:?}!"),
+
+                // We want at least a token after an assignment
                 None => panic!("Nothing to assign to!"),
             },
 
