@@ -20,15 +20,16 @@ impl std::fmt::Display for VMType {
             VMType::String(x) => write!(f, "{}", x),
             VMType::Array(xs) => {
                 write!(f, "{{")?;
-                for (i, x) in xs.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, " ")?;
-                    }
-                    write!(f, "{}", x)?;
-                }
-                write!(f, "}}")?;
 
-                Ok(())
+                xs.iter().enumerate().for_each(|(i, x)| {
+                    if i > 0 {
+                        write!(f, " ").unwrap();
+                    }
+
+                    write!(f, "{}", x).unwrap();
+                });
+
+                write!(f, "}}")
             }
         }
     }
@@ -104,7 +105,7 @@ impl std::ops::Add for VMType {
                 array.push(other);
                 VMType::Array(array)
             }
-            (a, b) => panic!("{a} {b}"),
+            (..) => panic!(),
         }
     }
 }
@@ -169,6 +170,8 @@ pub fn parse_array<'a>(
     tokens: &'a mut std::slice::Iter<Token>,
     data: &'a mut Vec<VMType>,
     globals: &'a mut HashMap<String, VMType>,
+    functions: &'a mut HashMap<String, Vec<Token>>,
+    locals: &'a mut HashMap<String, VMType>,
 ) {
     let mut array = Vec::default();
 
@@ -176,17 +179,38 @@ pub fn parse_array<'a>(
         match tokens.next().unwrap() {
             Token::ArrayEnd => break,
             Token::ArrayStart => {
-                parse_array(tokens, data, globals);
+                parse_array(tokens, data, globals, functions, locals);
                 array.push(data.pop().unwrap())
             }
             Token::Str(value) => array.push(VMType::String(value.clone())),
             Token::Float(value) => array.push(VMType::Float(*value)),
             Token::Block(expr) => array.push(VMType::Function(expr.clone())),
             Token::Integer(value) => array.push(VMType::Integer(*value)),
-            Token::Identifier(identifier) => match globals.get(identifier) {
-                Some(value) => array.push(value.clone()),
-                None => panic!(),
-            },
+            Token::Identifier(identifier) => {
+                match (globals.get(identifier), locals.get(identifier)) {
+                    // Found in locals
+                    (None, Some(value)) => {
+                        array.push(value.clone()); // Push the variable content
+                        continue;
+                    }
+
+                    // Found in globals
+                    (Some(value), None) => {
+                        array.push(value.clone()); // Push the variable content
+                        continue;
+                    }
+
+                    // Both in locals and globals
+                    (Some(_), Some(_)) => panic!(),
+
+                    // Must be in functions
+                    (..) => {}
+                }
+
+                array.push(VMType::Function(
+                    functions.get(identifier).expect(identifier).clone(),
+                ));
+            }
             _ => panic!(),
         }
     }
@@ -195,15 +219,16 @@ pub fn parse_array<'a>(
 }
 
 pub fn process_tokens<'a>(
-    tokens: &'a mut std::slice::Iter<Token>,
-    data: &'a mut Vec<VMType>,
-    globals: &'a mut HashMap<String, VMType>,
-    functions: &'a mut HashMap<String, Vec<Token>>,
+    tokens: &'a mut std::slice::Iter<Token>,  /* Program tokens */
+    data: &'a mut Vec<VMType>,                /* Program data stack */
+    globals: &'a mut HashMap<String, VMType>, /* Global variables */
+    functions: &'a mut HashMap<String, Vec<Token>>, /* Global functions */
 ) -> Result<&'a mut Vec<VMType>> {
     let mut locals = HashMap::new();
 
     while let Some(token) = tokens.next() {
         match token {
+            // Call anonymous functions
             Token::Call => match data.pop() {
                 Some(VMType::Function(tokens)) => {
                     process_tokens(&mut tokens.iter(), data, &mut globals.clone(), functions)?;
@@ -211,11 +236,12 @@ pub fn process_tokens<'a>(
                 _ => panic!(),
             },
 
+            // Parse a function definition
             Token::FuncStart => {
                 let name = next!(tokens, "identifier");
 
-                let mut final_block = Vec::default();
                 let mut parameters = Vec::default();
+                let mut final_block = Vec::default();
                 let mut function_block = Vec::default();
 
                 loop {
@@ -223,9 +249,10 @@ pub fn process_tokens<'a>(
 
                     match next_token {
                         Some(Token::Block(block)) => {
-                            for token in block {
-                                function_block.push(token.clone());
-                            }
+                            block
+                                .iter()
+                                .for_each(|token| function_block.push(token.clone()));
+
                             break;
                         }
 
@@ -249,7 +276,9 @@ pub fn process_tokens<'a>(
                 functions.insert(name, final_block);
             }
 
+            // Parse while statement
             Token::While => {
+                // While requires a code block to execute
                 let tokens = next!(tokens, "block");
 
                 while let Some(VMType::Integer(1)) = data.pop() {
@@ -257,9 +286,12 @@ pub fn process_tokens<'a>(
                 }
             }
 
+            // Parse for statement
             Token::For => {
+                // For requires a code block to execute
                 let tokens = next!(tokens, "block");
 
+                // For requires an indexable on the stack top
                 match data.pop() {
                     Some(VMType::Array(xs)) => {
                         for element in xs {
@@ -279,16 +311,21 @@ pub fn process_tokens<'a>(
                 }
             }
 
+            // Parse if statement
             Token::If => {
+                // If requires a code block to execute
                 let tokens = next!(tokens, "block");
 
+                // Check if stack top value is a TRUE value
                 if let Some(VMType::Integer(1)) = data.pop() {
                     process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
                 }
             }
 
-            Token::ArrayStart => parse_array(tokens, data, globals),
+            // Parse an array (recursive => separated function)
+            Token::ArrayStart => parse_array(tokens, data, globals, functions, &mut locals),
 
+            // Assign the stack top value to the next token
             Token::Assignment => match tokens.next() {
                 Some(Token::Identifier(name)) => {
                     match name.chars().collect::<Vec<char>>().first() {
@@ -298,27 +335,54 @@ pub fn process_tokens<'a>(
                     };
                 }
 
-                o => panic!("{o:?}"),
+                _ => panic!(),
             },
 
+            // Process the 'is greater than' binary operation
             Token::Gt => perform_binary_op!(data, >, VMType::Integer),
+
+            // Process the 'is lower than' binary operation
             Token::Lt => perform_binary_op!(data, <, VMType::Integer),
+
+            // Process the 'is equal to' binary operation
             Token::Eq => perform_binary_op!(data, ==, VMType::Integer),
+
+            // Process the 'add' binary operation
             Token::Add => perform_binary_op!(data, +),
+
+            // Process the 'substract' binary operation
             Token::Sub => perform_binary_op!(data, -),
+
+            // Process the 'multiply' binary operation
             Token::Mul => perform_binary_op!(data, *),
+
+            // Process the 'divide' binary operation
             Token::Div => perform_binary_op!(data, /),
+
+            // Process the 'modulo' binary operation
             Token::Mod => perform_binary_op!(data, %),
+
+            // Clear the data stack
             Token::Clear => data.clear(),
+
+            // Push a string to the stack
             Token::Str(content) => data.push(VMType::String(content.clone())),
+
+            // Push a float to the stack
             Token::Float(content) => data.push(VMType::Float(*content)),
+
+            // Push an integer to the stack
             Token::Integer(content) => data.push(VMType::Integer(*content)),
+
+            // Push an anonymous function to the stack
             Token::Block(tokens) => data.push(VMType::Function(tokens.clone())),
 
+            // Get the n'th element of an indexable
             Token::Get => match (data.pop(), data.pop()) {
                 (Some(VMType::Integer(index)), Some(VMType::Array(array))) => {
                     data.push(array.get(index as usize).unwrap().clone());
                 }
+
                 (Some(VMType::Integer(index)), Some(VMType::String(string))) => {
                     data.push(VMType::String(
                         string
@@ -345,6 +409,7 @@ pub fn process_tokens<'a>(
 
                     let mut file = std::fs::File::open(path)?;
                     let mut buf = vec![0u8; bytes as usize];
+
                     file.read_exact(&mut buf)?;
 
                     data.push(VMType::Array(
@@ -355,47 +420,60 @@ pub fn process_tokens<'a>(
                 }
 
                 "include" => {
+                    // Include requires a string on the stack
                     let Some(VMType::String(target)) = data.pop() else {
                         panic!()
                     };
 
                     let content = match target.as_str() {
                         "std" => include_str!("../stdlib/std.maeel").to_string(),
+
+                        // Read file to include
                         _ => std::fs::read_to_string(format!("{}.maeel", target.replace('.', "/")))
                             .expect("Failed to include file"),
                     };
 
                     process_tokens(
                         &mut lex_into_tokens(&content).iter(),
-                        &mut Vec::default(),
-                        globals,
-                        functions,
+                        &mut Vec::default(), // don't copy the data
+                        globals,             // give a ref to the globals
+                        functions,           // give a ref to the functions
                     )?;
                 }
 
                 identifier => {
                     match (globals.get(identifier), locals.get(identifier)) {
+                        // Found in locals
                         (None, Some(value)) => {
-                            data.push(value.clone());
+                            data.push(value.clone()); // Push the variable content
                             continue;
                         }
+
+                        // Found in globals
                         (Some(value), None) => {
-                            data.push(value.clone());
+                            data.push(value.clone()); // Push the variable content
                             continue;
                         }
+
+                        // Both in locals and globals
                         (Some(_), Some(_)) => panic!(),
+
+                        // Must be in functions
                         (..) => {}
                     }
 
+                    // Execute the function
                     process_tokens(
+                        /* Extract function tokens */
                         &mut functions.get(identifier).expect(identifier).clone().iter(),
-                        data,
-                        &mut globals.clone(),
-                        functions,
+                        data,                   // give a ref to the data
+                        &mut globals.clone(),   // copy the globals
+                        &mut functions.clone(), // copy the functions
                     )?;
                 }
             },
 
+            // This should be here
             Token::BlockStart | Token::ArrayEnd => {
                 panic!()
             }
@@ -409,31 +487,31 @@ pub fn process_tokens<'a>(
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
-    Block(Vec<Token>),
-    Str(String),
-    Identifier(String),
-    Integer(i64),
-    Float(f64),
-    Call,
-    Add,
-    Sub,
-    Mul,
-    Mod,
-    Div,
-    Eq,
-    Gt,
-    Lt,
-    Get,
-    Clear,
-    Assignment,
-    FuncStart,
-    ArrayStart,
-    ArrayEnd,
-    BlockStart,
-    BlockEnd,
-    If,
-    For,
-    While,
+    Block(Vec<Token>),  // (...)
+    Str(String),        // "..."
+    Identifier(String), // abc
+    Integer(i64),       // 123
+    Float(f64),         // 12.3
+    Call,               // &
+    Add,                // +
+    Sub,                // -
+    Mul,                // *
+    Mod,                // %
+    Div,                // /
+    Eq,                 // =
+    Gt,                 // >
+    Lt,                 // <
+    Get,                // get
+    Clear,              // clear
+    Assignment,         // ->
+    FuncStart,          // fun
+    ArrayStart,         // {
+    ArrayEnd,           // }
+    BlockStart,         // (
+    BlockEnd,           // )
+    If,                 // =>
+    For,                // for
+    While,              // while
 }
 
 fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
@@ -444,16 +522,19 @@ fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
             Token::BlockStart => {
                 let mut depth = 1_u8;
                 let mut block_tokens = Vec::new();
+
                 while depth > 0 {
                     match tokens_iter.next() {
                         Some(Token::BlockEnd) => {
                             block_tokens.push(Token::BlockEnd);
                             depth -= 1
                         }
+
                         Some(Token::BlockStart) => {
                             block_tokens.push(Token::BlockStart);
                             depth += 1
                         }
+
                         Some(token) => block_tokens.push(token.clone()),
                         None => break,
                     }
@@ -471,6 +552,7 @@ macro_rules! take_with_predicate {
         let content = std::iter::once($character)
             .chain($characters.clone().take_while($p))
             .collect::<String>();
+
         (1..content.len()).for_each(|_| {
             $characters.next().unwrap();
         });
@@ -479,12 +561,19 @@ macro_rules! take_with_predicate {
 }
 
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
+    // Code block depth
     let mut depth = 0;
+
+    // Output tokens
     let mut tokens = Vec::default();
+
+    // Peekable, so we can look the next value without
+    // poping it
     let mut characters = code.chars().peekable();
 
     while let Some(character) = characters.next() {
         match character {
+            // Comments are ignored
             '|' => {
                 for character in characters.by_ref() {
                     if character != '\n' {
@@ -493,15 +582,21 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     break;
                 }
             }
+
+            // Whitespaces are ignored
             ' ' | '\n' => continue,
+
             '(' => {
                 tokens.push(Token::BlockStart);
                 depth += 1;
             }
+
             ')' => {
                 tokens.push(Token::BlockEnd);
                 depth -= 1;
             }
+
+            // Lexify strings
             '"' => {
                 let mut index = 0;
                 let content_vec: Vec<char> = characters
@@ -541,7 +636,10 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 tokens.push(Token::Str(content))
             }
+
+            // Lexify identifiers
             'a'..='z' | 'A'..='Z' | '_' => {
+                // Identifier content
                 let content = take_with_predicate!(character, characters, |&character| {
                     character.is_alphanumeric() || character == '_'
                 });
@@ -556,35 +654,46 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     _ => Token::Identifier(content),
                 });
             }
+
+            // Lexify numerics
             '0'..='9' => {
+                // Numeric content
                 let content = take_with_predicate!(character, characters, |&character| {
                     character.is_ascii_digit() || character == '.' || character == '_'
                 });
+
+                // Numeric contains . => it is a float, otherwise,
+                // it is an integer
                 tokens.push(if content.contains('.') {
-                    assert_eq!(content.matches('.').count(), 1);
+                    assert_eq!(content.matches('.').count(), 1); // Float must contain one point
+
                     Token::Float(content.parse().unwrap())
                 } else {
                     Token::Integer(content.parse().unwrap())
                 });
             }
+
+            // Lexify equal symbol, or if
             '=' => match characters.peek() {
                 Some('>') => {
                     tokens.push(Token::If);
                     characters.next();
                 }
+
                 _ => tokens.push(Token::Eq),
             },
 
+            // Lexify minus symbol, or assignment
             '-' => match characters.peek() {
                 Some('>') => {
                     tokens.push(Token::Assignment);
                     characters.next();
                 }
+
                 _ => tokens.push(Token::Sub),
             },
 
             _ => tokens.push(match character {
-                '-' => Token::Sub,
                 '+' => Token::Add,
                 '*' => Token::Mul,
                 '/' => Token::Div,
@@ -601,24 +710,29 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             }),
         }
     }
+
     assert_eq!(depth, 0);
+
+    // Extract code blocks from the tokens stream
     extract_blocks(tokens.as_slice())
 }
 
 fn main() -> Result<()> {
+    // Read program content
     let content = std::fs::read_to_string(
-        std::env::args()
+        std::env::args() // Shell args
             .collect::<Vec<String>>()
             .get(1)
             .expect("Please provide a file"),
     )
     .expect("Failed to open file");
 
+    // Initial run
     process_tokens(
         &mut lex_into_tokens(&content).iter(),
-        &mut Vec::default(),
-        &mut HashMap::default(),
-        &mut HashMap::default(),
+        &mut Vec::default(),     // data stack
+        &mut HashMap::default(), // globals (variables)
+        &mut HashMap::default(), // functions
     )?;
 
     Ok(())
