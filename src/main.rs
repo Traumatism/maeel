@@ -101,9 +101,9 @@ impl std::ops::Add for VMType {
             (VMType::Float(a), VMType::Float(b)) => VMType::Float(a + b),
             (VMType::Integer(a), VMType::Float(b)) => VMType::Float(a as f64 + b),
             (VMType::Float(a), VMType::Integer(b)) => VMType::Float(a + b as f64),
-            (other, VMType::Array(mut array)) | (VMType::Array(mut array), other) => {
-                array.push(other);
-                VMType::Array(array)
+            (other, VMType::Array(mut xs)) | (VMType::Array(mut xs), other) => {
+                xs.push(other);
+                VMType::Array(xs)
             }
             (..) => panic!(),
         }
@@ -138,15 +138,14 @@ impl std::ops::Div for VMType {
     }
 }
 
-#[macro_export]
 macro_rules! next {
-    ($tokens:expr,"identifier") => {{
+    ($tokens:expr, "identifier") => {{
         match $tokens.next().unwrap() {
             Token::Identifier(value) => value.clone(),
             _ => panic!(),
         }
     }};
-    ($tokens:expr,"block") => {{
+    ($tokens:expr, "block") => {{
         match $tokens.next().unwrap() {
             Token::Block(block) => block.to_vec(),
             _ => panic!(),
@@ -166,37 +165,40 @@ macro_rules! perform_binary_op {
     }};
 }
 
-pub fn parse_array<'a>(
+pub fn parse_xs<'a>(
     tokens: &'a mut std::slice::Iter<Token>,
     data: &'a mut Vec<VMType>,
     globals: &'a mut HashMap<String, VMType>,
     functions: &'a mut HashMap<String, Vec<Token>>,
     locals: &'a mut HashMap<String, VMType>,
 ) {
-    let mut array = Vec::default();
+    let mut xs = Vec::default();
 
     loop {
         match tokens.next().unwrap() {
             Token::ArrayEnd => break,
+
+            // Recursion for xss of xss
             Token::ArrayStart => {
-                parse_array(tokens, data, globals, functions, locals);
-                array.push(data.pop().unwrap())
+                parse_xs(tokens, data, globals, functions, locals);
+                xs.push(data.pop().unwrap())
             }
-            Token::Str(value) => array.push(VMType::String(value.clone())),
-            Token::Float(value) => array.push(VMType::Float(*value)),
-            Token::Block(expr) => array.push(VMType::Function(expr.clone())),
-            Token::Integer(value) => array.push(VMType::Integer(*value)),
+
+            Token::Str(value) => xs.push(VMType::String(value.clone())),
+            Token::Float(value) => xs.push(VMType::Float(*value)),
+            Token::Block(expr) => xs.push(VMType::Function(expr.clone())),
+            Token::Integer(value) => xs.push(VMType::Integer(*value)),
             Token::Identifier(identifier) => {
                 match (globals.get(identifier), locals.get(identifier)) {
                     // Found in locals
                     (None, Some(value)) => {
-                        array.push(value.clone()); // Push the variable content
+                        xs.push(value.clone()); // Push the variable content
                         continue;
                     }
 
                     // Found in globals
                     (Some(value), None) => {
-                        array.push(value.clone()); // Push the variable content
+                        xs.push(value.clone()); // Push the variable content
                         continue;
                     }
 
@@ -207,7 +209,7 @@ pub fn parse_array<'a>(
                     (..) => {}
                 }
 
-                array.push(VMType::Function(
+                xs.push(VMType::Function(
                     functions.get(identifier).expect(identifier).clone(),
                 ));
             }
@@ -215,7 +217,7 @@ pub fn parse_array<'a>(
         }
     }
 
-    data.push(VMType::Array(array))
+    data.push(VMType::Array(xs))
 }
 
 pub fn process_tokens<'a>(
@@ -294,17 +296,17 @@ pub fn process_tokens<'a>(
                 // For requires an indexable on the stack top
                 match data.pop() {
                     Some(VMType::Array(xs)) => {
-                        for element in xs {
-                            data.push(element);
+                        xs.iter().for_each(|x| {
+                            data.push(x.clone());
                             process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
-                        }
+                        });
                     }
 
                     Some(VMType::String(string)) => {
-                        for element in string.chars().map(String::from).collect::<Vec<String>>() {
-                            data.push(VMType::String(element));
+                        string.chars().for_each(|x| {
+                            data.push(VMType::String(String::from(x)));
                             process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
-                        }
+                        });
                     }
 
                     _ => panic!(),
@@ -322,8 +324,8 @@ pub fn process_tokens<'a>(
                 }
             }
 
-            // Parse an array (recursive => separated function)
-            Token::ArrayStart => parse_array(tokens, data, globals, functions, &mut locals),
+            // Parse an xs (recursive => separated function)
+            Token::ArrayStart => parse_xs(tokens, data, globals, functions, &mut locals),
 
             // Assign the stack top value to the next token
             Token::Assignment => match tokens.next() {
@@ -379,8 +381,8 @@ pub fn process_tokens<'a>(
 
             // Get the n'th element of an indexable
             Token::Get => match (data.pop(), data.pop()) {
-                (Some(VMType::Integer(index)), Some(VMType::Array(array))) => {
-                    data.push(array.get(index as usize).unwrap().clone());
+                (Some(VMType::Integer(index)), Some(VMType::Array(xs))) => {
+                    data.push(xs.get(index as usize).unwrap().clone());
                 }
 
                 (Some(VMType::Integer(index)), Some(VMType::String(string))) => {
