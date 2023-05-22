@@ -135,10 +135,10 @@ fun match
 
     {} swap for
     (
-        dup first swap second -> fn value = => (fn+)
+        dup 0 get swap 1 get -> fn value = => (fn+)
     )
 
-    dup len null => ("Unknown case!" panic)
+    dup 0 swap for (drop 1+) 0 = => ("Unknown case!" panic)
 
     last
 )
@@ -192,7 +192,7 @@ fun unix_input
     (
         | Read one byte from /dev/stdin
         | and add it to output array
-        "/dev/stdin" 1 read first dup rot +
+        "/dev/stdin" 1 read 0 get dup rot +
 
         | Stop if char is \n
         swap 10 = not
@@ -233,17 +233,17 @@ fun dec
 
 fun divides
 (
-    % null
+    % 0 =
 )
 
 fun even
 (
-    2 divides
+    2 % 0 =
 )
 
 fun odd
 (
-    2 divides not
+    2 % 1 =
 )
 
 fun pom
@@ -278,7 +278,7 @@ fun gteq
 
 fun len
 (
-    0 swap for (drop inc)
+    0 swap for (drop 1+)
 )
 
 fun first
@@ -298,7 +298,7 @@ fun third
 
 fun last
 (
-    dup len dec get
+    dup 0 swap for (drop 1+) 1- get
 )
 
 fun merge
@@ -313,18 +313,18 @@ fun count xs x
     xs
     (x= dup => (1 swap) not => (0))
     map
-    sum
+    (+) 0 reduce
 )
 
 fun contains xs x
 (
-    xs len -> xs_len
+    xs 0 swap for (drop 1+) -> xs_len
     0 -> i
 
     0 1 while
     (
         xs i get x = => (drop 1)
-        i inc -> i
+        i 1+ -> i
         i xs_len <
     )
 )
@@ -333,9 +333,9 @@ fun reverse xs
 (
     {} -> ys
 
-    xs len dup 1 gteq while
+    xs 0 swap for (drop 1+) dup 1 gteq while
     (
-        dec dup xs swap get ys+ -> ys
+        1- dup xs swap get ys+ -> ys
         dup 1 gteq
     )
 
@@ -345,12 +345,12 @@ fun reverse xs
 fun pop xs
 (
     {} -> ys
-    xs len -> xs_len
-    xs first take1 -> y 1
+    xs 0 swap for (drop 1+) -> xs_len
+    xs 0 get take1 -> y 1
 
     dup xs_len < while
     (
-        xs over get ys+ -> ys inc dup xs_len <
+        xs over get ys+ -> ys 1+ dup xs_len <
     )
 
     ys y + swap drop
@@ -436,7 +436,7 @@ fun bool2string
 
 fun fact n
 (
-    1 n inc range product
+    1 n 1 + range product
 )
 
 | Square root approximation
@@ -455,13 +455,13 @@ fun log base n
     n base gteq while
     (
         | Increase the counter
-        inc
+        1+
 
         | Put n/base into n
         n base / dup -> n 
 
         | if n <= base, then continue
-        base gteq 
+        base gteq
     )
 )
 
@@ -479,8 +479,7 @@ fun range start end
     (
         | Push 'start' to the output list
         | and increase 'start' value
-        start + start inc -> start
-
+        start + start 1 + -> start
         start end <
     )
 )
