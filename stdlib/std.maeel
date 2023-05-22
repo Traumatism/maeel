@@ -396,11 +396,19 @@ fun string2array
     for (+)
 )
 
+| Convert a digit to a char
+fun int2char
+(
+    {{0 "0"} {1 "1"} {2 "2"} {3 "3"} {4 "4"}
+    {5 "5"} {6 "6"} {7 "7"} {8 "8"} {9 "9"}}
+    match
+)
+
 | Convert a single character into an integer
-fun strdigit2int
+fun char2int
 (
     {{"0" 0} {"1" 1} {"2" 2} {"3" 3} {"4" 4}
-    {"5" 5} {"6" 6} {"7" 4} {"8" 5} {"9" 6}}
+    {"5" 5} {"6" 6} {"7" 7} {"8" 8} {"9" 9}}
     match
 )
 
@@ -409,7 +417,7 @@ fun str2int
 (
     0 swap for
     (
-        swap 10 * swap strdigit2int +
+        swap 10 * swap char2int +
     )
 )
 
