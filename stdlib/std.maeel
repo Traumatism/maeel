@@ -1,3 +1,10 @@
+| Rules:
+|   - For optimization reasons, ovoid re-using std functions
+|     in std functions (as it is possible).
+|
+|   - New functions must be followed by a newline, then the code block
+
+
 | Drop the stack top value
 fun drop
 (
@@ -89,6 +96,12 @@ fun format
 fun puts
 (
     print drop
+)
+
+| Print and drop a digit
+fun puts_digit
+(
+    int2char puts
 )
 
 | Print and drop the stack top value

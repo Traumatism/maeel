@@ -197,6 +197,7 @@ impl std::ops::Div for VMType {
 }
 
 macro_rules! next {
+    // Grab the next identifier
     ($tokens:expr, "identifier") => {{
         match $tokens.next().unwrap() {
             Token::Identifier(value) => value.clone(),
@@ -204,6 +205,7 @@ macro_rules! next {
         }
     }};
 
+    // Grab the next code block
     ($tokens:expr, "block") => {{
         match $tokens.next().unwrap() {
             Token::Block(block) => block.to_vec(),
@@ -252,9 +254,13 @@ pub fn parse_xs<'a>(
             }
 
             Token::Str(value) => xs.push(VMType::String(value.clone())),
+
             Token::Float(value) => xs.push(VMType::Float(*value)),
+
             Token::Block(expr) => xs.push(VMType::Function(expr.clone())),
+
             Token::Integer(value) => xs.push(VMType::Integer(*value)),
+
             Token::Identifier(identifier) => {
                 match (globals.get(identifier), locals.get(identifier)) {
                     // Found in locals
@@ -641,6 +647,7 @@ macro_rules! take_with_predicate {
         (1..content.len()).for_each(|_| {
             $characters.next().unwrap();
         });
+
         content
     }};
 }
@@ -694,9 +701,11 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 while index < content_vec.len() {
                     let character = content_vec[index];
                     index += 1;
-                    content.push(if character == '\\' {
-                        if let Some(next_character) = content_vec.get(index) {
+
+                    content.push(match (character, content_vec.get(index)) {
+                        ('\\', Some(next_character)) => {
                             index += 1;
+
                             match next_character {
                                 'n' => '\n',
                                 'r' => '\r',
@@ -706,17 +715,19 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                                 _ => {
                                     panic!(
                                         "Invalid escape \
-                                             sequence: \\{}",
+                                                 sequence: \\{}",
                                         next_character
                                     )
                                 }
                             }
-                        } else {
-                            panic!("Incomplete escape sequence");
                         }
-                    } else {
-                        character
-                    })
+
+                        ('\\', None) => {
+                            panic!("Incomplete escape sequence")
+                        }
+
+                        _ => character,
+                    });
                 }
 
                 tokens.push(Token::Str(content))
