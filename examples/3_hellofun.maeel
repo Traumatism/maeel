@@ -1,0 +1,8 @@
+"std" include
+
+fun say_hello name
+(
+    name "Hello, % !" format putsln
+)
+
+"Victor" say_hello

@@ -1,0 +1,3 @@
+"std" include
+
+"Hello, world" putsln
