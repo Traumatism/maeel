@@ -211,7 +211,7 @@ pub fn process_tokens<'a>(
                 _ => panic!(),
             },
 
-            Token::ProcStart => {
+            Token::FuncStart => {
                 let name = next!(tokens, "identifier");
 
                 let mut final_block = Vec::default();
@@ -240,7 +240,7 @@ pub fn process_tokens<'a>(
                 parameters.reverse();
 
                 for parameter in parameters {
-                    final_block.push(Token::Let);
+                    final_block.push(Token::Assignment);
                     final_block.push(parameter)
                 }
 
@@ -289,7 +289,7 @@ pub fn process_tokens<'a>(
 
             Token::ArrayStart => parse_array(tokens, data, globals),
 
-            Token::Let => match tokens.next() {
+            Token::Assignment => match tokens.next() {
                 Some(Token::Identifier(name)) => {
                     match name.chars().collect::<Vec<char>>().first() {
                         Some('_') => locals.insert(name.clone(), data.pop().unwrap()),
@@ -425,8 +425,8 @@ pub enum Token {
     Lt,
     Get,
     Clear,
-    Let,
-    ProcStart,
+    Assignment,
+    FuncStart,
     ArrayStart,
     ArrayEnd,
     BlockStart,
@@ -547,7 +547,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 });
 
                 tokens.push(match content.as_str() {
-                    "fun" => Token::ProcStart,
+                    "fun" => Token::FuncStart,
                     "while" => Token::While,
                     "for" => Token::For,
                     "get" => Token::Get,
@@ -577,7 +577,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
             '-' => match characters.peek() {
                 Some('>') => {
-                    tokens.push(Token::Let);
+                    tokens.push(Token::Assignment);
                     characters.next();
                 }
                 _ => tokens.push(Token::Sub),
