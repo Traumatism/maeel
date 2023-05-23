@@ -1,10 +1,10 @@
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
-    Block(Vec<Token>),  // (...)
-    String(String),     // "..."
-    Identifier(String), // abc
-    Integer(i64),       // 123
-    Float(f64),         // 12.3
+    Block(Vec<Token>),  // ex: (1 1 +)
+    String(String),     // ex: "abc"
+    Identifier(String), // ex: abc
+    Integer(i64),       // ex: 123
+    Float(f64),         // ex: 12.3
     Call,               // &
     Add,                // +
     Sub,                // -
@@ -22,7 +22,7 @@ pub enum Token {
     ArrayEnd,           // }
     BlockStart,         // (
     BlockEnd,           // )
-    If,                 // =>
+    Then,               // =>
     For,                // for
     While,              // while
 }
@@ -117,13 +117,12 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
             // Lexify strings
             '"' => {
-                let mut index = 0;
-
                 let content_vec: Vec<char> = characters
                     .by_ref()
                     .take_while(|&character| character != '"')
                     .collect();
 
+                let mut index = 0;
                 let mut content = String::with_capacity(content_vec.len());
 
                 while index < content_vec.len() {
@@ -174,7 +173,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     "while" => Token::While,
                     "for" => Token::For,
                     "get" => Token::Get,
-                    "then" => Token::If,
+                    "then" => Token::Then,
                     "clear" => Token::Clear,
                     _ => Token::Identifier(content),
                 });
@@ -201,7 +200,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             // Lexify equal symbol, or if
             '=' => match characters.peek() {
                 Some('>') => {
-                    tokens.push(Token::If);
+                    tokens.push(Token::Then);
                     characters.next();
                 }
 
