@@ -243,7 +243,7 @@ fn parse_xs(
         match tokens.next().unwrap() {
             Token::ArrayEnd => break,
 
-            // Recursion for xss of xss
+            // Recursion for xs of xs
             Token::ArrayStart => {
                 parse_xs(tokens, data, globals, functions, locals);
                 xs.push(data.pop().unwrap())
