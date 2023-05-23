@@ -10,6 +10,7 @@ let precedence = function
 let convert_rpn_to_infix rpn =
   let stack = ref [] in
   let tokens = String.split_on_char ' ' rpn in
+
   let rec process_tokens = function
     | [] -> List.hd !stack
     | token :: rest ->
@@ -17,17 +18,15 @@ let convert_rpn_to_infix rpn =
           let op1 = List.hd !stack in
             stack := List.tl !stack;
 
-            let op2 = List.hd !stack in
-              stack := List.tl !stack;
+          let op2 = List.hd !stack in
+            stack := List.tl !stack;
 
-              let result = "(" ^ op2 ^ token ^ op1 ^ ")" in
-                stack := result :: !stack;
+          let result = "(" ^ op2 ^ token ^ op1 ^ ")" in
+              stack := result :: !stack;
 
           process_tokens rest
-        else (
-          stack := token :: !stack;
-          process_tokens rest
-        )
+
+        else (stack := token :: !stack; process_tokens rest)
   in
   process_tokens tokens
 
