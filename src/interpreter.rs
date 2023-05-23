@@ -230,7 +230,7 @@ macro_rules! perform_binary_op {
     }};
 }
 
-pub fn parse_xs<'a>(
+fn parse_xs<'a>(
     tokens: &'a mut std::slice::Iter<Token>,
     data: &'a mut Vec<VMType>,
     globals: &'a mut HashMap<String, VMType>,
