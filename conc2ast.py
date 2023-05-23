@@ -1,7 +1,6 @@
 CODE = "1 1 + 3 * 4 f"
 
-Token = tuple[str, int | None]
-tokens: list[Token] = []
+tokens: list[tuple[str, int | None]] = []
 
 state = 0
 state1_buffer = ""
