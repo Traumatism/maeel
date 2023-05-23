@@ -4,6 +4,8 @@ use std::io::Result;
 
 use super::lexer::*;
 
+/// Values that can be processed by the virtual
+/// machine.
 #[derive(Clone)]
 pub enum VMType {
     Float(f64),
@@ -199,19 +201,11 @@ impl std::ops::Div for VMType {
 }
 
 macro_rules! next {
-    // Grab the next identifier
-    ($tokens:expr, "identifier") => {{
-        match $tokens.next().unwrap() {
-            Token::Identifier(value) => value.clone(),
-            other => panic!("Expected identifier, got {other:?}"),
-        }
-    }};
-
-    // Grab the next code block
-    ($tokens:expr, "block") => {{
-        match $tokens.next().unwrap() {
-            Token::Block(block) => block.to_vec(),
-            other => panic!("Expected code block, got {other:?}"),
+    // Grab the next token of the specified variant
+    ($tokens:expr, $variant:ident) => {{
+        match $tokens.next() {
+            Some(Token::$variant(value)) => value.clone(),
+            other => panic!("Expected {}, got {:?}", stringify!($variant), other),
         }
     }};
 }
@@ -328,7 +322,7 @@ pub fn process_tokens<'a>(
 
             // Parse a function definition
             Token::FuncDef => {
-                let name = next!(tokens, "identifier");
+                let name = next!(tokens, Identifier);
 
                 let mut parameters = Vec::default();
                 let mut final_block = Vec::default();
@@ -369,7 +363,7 @@ pub fn process_tokens<'a>(
             // Parse while statement
             Token::While => {
                 // While requires a code block to execute
-                let tokens = next!(tokens, "block");
+                let tokens = next!(tokens, Block);
 
                 while let Some(VMType::Integer(1)) = data.pop() {
                     process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
@@ -379,7 +373,7 @@ pub fn process_tokens<'a>(
             // Parse for statement
             Token::For => {
                 // For requires a code block to execute
-                let tokens = next!(tokens, "block");
+                let tokens = next!(tokens, Block);
 
                 // For requires an indexable on the stack top
                 match data.pop() {
@@ -406,7 +400,7 @@ pub fn process_tokens<'a>(
             // Parse if statement
             Token::Then => {
                 // Then requires a code block to execute
-                let tokens = next!(tokens, "block");
+                let tokens = next!(tokens, Block);
 
                 // Check if stack top value is a TRUE value
                 if let Some(VMType::Integer(1)) = data.pop() {
@@ -575,6 +569,7 @@ pub fn process_tokens<'a>(
                 panic!()
             }
 
+            // uhm
             Token::BlockEnd => {}
         };
     }
