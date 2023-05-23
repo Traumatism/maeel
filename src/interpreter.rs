@@ -230,12 +230,12 @@ macro_rules! perform_binary_op {
     }};
 }
 
-fn parse_xs<'a>(
-    tokens: &'a mut std::slice::Iter<Token>,
-    data: &'a mut Vec<VMType>,
-    globals: &'a mut HashMap<String, VMType>,
-    functions: &'a mut HashMap<String, Vec<Token>>,
-    locals: &'a mut HashMap<String, VMType>,
+fn parse_xs(
+    tokens: &mut std::slice::Iter<Token>,
+    data: &mut Vec<VMType>,
+    globals: &mut HashMap<String, VMType>,
+    functions: &mut HashMap<String, Vec<Token>>,
+    locals: &mut HashMap<String, VMType>,
 ) {
     let mut xs = Vec::default();
 
