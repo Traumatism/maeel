@@ -314,8 +314,14 @@ pub fn process_tokens<'a>(
             // Call anonymous functions
             Token::Call => match data.pop() {
                 Some(VMType::Function(tokens)) => {
-                    process_tokens(&mut tokens.iter(), data, &mut globals.clone(), functions)?;
+                    process_tokens(
+                        &mut tokens.iter(),
+                        data,
+                        &mut globals.clone(),
+                        &mut functions.clone(),
+                    )?;
                 }
+
                 Some(other) => panic!("Cannot call {other}"),
                 None => panic!("Nothing to call"),
             },
