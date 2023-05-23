@@ -16,3 +16,4 @@ Cargo.lock
 *.cmx
 *.o
 *.ml
+maeel_ocaml/
