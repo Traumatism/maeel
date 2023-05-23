@@ -327,7 +327,7 @@ pub fn process_tokens<'a>(
             },
 
             // Parse a function definition
-            Token::FuncStart => {
+            Token::FuncDef => {
                 let name = next!(tokens, "identifier");
 
                 let mut parameters = Vec::default();

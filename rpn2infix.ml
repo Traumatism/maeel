@@ -15,20 +15,13 @@ let convert_rpn_to_infix rpn =
     | [] -> List.hd !stack
     | token :: rest ->
         if is_operator token then
-          let op1 = List.hd !stack in
-            stack := List.tl !stack;
-
-          let op2 = List.hd !stack in
-            stack := List.tl !stack;
-
-          let result = "(" ^ op2 ^ token ^ op1 ^ ")" in
-              stack := result :: !stack;
-
+          let rhs = List.hd !stack in stack := List.tl !stack;
+          let lhs = List.hd !stack in stack := List.tl !stack;
+          let result = "(" ^ lhs ^ token ^ rhs ^ ")" in stack := result :: !stack;
           process_tokens rest
-
         else (stack := token :: !stack; process_tokens rest)
-  in
-  process_tokens tokens
+
+  in process_tokens tokens
 
 let rpn_expression = "1 1 + 3 *"
 let infix_expression = convert_rpn_to_infix rpn_expression;;

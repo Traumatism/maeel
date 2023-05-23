@@ -17,7 +17,7 @@ pub enum Token {
     Get,                // get
     Clear,              // clear
     Assignment,         // ->
-    FuncStart,          // fun
+    FuncDef,            // fun
     ArrayStart,         // {
     ArrayEnd,           // }
     BlockStart,         // (
@@ -170,7 +170,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 });
 
                 tokens.push(match content.as_str() {
-                    "fun" => Token::FuncStart,
+                    "fun" => Token::FuncDef,
                     "while" => Token::While,
                     "for" => Token::For,
                     "get" => Token::Get,
