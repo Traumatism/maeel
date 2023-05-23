@@ -15,11 +15,14 @@ let convert_rpn_to_infix rpn =
     | token :: rest ->
         if is_operator token then
           let op1 = List.hd !stack in
-          stack := List.tl !stack;
-          let op2 = List.hd !stack in
-          stack := List.tl !stack;
-          let result = "(" ^ op2 ^ token ^ op1 ^ ")" in
-          stack := result :: !stack;
+            stack := List.tl !stack;
+
+            let op2 = List.hd !stack in
+              stack := List.tl !stack;
+
+              let result = "(" ^ op2 ^ token ^ op1 ^ ")" in
+                stack := result :: !stack;
+
           process_tokens rest
         else (
           stack := token :: !stack;
