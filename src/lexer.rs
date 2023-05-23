@@ -54,6 +54,7 @@ fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
                         None => break,
                     }
                 }
+
                 Token::Block(extract_blocks(&block_tokens))
             }
 
@@ -230,12 +231,12 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 '=' => Token::Eq,
                 '<' => Token::Lt,
                 '>' => Token::Gt,
-
                 character => panic!("{character}"),
             }),
         }
     }
 
+    // Code block depth should be equal to zero
     assert_eq!(depth, 0);
 
     // Extract code blocks from the tokens stream
