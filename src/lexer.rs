@@ -1,7 +1,7 @@
 #[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Block(Vec<Token>),  // (...)
-    Str(String),        // "..."
+    String(String),     // "..."
     Identifier(String), // abc
     Integer(i64),       // 123
     Float(f64),         // 12.3
@@ -159,7 +159,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     });
                 }
 
-                tokens.push(Token::Str(content))
+                tokens.push(Token::String(content))
             }
 
             // Lexify identifiers
