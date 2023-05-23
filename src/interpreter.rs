@@ -255,7 +255,7 @@ pub fn parse_xs<'a>(
                 xs.push(data.pop().unwrap())
             }
 
-            Token::Str(value) => xs.push(VMType::String(value.clone())),
+            Token::String(value) => xs.push(VMType::String(value.clone())),
 
             Token::Float(value) => xs.push(VMType::Float(*value)),
 
@@ -461,7 +461,7 @@ pub fn process_tokens<'a>(
             Token::Clear => data.clear(),
 
             // Push a string to the stack
-            Token::Str(content) => data.push(VMType::String(content.clone())),
+            Token::String(content) => data.push(VMType::String(content.clone())),
 
             // Push a float to the stack
             Token::Float(content) => data.push(VMType::Float(*content)),
@@ -499,10 +499,9 @@ pub fn process_tokens<'a>(
 
                     assert!(bytes >= 0);
 
-                    let mut file = std::fs::File::open(path)?;
                     let mut buf = vec![0u8; bytes as usize];
 
-                    file.read_exact(&mut buf)?;
+                    std::fs::File::open(path)?.read_exact(&mut buf)?;
 
                     data.push(VMType::Array(
                         buf.iter()
@@ -565,7 +564,7 @@ pub fn process_tokens<'a>(
                 }
             },
 
-            // This should be here
+            // This should not be here
             Token::BlockStart | Token::ArrayEnd => {
                 panic!()
             }
