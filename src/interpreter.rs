@@ -404,8 +404,8 @@ pub fn process_tokens<'a>(
             }
 
             // Parse if statement
-            Token::If => {
-                // If requires a code block to execute
+            Token::Then => {
+                // Then requires a code block to execute
                 let tokens = next!(tokens, "block");
 
                 // Check if stack top value is a TRUE value
