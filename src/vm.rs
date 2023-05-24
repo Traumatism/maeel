@@ -197,49 +197,32 @@ impl std::ops::Div for VMType {
 struct Node(VMType, Option<Box<Node>>);
 
 pub struct VMStack {
-    head: *mut Node,
+    head: Option<Box<Node>>,
 }
 
 impl VMStack {
     pub fn new() -> Self {
-        VMStack {
-            head: std::ptr::null_mut(),
-        }
+        VMStack { head: None }
     }
 
+    /// Push a value on the top of the stack
     pub fn push(&mut self, value: VMType) {
-        let new_node = Box::into_raw(Box::new(Node(value, self.head)));
-        self.head = new_node;
+        self.head = Some(Box::new(Node(value, self.head.take())));
     }
 
+    /// Pop a value from the top of the stack
     pub fn pop(&mut self) -> Option<VMType> {
-        if self.head.is_null() {
-            None
-        } else {
-            let node = unsafe { Box::from_raw(self.head) };
+        self.head.take().map(|node| {
             self.head = node.1;
-            Some(node.0)
-        }
+            node.0
+        })
     }
 
     pub fn peek(&self) -> Option<&VMType> {
-        if self.head.is_null() {
-            None
-        } else {
-            unsafe { Some(&(*self.head).0) }
-        }
+        self.head.as_ref().map(|node| &node.0)
     }
 
     pub fn clear(&mut self) {
-        while !self.head.is_null() {
-            let node = unsafe { Box::from_raw(self.head) };
-            self.head = node.1;
-        }
-    }
-}
-
-impl Drop for VMStack {
-    fn drop(&mut self) {
-        self.clear();
+        self.head = None;
     }
 }
