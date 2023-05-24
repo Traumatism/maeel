@@ -199,10 +199,7 @@ pub struct VMStack {
     head: Option<Box<Node>>,
 }
 
-struct Node {
-    value: VMType,
-    next: Option<Box<Node>>,
-}
+struct Node(VMType, Option<Box<Node>>);
 
 impl VMStack {
     pub fn new() -> Self {
@@ -211,23 +208,19 @@ impl VMStack {
 
     /// Push a value on the top of the stack
     pub fn push(&mut self, value: VMType) {
-        let new_node = Box::new(Node {
-            value,
-            next: self.head.take(),
-        });
-        self.head = Some(new_node);
+        self.head = Some(Box::new(Node(value, self.head.take())));
     }
 
     /// Pop a value from the top of the stack
     pub fn pop(&mut self) -> Option<VMType> {
         self.head.take().map(|node| {
-            self.head = node.next;
-            node.value
+            self.head = node.1;
+            node.0
         })
     }
 
     pub fn peek(&self) -> Option<&VMType> {
-        self.head.as_ref().map(|node| &node.value)
+        self.head.as_ref().map(|node| &node.0)
     }
 
     pub fn clear(&mut self) {
