@@ -1,10 +1,3 @@
-| Rules:
-|   - For optimization reasons, ovoid re-using std functions
-|     in std functions (as it is possible).
-|
-|   - New functions must be followed by a newline, then the code block
-
-
 | Drop the stack top value
 fun drop
 (
@@ -471,7 +464,7 @@ fun log base n
         1+
 
         | Put n/base into n
-        n base / dup -> n 
+        n base / dup -> n
 
         | if n <= base, then continue
         base gteq
