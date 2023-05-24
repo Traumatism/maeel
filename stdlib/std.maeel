@@ -317,7 +317,7 @@ fun merge
 fun count xs x
 (
     xs
-    (x= dup => (1 swap) not => (0))
+    (x = dup => (1 swap) not => (0))
     map
     (+) 0 reduce
 )
