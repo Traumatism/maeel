@@ -43,7 +43,6 @@ fn parse_xs(
     data: &mut VMStack,
     globals: &mut HashMap<String, VMType>,
     functions: &mut HashMap<String, Vec<Token>>,
-    locals: &mut HashMap<String, VMType>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut xs = Vec::default();
 
@@ -53,7 +52,7 @@ fn parse_xs(
 
             // Recursion for xs of xs
             Some(Token::ArrayStart) => {
-                parse_xs(tokens, data, globals, functions, locals)?;
+                parse_xs(tokens, data, globals, functions)?;
 
                 xs.push(data.pop()?)
             }
@@ -67,34 +66,22 @@ fn parse_xs(
             Some(Token::Block(expr)) => xs.push(VMType::Function(expr.clone())),
 
             Some(Token::Identifier(identifier)) => {
-                match (globals.get(identifier), locals.get(identifier)) {
-                    // Found in locals
-                    (None, Some(value)) => {
-                        xs.push(value.clone()); // Push the variable content
+                match globals.get(identifier) {
+                    Some(value) => {
+                        maeel_push!(xs, value.clone()); // Push the variable content
                         continue;
-                    }
-
-                    // Found in globals
-                    (Some(value), None) => {
-                        xs.push(value.clone()); // Push the variable content
-                        continue;
-                    }
-
-                    // Both in locals and globals
-                    (Some(_), Some(_)) => {
-                        panic!("{identifier} is both in globals and locals, bruh!")
                     }
 
                     // Must be in functions
-                    (..) => {}
+                    None => {
+                        xs.push(VMType::Function(
+                            functions
+                                .get(identifier)
+                                .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
+                                .clone(),
+                        ));
+                    }
                 }
-
-                xs.push(VMType::Function(
-                    functions
-                        .get(identifier)
-                        .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
-                        .clone(),
-                ));
             }
 
             other => panic!("Found unexpected token while parsing array: {other:?}"),
@@ -112,7 +99,6 @@ pub fn process_tokens<'a>(
     globals: &'a mut HashMap<String, VMType>, /* Global variables */
     functions: &'a mut HashMap<String, Vec<Token>>, /* Global functions */
 ) -> Result<&'a mut VMStack, Box<dyn std::error::Error>> {
-    let mut locals = HashMap::new();
     while let Some(token) = tokens.next() {
         match token {
             // Call anonymous functions
@@ -132,37 +118,28 @@ pub fn process_tokens<'a>(
             },
 
             Token::FunctionDefinition => {
-                let mut parameters = Vec::default();
-                let mut final_block = Vec::default();
-                let mut function_block = Vec::default();
-
                 let name = next!(tokens, Identifier);
+
+                let mut function_block = Vec::default();
 
                 for next_token in tokens.by_ref() {
                     match next_token {
                         Token::Block(block) => {
+                            function_block.reverse();
                             function_block.extend(block.clone());
                             break;
                         }
 
-                        Token::Identifier(_) => parameters.push(next_token),
+                        Token::Identifier(_) => {
+                            function_block.push(next_token.clone());
+                            function_block.push(Token::Assignment);
+                        }
 
                         _ => panic!(),
                     }
                 }
 
-                parameters.reverse();
-
-                final_block.extend(
-                    parameters
-                        .iter()
-                        .cloned()
-                        .flat_map(|parameter| vec![Token::Assignment, parameter.clone()]),
-                );
-
-                final_block.extend(function_block);
-
-                functions.insert(name, final_block);
+                functions.insert(name, function_block);
             }
 
             // Parse while statement
@@ -216,22 +193,11 @@ pub fn process_tokens<'a>(
             }
 
             // Parse an xs (recursive => separated function)
-            Token::ArrayStart => parse_xs(tokens, data, globals, functions, &mut locals)?,
+            Token::ArrayStart => parse_xs(tokens, data, globals, functions)?,
 
             // Assign the stack top value to the next token
             Token::Assignment => {
-                let name = next!(tokens, Identifier);
-
-                match name.chars().collect::<Vec<char>>().first() {
-                    // Variable name does start with _ <=> Local variable
-                    Some('_') => locals.insert(name, data.pop()?),
-
-                    // Variable name does not start with _ <=> Global variable
-                    Some(_) => globals.insert(name, data.pop()?),
-
-                    // No variable name provided
-                    None => panic!("Variable name is missing!"),
-                };
+                globals.insert(next!(tokens, Identifier), data.pop()?);
             }
 
             // Process the 'is greater than' binary operation
@@ -340,18 +306,14 @@ pub fn process_tokens<'a>(
                 }
 
                 identifier => {
-                    match (globals.get(identifier), locals.get(identifier)) {
-                        // Found in locals xor globals
-                        (Some(value), None) | (None, Some(value)) => {
+                    match globals.get(identifier) {
+                        Some(value) => {
                             maeel_push!(data, value.clone()); // Push the variable content
                             continue;
                         }
 
-                        // Both in locals and globals
-                        (Some(_), Some(_)) => panic!("??"),
-
                         // Must be in functions
-                        (None, None) => {
+                        None => {
                             // Execute the function
                             process_tokens(
                                 /* Extract function tokens */

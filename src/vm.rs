@@ -1,7 +1,5 @@
 use super::lexer::*;
 
-use std::error::Error;
-
 /// Values that can be processed by the virtual machine.
 #[derive(Clone)]
 pub enum VMType {
@@ -218,7 +216,7 @@ impl VMStack {
         self.head = Box::into_raw(Box::new(Node(value, self.head)))
     }
 
-    pub fn pop(&mut self) -> Result<VMType, Box<dyn Error>> {
+    pub fn pop(&mut self) -> Result<VMType, Box<dyn std::error::Error>> {
         if self.head.is_null() {
             Err("Stack is empty".into())
         } else {
@@ -228,7 +226,7 @@ impl VMStack {
         }
     }
 
-    pub fn peek(&self) -> Result<&VMType, Box<dyn Error>> {
+    pub fn peek(&self) -> Result<&VMType, Box<dyn std::error::Error>> {
         if self.head.is_null() {
             Err("Stack is empty".into())
         } else {
