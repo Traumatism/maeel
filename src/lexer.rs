@@ -173,9 +173,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     "while" => Token::While,
                     "for" => Token::For,
                     "get" => Token::Get,
-                    "then" => Token::Then,
                     "clear" => Token::Clear,
-
                     _ => Token::Identifier(content),
                 });
             }

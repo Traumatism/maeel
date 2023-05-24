@@ -112,12 +112,12 @@ pub fn process_tokens<'a>(
         match token {
             // Call anonymous functions
             Token::Call => match data.pop() {
-                Some(VMType::Function(tokens)) => {
+                Some(VMType::Function(block_tokens)) => {
                     process_tokens(
-                        &mut tokens.iter(),
+                        &mut block_tokens.iter(),
                         data,
                         &mut globals.clone(),
-                        &mut functions.clone(),
+                        functions,
                     )?;
                 }
 
@@ -125,11 +125,11 @@ pub fn process_tokens<'a>(
                 None => panic!("Nothing to call"),
             },
             Token::FunctionDefinition => {
-                let name = next!(tokens, Identifier);
-
                 let mut parameters = Vec::default();
                 let mut final_block = Vec::default();
                 let mut function_block = Vec::default();
+
+                let name = next!(tokens, Identifier);
 
                 for next_token in tokens.by_ref() {
                     match next_token {
@@ -339,20 +339,20 @@ pub fn process_tokens<'a>(
                         }
 
                         // Both in locals and globals
-                        (Some(_), Some(_)) => panic!("{identifier} isn't in scope!"),
+                        (Some(_), Some(_)) => panic!("?????????????"),
 
                         // Must be in functions
-                        (..) => {}
+                        (None, None) => {
+                            // Execute the function
+                            process_tokens(
+                                /* Extract function tokens */
+                                &mut functions.get(identifier).expect(identifier).clone().iter(),
+                                data,                 // give a ref to the data
+                                &mut globals.clone(), // copy the globals
+                                functions,            // give a ref to the functions
+                            )?;
+                        }
                     }
-
-                    // Execute the function
-                    process_tokens(
-                        /* Extract function tokens */
-                        &mut functions.get(identifier).expect(identifier).clone().iter(),
-                        data,                   // give a ref to the data
-                        &mut globals.clone(),   // copy the globals
-                        &mut functions.clone(), // copy the functions
-                    )?;
                 }
             },
 

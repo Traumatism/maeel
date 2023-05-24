@@ -7,6 +7,11 @@ pub enum VMType {
     Integer(i64),
     String(String),
     Array(Vec<VMType>),
+
+    /*
+    TODO: should be allocated on the stack, as the size of
+    a function is constant.
+    */
     Function(Vec<Token>),
 }
 
