@@ -6,18 +6,18 @@ pub enum Token {
     Integer(i64),       // ex: 123
     Float(f64),         // ex: 12.3
     Call,               // &
-    Add,                // +
-    Sub,                // -
-    Mul,                // *
-    Mod,                // %
-    Div,                // /
-    Eq,                 // =
-    Gt,                 // >
-    Lt,                 // <
+    Plus,               // +
+    Minus,              // -
+    Times,              // *
+    Modulo,             // %
+    Divide,             // /
+    Equal,              // =
+    GreaterThan,        // >
+    LowerThan,          // <
     Get,                // get
     Clear,              // clear
     Assignment,         // ->
-    FuncDef,            // fun
+    FunctionDefinition, // fun
     ArrayStart,         // {
     ArrayEnd,           // }
     BlockStart,         // (
@@ -169,7 +169,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 });
 
                 tokens.push(match content.as_str() {
-                    "fun" => Token::FuncDef,
+                    "fun" => Token::FunctionDefinition,
                     "while" => Token::While,
                     "for" => Token::For,
                     "get" => Token::Get,
@@ -205,7 +205,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     characters.next();
                 }
 
-                _ => tokens.push(Token::Eq),
+                _ => tokens.push(Token::Equal),
             },
 
             // Lexify minus symbol, or assignment
@@ -215,22 +215,22 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     characters.next();
                 }
 
-                _ => tokens.push(Token::Sub),
+                _ => tokens.push(Token::Minus),
             },
 
             _ => tokens.push(match character {
-                '+' => Token::Add,
-                '*' => Token::Mul,
-                '/' => Token::Div,
-                '%' => Token::Mod,
+                '+' => Token::Plus,
+                '*' => Token::Times,
+                '/' => Token::Divide,
+                '%' => Token::Modulo,
                 '&' => Token::Call,
                 '(' => Token::BlockStart,
                 ')' => Token::BlockEnd,
                 '{' => Token::ArrayStart,
                 '}' => Token::ArrayEnd,
-                '=' => Token::Eq,
-                '<' => Token::Lt,
-                '>' => Token::Gt,
+                '=' => Token::Equal,
+                '<' => Token::LowerThan,
+                '>' => Token::GreaterThan,
                 character => panic!("{character}"),
             }),
         }

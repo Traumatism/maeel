@@ -240,24 +240,24 @@ fn parse_xs(
     let mut xs = Vec::default();
 
     loop {
-        match tokens.next().unwrap() {
-            Token::ArrayEnd => break,
+        match tokens.next() {
+            Some(Token::ArrayEnd) => break,
 
             // Recursion for xs of xs
-            Token::ArrayStart => {
+            Some(Token::ArrayStart) => {
                 parse_xs(tokens, data, globals, functions, locals);
                 xs.push(data.pop().unwrap())
             }
 
-            Token::String(value) => xs.push(VMType::String(value.clone())),
+            Some(Token::String(value)) => xs.push(VMType::String(value.clone())),
 
-            Token::Float(value) => xs.push(VMType::Float(*value)),
+            Some(Token::Float(value)) => xs.push(VMType::Float(*value)),
 
-            Token::Block(expr) => xs.push(VMType::Function(expr.clone())),
+            Some(Token::Block(expr)) => xs.push(VMType::Function(expr.clone())),
 
-            Token::Integer(value) => xs.push(VMType::Integer(*value)),
+            Some(Token::Integer(value)) => xs.push(VMType::Integer(*value)),
 
-            Token::Identifier(identifier) => {
+            Some(Token::Identifier(identifier)) => {
                 match (globals.get(identifier), locals.get(identifier)) {
                     // Found in locals
                     (None, Some(value)) => {
@@ -321,7 +321,7 @@ pub fn process_tokens<'a>(
             },
 
             // Parse a function definition
-            Token::FuncDef => {
+            Token::FunctionDefinition => {
                 let name = next!(tokens, Identifier);
 
                 let mut parameters = Vec::default();
@@ -366,7 +366,7 @@ pub fn process_tokens<'a>(
                 let tokens = next!(tokens, Block);
 
                 while let Some(VMType::Integer(1)) = data.pop() {
-                    process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
+                    process_tokens(&mut tokens.iter(), data, globals, functions)?;
                 }
             }
 
@@ -404,7 +404,7 @@ pub fn process_tokens<'a>(
 
                 // Check if stack top value is a TRUE value
                 if let Some(VMType::Integer(1)) = data.pop() {
-                    process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
+                    process_tokens(&mut tokens.iter(), data, globals, functions)?;
                 }
             }
 
@@ -412,50 +412,44 @@ pub fn process_tokens<'a>(
             Token::ArrayStart => parse_xs(tokens, data, globals, functions, &mut locals),
 
             // Assign the stack top value to the next token
-            Token::Assignment => match tokens.next() {
-                Some(Token::Identifier(name)) => {
-                    match name.chars().collect::<Vec<char>>().first() {
-                        // Variable name does start with _ <=> Local variable
-                        Some('_') => locals.insert(name.clone(), data.pop().unwrap()),
+            Token::Assignment => {
+                let name = next!(tokens, Identifier);
 
-                        // Variable name does not start with _ <=> Global variable
-                        Some(_) => globals.insert(name.clone(), data.pop().unwrap()),
+                match name.chars().collect::<Vec<char>>().first() {
+                    // Variable name does start with _ <=> Local variable
+                    Some('_') => locals.insert(name.clone(), data.pop().unwrap()),
 
-                        // No variable name provided
-                        None => panic!("Variable name is missing!"),
-                    };
-                }
+                    // Variable name does not start with _ <=> Global variable
+                    Some(_) => globals.insert(name.clone(), data.pop().unwrap()),
 
-                // We want an identifier to assign value to
-                Some(other) => panic!("Can't assign a value to a(n) {other:?}!"),
-
-                // We want at least a token after an assignment
-                None => panic!("Nothing to assign to!"),
-            },
+                    // No variable name provided
+                    None => panic!("Variable name is missing!"),
+                };
+            }
 
             // Process the 'is greater than' binary operation
-            Token::Gt => perform_binary_op!(data, >, VMType::Integer),
+            Token::GreaterThan => perform_binary_op!(data, >, VMType::Integer),
 
             // Process the 'is lower than' binary operation
-            Token::Lt => perform_binary_op!(data, <, VMType::Integer),
+            Token::LowerThan => perform_binary_op!(data, <, VMType::Integer),
 
             // Process the 'is equal to' binary operation
-            Token::Eq => perform_binary_op!(data, ==, VMType::Integer),
+            Token::Equal => perform_binary_op!(data, ==, VMType::Integer),
 
             // Process the 'add' binary operation
-            Token::Add => perform_binary_op!(data, +),
+            Token::Plus => perform_binary_op!(data, +),
 
             // Process the 'substract' binary operation
-            Token::Sub => perform_binary_op!(data, -),
+            Token::Minus => perform_binary_op!(data, -),
 
             // Process the 'multiply' binary operation
-            Token::Mul => perform_binary_op!(data, *),
+            Token::Times => perform_binary_op!(data, *),
 
             // Process the 'divide' binary operation
-            Token::Div => perform_binary_op!(data, /),
+            Token::Divide => perform_binary_op!(data, /),
 
             // Process the 'modulo' binary operation
-            Token::Mod => perform_binary_op!(data, %),
+            Token::Modulo => perform_binary_op!(data, %),
 
             // Clear the data stack
             Token::Clear => data.clear(),
