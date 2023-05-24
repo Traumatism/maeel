@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::io::Result;
 
 mod vm;
 use vm::*;
@@ -10,7 +9,7 @@ use lexer::*;
 mod interpreter;
 use interpreter::*;
 
-fn main() -> Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Read program content
     let content = std::fs::read_to_string(
         std::env::args() // Shell args

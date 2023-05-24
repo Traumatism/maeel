@@ -1,6 +1,5 @@
 use std::collections::hash_map::HashMap;
 use std::io::Read;
-use std::io::Result;
 
 use crate::lexer::*;
 use crate::vm::*;
@@ -17,21 +16,13 @@ macro_rules! next {
 
 macro_rules! perform_binary_op {
     ($data:expr, $operator:tt) => {{
-        let (a, b) = (
-            $data.pop().expect("Binary operation expect 2 values on the stack"),
-            $data.pop().expect("Binary operation expect 2 values on the stack")
-        );
-
+        let (a, b) = ($data.pop()?, $data.pop()?);
         $data.push(b $operator a)
     }};
 
-    ($data:expr, $operator:tt, $vmtype:expr) => {{
-        let (a, b) = (
-            $data.pop().expect("Binary operation expect 2 values on the stack"),
-            $data.pop().expect("Binary operation expect 2 values on the stack")
-        );
-
-        $data.push($vmtype((b $operator a) as i64))
+    ($data:expr, $operator:tt, $variant:ident) => {{
+        let (a, b) = ($data.pop()?, $data.pop()?);
+        $data.push(VMType::$variant((b $operator a) as i64))
     }};
 }
 
@@ -41,7 +32,7 @@ fn parse_xs(
     globals: &mut HashMap<String, VMType>,
     functions: &mut HashMap<String, Vec<Token>>,
     locals: &mut HashMap<String, VMType>,
-) {
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut xs = Vec::default();
 
     loop {
@@ -50,17 +41,18 @@ fn parse_xs(
 
             // Recursion for xs of xs
             Some(Token::ArrayStart) => {
-                parse_xs(tokens, data, globals, functions, locals);
-                xs.push(data.pop().unwrap())
+                parse_xs(tokens, data, globals, functions, locals)?;
+
+                xs.push(data.pop()?)
             }
 
             Some(Token::String(value)) => xs.push(VMType::String(value.clone())),
 
             Some(Token::Float(value)) => xs.push(VMType::Float(*value)),
 
-            Some(Token::Block(expr)) => xs.push(VMType::Function(expr.clone())),
-
             Some(Token::Integer(value)) => xs.push(VMType::Integer(*value)),
+
+            Some(Token::Block(expr)) => xs.push(VMType::Function(expr.clone())),
 
             Some(Token::Identifier(identifier)) => {
                 match (globals.get(identifier), locals.get(identifier)) {
@@ -97,7 +89,9 @@ fn parse_xs(
         }
     }
 
-    data.push(VMType::Array(xs))
+    data.push(VMType::Array(xs));
+
+    Ok(())
 }
 
 pub fn process_tokens<'a>(
@@ -105,14 +99,13 @@ pub fn process_tokens<'a>(
     data: &'a mut VMStack,                    /* Program data stack */
     globals: &'a mut HashMap<String, VMType>, /* Global variables */
     functions: &'a mut HashMap<String, Vec<Token>>, /* Global functions */
-) -> Result<&'a mut VMStack> {
+) -> Result<&'a mut VMStack, Box<dyn std::error::Error>> {
     let mut locals = HashMap::new();
-
     while let Some(token) = tokens.next() {
         match token {
             // Call anonymous functions
             Token::Call => match data.pop() {
-                Some(VMType::Function(block_tokens)) => {
+                Ok(VMType::Function(block_tokens)) => {
                     process_tokens(
                         &mut block_tokens.iter(),
                         data,
@@ -121,9 +114,11 @@ pub fn process_tokens<'a>(
                     )?;
                 }
 
-                Some(other) => panic!("Cannot call {other}"),
-                None => panic!("Nothing to call"),
+                Ok(other) => panic!("Cannot call {other}"),
+
+                Err(_) => panic!("Nothing to call"),
             },
+
             Token::FunctionDefinition => {
                 let mut parameters = Vec::default();
                 let mut final_block = Vec::default();
@@ -163,7 +158,7 @@ pub fn process_tokens<'a>(
                 // While requires a code block to execute
                 let tokens = next!(tokens, Block);
 
-                while let Some(VMType::Integer(1)) = data.pop() {
+                while let Ok(VMType::Integer(1)) = data.pop() {
                     process_tokens(&mut tokens.iter(), data, globals, functions)?;
                 }
             }
@@ -175,23 +170,25 @@ pub fn process_tokens<'a>(
 
                 // For requires an indexable on the stack top
                 match data.pop() {
-                    Some(VMType::Array(xs)) => {
+                    Ok(VMType::Array(xs)) => {
                         xs.iter().for_each(|x| {
                             data.push(x.clone());
+
                             process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
                         });
                     }
 
-                    Some(VMType::String(string)) => {
+                    Ok(VMType::String(string)) => {
                         string.chars().for_each(|x| {
-                            data.push(VMType::String(String::from(x)));
+                            data.push(VMType::String(x.to_string()));
+
                             process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
                         });
                     }
 
-                    Some(other) => panic!("{other} is not indexable!"),
+                    Ok(other) => panic!("{other} is not indexable!"),
 
-                    None => panic!("Nothing to index!"),
+                    Err(_) => panic!("Nothing to index!"),
                 }
             }
 
@@ -201,13 +198,13 @@ pub fn process_tokens<'a>(
                 let tokens = next!(tokens, Block);
 
                 // Check if stack top value is a TRUE value
-                if let Some(VMType::Integer(1)) = data.pop() {
+                if let Ok(VMType::Integer(1)) = data.pop() {
                     process_tokens(&mut tokens.iter(), data, globals, functions)?;
                 }
             }
 
             // Parse an xs (recursive => separated function)
-            Token::ArrayStart => parse_xs(tokens, data, globals, functions, &mut locals),
+            Token::ArrayStart => parse_xs(tokens, data, globals, functions, &mut locals)?,
 
             // Assign the stack top value to the next token
             Token::Assignment => {
@@ -215,10 +212,10 @@ pub fn process_tokens<'a>(
 
                 match name.chars().collect::<Vec<char>>().first() {
                     // Variable name does start with _ <=> Local variable
-                    Some('_') => locals.insert(name.clone(), data.pop().unwrap()),
+                    Some('_') => locals.insert(name, data.pop()?),
 
                     // Variable name does not start with _ <=> Global variable
-                    Some(_) => globals.insert(name.clone(), data.pop().unwrap()),
+                    Some(_) => globals.insert(name, data.pop()?),
 
                     // No variable name provided
                     None => panic!("Variable name is missing!"),
@@ -226,13 +223,13 @@ pub fn process_tokens<'a>(
             }
 
             // Process the 'is greater than' binary operation
-            Token::GreaterThan => perform_binary_op!(data, >, VMType::Integer),
+            Token::GreaterThan => perform_binary_op!(data, >, Integer),
 
             // Process the 'is lower than' binary operation
-            Token::LowerThan => perform_binary_op!(data, <, VMType::Integer),
+            Token::LowerThan => perform_binary_op!(data, <, Integer),
 
             // Process the 'is equal to' binary operation
-            Token::Equal => perform_binary_op!(data, ==, VMType::Integer),
+            Token::Equal => perform_binary_op!(data, ==, Integer),
 
             // Process the 'add' binary operation
             Token::Plus => perform_binary_op!(data, +),
@@ -266,26 +263,29 @@ pub fn process_tokens<'a>(
 
             // Get the n'th element of an indexable
             Token::Get => match (data.pop(), data.pop()) {
-                (Some(VMType::Integer(index)), Some(VMType::Array(xs))) => {
+                (Ok(VMType::Integer(index)), Ok(VMType::Array(xs))) => {
                     data.push(xs.get(index as usize).unwrap().clone());
                 }
 
-                (Some(VMType::Integer(index)), Some(VMType::String(string))) => {
+                (Ok(VMType::Integer(index)), Ok(VMType::String(string))) => {
                     data.push(VMType::String(
                         string.chars().nth(index as usize).unwrap().to_string(),
                     ));
                 }
 
-                (Some(other), Some(VMType::Integer(_))) => panic!("{other} is not indexable!"),
+                (Ok(other), Ok(VMType::Integer(_))) => panic!("{other} is not indexable!"),
 
                 (..) => panic!("Nothing to index!"),
             },
 
             Token::Identifier(identifier) => match identifier.as_str() {
-                "print" => print!("{}", data.peek().unwrap()),
+                "print" => print!("{}", data.peek()?),
 
                 "read" => {
-                    let (Some(VMType::Integer(bytes)), Some(VMType::String(path))) = (data.pop(), data.pop()) else {
+                    let (
+                        Ok(VMType::Integer(bytes)),
+                        Ok(VMType::String(path))
+                    ) = (data.pop(), data.pop()) else {
                         panic!()
                     };
 
@@ -304,7 +304,7 @@ pub fn process_tokens<'a>(
 
                 "include" => {
                     // Include requires a string on the stack
-                    let Some(VMType::String(target)) = data.pop() else {
+                    let Ok(VMType::String(target)) = data.pop() else {
                         panic!()
                     };
 
@@ -326,20 +326,14 @@ pub fn process_tokens<'a>(
 
                 identifier => {
                     match (globals.get(identifier), locals.get(identifier)) {
-                        // Found in locals
-                        (None, Some(value)) => {
-                            data.push(value.clone()); // Push the variable content
-                            continue;
-                        }
-
-                        // Found in globals
-                        (Some(value), None) => {
+                        // Found in locals xor globals
+                        (Some(value), None) | (None, Some(value)) => {
                             data.push(value.clone()); // Push the variable content
                             continue;
                         }
 
                         // Both in locals and globals
-                        (Some(_), Some(_)) => panic!("?????????????"),
+                        (Some(_), Some(_)) => panic!("??"),
 
                         // Must be in functions
                         (None, None) => {

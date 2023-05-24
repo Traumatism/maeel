@@ -1,5 +1,7 @@
 use super::lexer::*;
 
+use std::error::Error;
+
 /// Values that can be processed by the virtual machine.
 #[derive(Clone)]
 pub enum VMType {
@@ -213,38 +215,36 @@ impl VMStack {
     }
 
     pub fn push(&mut self, value: VMType) {
-        let new_node = Box::into_raw(Box::new(Node(value, self.head)));
-        self.head = new_node;
+        self.head = Box::into_raw(Box::new(Node(value, self.head)))
     }
 
-    pub fn pop(&mut self) -> Option<VMType> {
+    pub fn pop(&mut self) -> Result<VMType, Box<dyn Error>> {
         if self.head.is_null() {
-            None
+            Err("Stack is empty".into())
         } else {
             let node = unsafe { Box::from_raw(self.head) };
             self.head = node.1;
-            Some(node.0)
+            Ok(node.0)
         }
     }
 
-    pub fn peek(&self) -> Option<&VMType> {
+    pub fn peek(&self) -> Result<&VMType, Box<dyn Error>> {
         if self.head.is_null() {
-            None
+            Err("Stack is empty".into())
         } else {
-            unsafe { Some(&(*self.head).0) }
+            unsafe { Ok(&(*self.head).0) }
         }
     }
 
     pub fn clear(&mut self) {
         while !self.head.is_null() {
-            let node = unsafe { Box::from_raw(self.head) };
-            self.head = node.1;
+            self.head = unsafe { Box::from_raw(self.head) }.1
         }
     }
 }
 
 impl Drop for VMStack {
     fn drop(&mut self) {
-        self.clear();
+        self.clear()
     }
 }
