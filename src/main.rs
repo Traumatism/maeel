@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 use std::io::Result;
 
+mod vm;
+use vm::*;
+
 mod lexer;
 use lexer::*;
 
 mod interpreter;
-use interpreter::process_tokens;
+use interpreter::*;
 
 fn main() -> Result<()> {
     // Read program content
@@ -20,7 +23,7 @@ fn main() -> Result<()> {
     // Initial run
     process_tokens(
         &mut lex_into_tokens(&content).iter(),
-        &mut Vec::default(),     // data stack
+        &mut VMStack::new(),     // data stack
         &mut HashMap::default(), // globals (variables)
         &mut HashMap::default(), // functions
     )?;

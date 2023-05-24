@@ -1,204 +1,9 @@
-use std::collections::HashMap;
+use std::collections::hash_map::HashMap;
 use std::io::Read;
 use std::io::Result;
 
-use super::lexer::*;
-
-/// Values that can be processed by the virtual
-/// machine.
-#[derive(Clone)]
-pub enum VMType {
-    Float(f64),
-    Integer(i64),
-    String(String),
-    Array(Vec<VMType>),
-    Function(Vec<Token>),
-}
-
-impl std::fmt::Display for VMType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        /*
-        TODO: implement a function to check the type of the top element
-        of the array. Should make function overloading (like print) easier.
-        So their could be a print function for integer, a print function for strings
-        etc.
-        */
-
-        match self {
-            // Write a string to stdout (impossible to implement in maeel, by design)
-            VMType::String(x) => write!(f, "{}", x),
-
-            // Write an anonymous function to stdout (impossible to implement in maeel)
-            VMType::Function(tokens) => write!(f, "{:?}", tokens),
-
-            // Write a float to stdout (float2str[maeel] is in dev)
-            VMType::Float(x) => write!(f, "{}", x),
-
-            // Write an integer to stdout (int2str[maeel] is in dev)
-            VMType::Integer(x) => write!(f, "{}", x),
-
-            // Write an array to stdout
-            VMType::Array(xs) => {
-                write!(f, "{{")?;
-
-                xs.iter().enumerate().for_each(|(i, x)| {
-                    if i > 0 {
-                        write!(f, " ").unwrap();
-                    }
-
-                    write!(f, "{}", &x).unwrap();
-                });
-
-                write!(f, "}}")
-            }
-        }
-    }
-}
-
-impl PartialOrd for VMType {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match (self, other) {
-            (VMType::Integer(a), VMType::Integer(b)) => Some(a.cmp(b)),
-            (VMType::Float(a), VMType::Float(b)) => Some(a.total_cmp(b)),
-            (VMType::Integer(a), VMType::Float(b)) | (VMType::Float(b), VMType::Integer(a)) => {
-                Some(b.total_cmp(&(*a as f64)))
-            }
-
-            (a, b) => panic!("Cannot compare {a} and {b}"),
-        }
-    }
-}
-
-impl PartialEq for VMType {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (VMType::String(a), VMType::String(b)) => a == b,
-            (VMType::Array(a), VMType::Array(b)) => a == b,
-            (VMType::Float(a), VMType::Integer(b)) => *a == (*b as f64),
-            (VMType::Integer(a), VMType::Float(b)) => (*a as f64) == *b,
-            (VMType::Integer(a), VMType::Integer(b)) => a == b,
-            (VMType::Float(a), VMType::Float(b)) => a == b,
-
-            _ => false,
-        }
-    }
-}
-
-impl std::ops::Sub for VMType {
-    type Output = VMType;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            // int - int
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m - n),
-
-            // float - float
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x - y),
-
-            // int - float
-            (VMType::Float(x), VMType::Integer(m)) | (VMType::Integer(m), VMType::Float(x)) => {
-                VMType::Float(m as f64 - x)
-            }
-
-            (a, b) => panic!("Cannot substract {a} and {b}"),
-        }
-    }
-}
-
-impl std::ops::Mul for VMType {
-    type Output = VMType;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            // int * int
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m * n),
-
-            // float * float
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x * y),
-
-            // float * float
-            (VMType::Float(x), VMType::Integer(m)) | (VMType::Integer(m), VMType::Float(x)) => {
-                VMType::Float(x * m as f64)
-            }
-
-            (a, b) => panic!("Cannot multiply {a} and {b}"),
-        }
-    }
-}
-
-impl std::ops::Add for VMType {
-    type Output = VMType;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            // str + str
-            (VMType::String(a), VMType::String(b)) => VMType::String(a + &b),
-
-            // int + int
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m + n),
-
-            // float + float
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x + y),
-
-            // int + float
-            (VMType::Integer(m), VMType::Float(x)) | (VMType::Float(x), VMType::Integer(m)) => {
-                VMType::Float(m as f64 + x)
-            }
-
-            // array + e and e + array
-            (other, VMType::Array(mut xs)) | (VMType::Array(mut xs), other) => {
-                xs.push(other);
-                VMType::Array(xs)
-            }
-
-            (a, b) => panic!("Cannot add {a} and {b}"),
-        }
-    }
-}
-
-impl std::ops::Rem for VMType {
-    type Output = VMType;
-
-    fn rem(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            // int % int
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Integer(m % n),
-
-            // float % float
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x % y),
-
-            // int % float
-            (VMType::Integer(m), VMType::Float(x)) => VMType::Float(m as f64 % x),
-
-            // float % int
-            (VMType::Float(x), VMType::Integer(m)) => VMType::Float(x % m as f64),
-
-            (a, b) => panic!("Cannot divide {a} and {b}"),
-        }
-    }
-}
-
-impl std::ops::Div for VMType {
-    type Output = VMType;
-
-    fn div(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            // int / int
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Float(m as f64 / n as f64),
-
-            // float / float
-            (VMType::Float(x), VMType::Float(y)) => VMType::Float(x / y),
-
-            // int / float
-            (VMType::Integer(m), VMType::Float(x)) => VMType::Float(m as f64 / x),
-
-            // float / int
-            (VMType::Float(x), VMType::Integer(m)) => VMType::Float(x / m as f64),
-
-            (a, b) => panic!("Cannot divide {a} and {b}"),
-        }
-    }
-}
+use crate::lexer::*;
+use crate::vm::*;
 
 macro_rules! next {
     // Grab the next token of the specified variant
@@ -232,7 +37,7 @@ macro_rules! perform_binary_op {
 
 fn parse_xs(
     tokens: &mut std::slice::Iter<Token>,
-    data: &mut Vec<VMType>,
+    data: &mut VMStack,
     globals: &mut HashMap<String, VMType>,
     functions: &mut HashMap<String, Vec<Token>>,
     locals: &mut HashMap<String, VMType>,
@@ -297,10 +102,10 @@ fn parse_xs(
 
 pub fn process_tokens<'a>(
     tokens: &'a mut std::slice::Iter<Token>,  /* Program tokens */
-    data: &'a mut Vec<VMType>,                /* Program data stack */
+    data: &'a mut VMStack,                    /* Program data stack */
     globals: &'a mut HashMap<String, VMType>, /* Global variables */
     functions: &'a mut HashMap<String, Vec<Token>>, /* Global functions */
-) -> Result<&'a mut Vec<VMType>> {
+) -> Result<&'a mut VMStack> {
     let mut locals = HashMap::new();
 
     while let Some(token) = tokens.next() {
@@ -319,8 +124,6 @@ pub fn process_tokens<'a>(
                 Some(other) => panic!("Cannot call {other}"),
                 None => panic!("Nothing to call"),
             },
-
-            // Parse a function definition
             Token::FunctionDefinition => {
                 let name = next!(tokens, Identifier);
 
@@ -328,34 +131,29 @@ pub fn process_tokens<'a>(
                 let mut final_block = Vec::default();
                 let mut function_block = Vec::default();
 
-                loop {
-                    let next_token = tokens.next();
-
+                for next_token in tokens.by_ref() {
                     match next_token {
-                        Some(Token::Block(block)) => {
-                            block
-                                .iter()
-                                .for_each(|token| function_block.push(token.clone()));
-
+                        Token::Block(block) => {
+                            function_block.extend(block.clone());
                             break;
                         }
 
-                        Some(Token::Identifier(_)) => {
-                            parameters.push(next_token.unwrap().clone());
-                        }
+                        Token::Identifier(_) => parameters.push(next_token),
 
-                        other => panic!("{other:?}"),
+                        _ => panic!(),
                     }
                 }
 
                 parameters.reverse();
 
-                for parameter in parameters {
-                    final_block.push(Token::Assignment);
-                    final_block.push(parameter)
-                }
+                final_block.extend(
+                    parameters
+                        .iter()
+                        .cloned()
+                        .flat_map(|parameter| vec![Token::Assignment, parameter.clone()]),
+                );
 
-                final_block.append(&mut function_block);
+                final_block.extend(function_block);
 
                 functions.insert(name, final_block);
             }
@@ -484,7 +282,7 @@ pub fn process_tokens<'a>(
             },
 
             Token::Identifier(identifier) => match identifier.as_str() {
-                "print" => print!("{}", data.last().unwrap()),
+                "print" => print!("{}", data.peek().unwrap()),
 
                 "read" => {
                     let (Some(VMType::Integer(bytes)), Some(VMType::String(path))) = (data.pop(), data.pop()) else {
@@ -520,7 +318,7 @@ pub fn process_tokens<'a>(
 
                     process_tokens(
                         &mut lex_into_tokens(&content).iter(),
-                        &mut Vec::default(), // don't copy the data
+                        &mut VMStack::new(), // don't copy the data
                         globals,             // give a ref to the globals
                         functions,           // give a ref to the functions
                     )?;
