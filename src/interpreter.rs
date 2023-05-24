@@ -14,15 +14,27 @@ macro_rules! next {
     }};
 }
 
-macro_rules! perform_binary_op {
+macro_rules! maeel_push {
+    ($data:expr, $variant:ident, $value:expr) => {
+        $data.push(VMType::$variant($value))
+    };
+
+    ($data:expr, $value:expr) => {
+        $data.push($value)
+    };
+}
+
+macro_rules! maeel_binop {
     ($data:expr, $operator:tt) => {{
         let (a, b) = ($data.pop()?, $data.pop()?);
-        $data.push(b $operator a)
+
+        maeel_push!($data, b $operator a)
     }};
 
     ($data:expr, $operator:tt, $variant:ident) => {{
         let (a, b) = ($data.pop()?, $data.pop()?);
-        $data.push(VMType::$variant((b $operator a) as i64))
+
+        maeel_push!($data, $variant, (b $operator a) as i64);
     }};
 }
 
@@ -89,7 +101,7 @@ fn parse_xs(
         }
     }
 
-    data.push(VMType::Array(xs));
+    maeel_push!(data, Array, xs);
 
     Ok(())
 }
@@ -172,7 +184,7 @@ pub fn process_tokens<'a>(
                 match data.pop() {
                     Ok(VMType::Array(xs)) => {
                         xs.iter().for_each(|x| {
-                            data.push(x.clone());
+                            maeel_push!(data, x.clone());
 
                             process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
                         });
@@ -180,7 +192,7 @@ pub fn process_tokens<'a>(
 
                     Ok(VMType::String(string)) => {
                         string.chars().for_each(|x| {
-                            data.push(VMType::String(x.to_string()));
+                            maeel_push!(data, String, x.to_string());
 
                             process_tokens(&mut tokens.iter(), data, globals, functions).unwrap();
                         });
@@ -223,54 +235,56 @@ pub fn process_tokens<'a>(
             }
 
             // Process the 'is greater than' binary operation
-            Token::GreaterThan => perform_binary_op!(data, >, Integer),
+            Token::GreaterThan => maeel_binop!(data, >, Integer),
 
             // Process the 'is lower than' binary operation
-            Token::LowerThan => perform_binary_op!(data, <, Integer),
+            Token::LowerThan => maeel_binop!(data, <, Integer),
 
             // Process the 'is equal to' binary operation
-            Token::Equal => perform_binary_op!(data, ==, Integer),
+            Token::Equal => maeel_binop!(data, ==, Integer),
 
             // Process the 'add' binary operation
-            Token::Plus => perform_binary_op!(data, +),
+            Token::Plus => maeel_binop!(data, +),
 
             // Process the 'substract' binary operation
-            Token::Minus => perform_binary_op!(data, -),
+            Token::Minus => maeel_binop!(data, -),
 
             // Process the 'multiply' binary operation
-            Token::Times => perform_binary_op!(data, *),
+            Token::Times => maeel_binop!(data, *),
 
             // Process the 'divide' binary operation
-            Token::Divide => perform_binary_op!(data, /),
+            Token::Divide => maeel_binop!(data, /),
 
             // Process the 'modulo' binary operation
-            Token::Modulo => perform_binary_op!(data, %),
+            Token::Modulo => maeel_binop!(data, %),
 
             // Clear the data stack
             Token::Clear => data.clear(),
 
             // Push a string to the stack
-            Token::String(content) => data.push(VMType::String(content.clone())),
+            Token::String(content) => maeel_push!(data, String, content.clone()),
 
             // Push a float to the stack
-            Token::Float(content) => data.push(VMType::Float(*content)),
+            Token::Float(content) => maeel_push!(data, Float, *content),
 
             // Push an integer to the stack
-            Token::Integer(content) => data.push(VMType::Integer(*content)),
+            Token::Integer(content) => maeel_push!(data, Integer, *content),
 
             // Push an anonymous function to the stack
-            Token::Block(tokens) => data.push(VMType::Function(tokens.clone())),
+            Token::Block(tokens) => maeel_push!(data, Function, tokens.clone()),
 
             // Get the n'th element of an indexable
             Token::Get => match (data.pop(), data.pop()) {
                 (Ok(VMType::Integer(index)), Ok(VMType::Array(xs))) => {
-                    data.push(xs.get(index as usize).unwrap().clone());
+                    maeel_push!(data, xs.get(index as usize).unwrap().clone());
                 }
 
                 (Ok(VMType::Integer(index)), Ok(VMType::String(string))) => {
-                    data.push(VMType::String(
-                        string.chars().nth(index as usize).unwrap().to_string(),
-                    ));
+                    maeel_push!(
+                        data,
+                        String,
+                        string.chars().nth(index as usize).unwrap().to_string()
+                    );
                 }
 
                 (Ok(other), Ok(VMType::Integer(_))) => panic!("{other} is not indexable!"),
@@ -292,14 +306,15 @@ pub fn process_tokens<'a>(
                     assert!(bytes >= 0);
 
                     let mut buf = vec![0u8; bytes as usize];
-
                     std::fs::File::open(path)?.read_exact(&mut buf)?;
 
-                    data.push(VMType::Array(
+                    maeel_push!(
+                        data,
+                        Array,
                         buf.iter()
                             .map(|byte| VMType::Integer(*byte as i64))
-                            .collect(),
-                    ));
+                            .collect()
+                    );
                 }
 
                 "include" => {
@@ -328,7 +343,7 @@ pub fn process_tokens<'a>(
                     match (globals.get(identifier), locals.get(identifier)) {
                         // Found in locals xor globals
                         (Some(value), None) | (None, Some(value)) => {
-                            data.push(value.clone()); // Push the variable content
+                            maeel_push!(data, value.clone()); // Push the variable content
                             continue;
                         }
 
