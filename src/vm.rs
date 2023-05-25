@@ -7,23 +7,11 @@ pub enum VMType {
     Integer(i64),
     String(String),
     Array(Vec<VMType>),
-
-    /*
-    TODO: should be allocated on the stack, as the size of
-    a function is constant.
-    */
     Function(Vec<Token>),
 }
 
 impl std::fmt::Display for VMType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        /*
-        TODO: implement a function to check the type of the top element
-        of the array. Should make function overloading (like print) easier.
-        So their could be a print function for integer, a print function for strings
-        etc.
-        */
-
         match self {
             // Write a string to stdout (impossible to implement in maeel, by design)
             VMType::String(x) => write!(f, "{}", x),
