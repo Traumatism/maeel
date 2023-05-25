@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum Token {
     Block(Vec<Token>),  // ex: (1 1 +)
     String(String),     // ex: "abc"
@@ -34,7 +34,7 @@ fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
     while let Some(token) = tokens_iter.next() {
         output.push(match token {
             Token::BlockStart => {
-                let mut depth = 1;
+                let mut depth: u8 = 1;
                 let mut block_tokens = Vec::new();
 
                 while depth > 0 {
@@ -81,7 +81,7 @@ macro_rules! take_with_predicate {
 
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     // Code block depth
-    let mut depth = 0;
+    let mut depth: u8 = 0;
 
     // Output tokens
     let mut tokens = Vec::default();
@@ -189,7 +189,6 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 // it is an integer
                 tokens.push(if content.contains('.') {
                     assert_eq!(content.matches('.').count(), 1); // Float must contain one point
-
                     Token::Float(content.parse().unwrap())
                 } else {
                     Token::Integer(content.parse().unwrap())
@@ -221,14 +220,14 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 '*' => Token::Times,
                 '/' => Token::Divide,
                 '%' => Token::Modulo,
-                '&' => Token::Call,
+                '=' => Token::Equal,
+                '<' => Token::LowerThan,
+                '>' => Token::GreaterThan,
                 '(' => Token::BlockStart,
                 ')' => Token::BlockEnd,
                 '{' => Token::ArrayStart,
                 '}' => Token::ArrayEnd,
-                '=' => Token::Equal,
-                '<' => Token::LowerThan,
-                '>' => Token::GreaterThan,
+                '&' => Token::Call,
                 character => panic!("{character}"),
             }),
         }

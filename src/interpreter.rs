@@ -131,8 +131,7 @@ pub fn process_tokens<'a>(
                         }
 
                         Token::Identifier(_) => {
-                            function_block.push(next_token.clone());
-                            function_block.push(Token::Assignment);
+                            function_block.extend(vec![next_token.clone(), Token::Assignment]);
                         }
 
                         _ => panic!(),
@@ -238,19 +237,15 @@ pub fn process_tokens<'a>(
 
             // Get the n'th element of an indexable
             Token::Get => {
-                let index = maeelvm_expect!(data, Integer);
+                let index = maeelvm_expect!(data, Integer) as usize;
 
                 match data.pop() {
                     Ok(VMType::Array(xs)) => {
-                        maeelvm_push!(data, xs.get(index as usize).unwrap().clone())
+                        maeelvm_push!(data, xs.get(index).unwrap().clone())
                     }
 
                     Ok(VMType::String(string)) => {
-                        maeelvm_push!(
-                            data,
-                            String,
-                            string.chars().nth(index as usize).unwrap().to_string()
-                        );
+                        maeelvm_push!(data, String, string.chars().nth(index).unwrap().to_string());
                     }
 
                     Ok(other) => panic!("{other} is not indexable!"),
