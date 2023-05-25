@@ -12,3 +12,6 @@ test:
 
 clean: 
 	rm ./maeel ./maeel.tmp Cargo.lock || rm -r target
+
+bench:
+	cargo build -q --release && hyperfine "target/release/maeel stdlib/tests.maeel"
