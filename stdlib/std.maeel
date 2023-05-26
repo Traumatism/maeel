@@ -16,15 +16,15 @@ fun swap a b
     b a
 )
 
-| Push the value over the stack top value
+| Push the value vmover the stack top value
 | on the stack
 fun over a b
 (
     a b a
 )
 
-| Push the value over the value over the
-| stack top value on the stack after swaping
+| Push the value vmover the value vmover the
+| stack top value on the stack after vmswaping
 | the two stack top values
 fun rot a b c
 (
@@ -40,29 +40,29 @@ fun drop3
     drop drop2
 )
 
-fun dup2
+fun vmdup2
 (
-    dup dup
+    vmdup vmdup
 )
 
-fun dup3
+fun vmdup3
 (
-    dup dup2
+    vmdup vmdup2
 )
 
-fun over2
+fun vmover2
 (
-    over over
+    vmover vmover
 )
 
-fun over3
+fun vmover3
 (
-    over over2
+    vmover vmover2
 )
 
-fun rot2
+fun vmrot2
 (
-    rot rot
+    vmrot vmrot
 )
 
 fun format
@@ -76,7 +76,7 @@ fun format
 
         | If the char is a %, push the
         | stack top element (and drop it)
-        char "%" =     => (o swap +)
+        char "%" =     => (o vmswap +)
 
         | Otherwise, push the char
         char "%" = not => (o char +) -> o
@@ -113,7 +113,7 @@ fun println
 | Return { fn(x) | x in xs }
 fun map fn
 (
-    {} swap for (fn& +)
+    {} vmswap for (fn& +)
 )
 
 | Return ( x if p(x) | x in xs )
@@ -124,7 +124,7 @@ fun filter p
     for
     (
         | If P(x) is true, push x to ys
-        dup p& => (ys swap + -> ys)
+        vmdup p& => (ys vmswap + -> ys)
     )
 
     ys
@@ -132,19 +132,19 @@ fun filter p
 
 fun reduce xs fn init
 (
-    init xs for (swap fn&)
+    init xs for (vmswap fn&)
 )
 
 fun match
 (
-    swap -> value
+    vmswap -> value
 
-    {} swap for
+    {} vmswap for
     (
-        dup 0 get swap 1 get -> fn value = => (fn+)
+        vmdup 0 get vmswap 1 get -> fn value = => (fn+)
     )
 
-    dup 0 swap for (drop 1+) 0 = => ("Unknown case!" panic)
+    vmdup 0 vmswap for (drop 1+) 0 = => ("Unknown case!" panic)
 
     last
 )
@@ -198,10 +198,10 @@ fun unix_input
     (
         | Read one byte from /dev/stdin
         | and add it to output array
-        "/dev/stdin" 1 read 0 get dup rot +
+        "/dev/stdin" 1 read 0 get vmdup vmrot +
 
         | Stop if char is \n
-        swap 10 = not
+        vmswap 10 = not
     )
 )
 
@@ -216,7 +216,7 @@ fun unix_random_numbers n mod
 
 fun assert_eq
 (
-    rot = dup bool2string rot2
+    vmrot = vmdup bool2string vmrot vmrot
     "% (%)" format putsln
     not => ("" panic)
 )
@@ -254,37 +254,37 @@ fun odd
 
 fun pom
 (
-    dup not
+    vmdup not
 )
 
 fun inverse
 (
-    1 swap/
+    1 vmswap/
 )
 
 fun square
 (
-    dup*
+    vmdup*
 )
 
 fun cube
 (
-    dup square*
+    vmdup square*
 )
 
 fun lteq
 (
-    over2< rot= or
+    vmover vmover < vmrot = or
 )
 
 fun gteq
 (
-    over2> rot= or
+    vmover vmover > vmrot = or
 )
 
 fun len
 (
-    0 swap for (drop 1+)
+    0 vmswap for (drop 1+)
 )
 
 fun first
@@ -304,27 +304,25 @@ fun third
 
 fun last
 (
-    dup 0 swap for (drop 1+) 1- get
+    vmdup 0 vmswap for (drop 1+) 1- get
 )
 
 fun merge
 (
-    {}
-    rot2 for (+)
-    swap for (+)
+    {} vmrot vmrot for (+) vmswap for (+)
 )
 
 fun count xs x
 (
     xs
-    (x = dup => (1 swap) not => (0))
+    (x = vmdup => (1 vmswap) not => (0))
     map
     (+) 0 reduce
 )
 
 fun contains xs x
 (
-    xs 0 swap for (drop 1+) -> xs_len
+    xs 0 vmswap for (drop 1+) -> xs_len
     0 -> i
 
     0 1 while
@@ -339,33 +337,34 @@ fun reverse xs
 (
     {} -> ys
 
-    xs 0 swap for (drop 1+) dup 1 gteq while
+    xs 0 vmswap for (drop 1+) vmdup 1 gteq while
     (
-        1- dup xs swap get ys+ -> ys
-        dup 1 gteq
+        1- vmdup xs vmswap get ys+ -> ys
+        vmdup 1 gteq
     )
 
     drop ys
 )
 
-fun pop xs
+fun pop
 (
     {} -> ys
-    xs 0 swap for (drop 1+) -> xs_len
-    xs 0 get take1 -> y 1
 
-    dup xs_len < while
+    vmdup 0 vmswap for (drop 1+) -> xs_len
+    vmdup 0 get take1 -> y -> xs
+
+    1 1 xs_len < while
     (
-        xs over get ys+ -> ys 1+ dup xs_len <
+        xs vmover get ys+ -> ys 1+ vmdup xs_len <
     )
 
-    ys y + swap drop
+    ys y + vmswap drop
 )
 
 fun push
 (
     take1
-    swap
+    vmswap
     for (+)
 )
 
@@ -398,7 +397,7 @@ fun take3 a b c
 
 fun string2array
 (
-    {} swap
+    {} vmswap
     for (+)
 )
 
@@ -421,16 +420,16 @@ fun char2int
 | Convert a string into an integer
 fun str2int
 (
-    0 swap for
+    0 vmswap for
     (
-        swap 10 * swap char2int +
+        vmswap 10 * vmswap char2int +
     )
 )
 
 | Convert an array into a string
 fun array2string
 (
-    "" swap
+    "" vmswap
     for (+)
 )
 
@@ -449,7 +448,7 @@ fun fact n
 fun sqrt x
 (
     0 5 range
-    (dup x swap/ swap+ 2/ swap drop)
+    (vmdup x vmswap/ vmswap+ 2/ vmswap drop)
     x 2/
     reduce
 )
@@ -464,7 +463,7 @@ fun log base n
         1+
 
         | Put n/base into n
-        n base / dup -> n
+        n base / vmdup -> n
 
         | if n <= base, then continue
         base gteq
@@ -478,14 +477,11 @@ fun pow base exp
     0 exp range (drop base) map product
 )
 
-fun range start end
+fun range
 (
-    {}  | Output list
-    start end < while
+    vmover vmover < vmrot ->end ->start
+    {} vmswap while
     (
-        | Push 'start' to the output list
-        | and increase 'start' value
-        start + start 1 + -> start
-        start end <
+        start+ start 1+ vmdup ->start end <
     )
 )

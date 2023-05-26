@@ -1,10 +1,8 @@
 "std" include
 
-fun fib n
-(
-    n 1 lteq
-        dup => (1 swap)
-        not => (n 1- fib n 2- fib +)
+fun fib n (
+    n 2 < vmdup => (1 vmswap)
+    not => (n 1- fib n 2- fib +)
 )
 
-1 10 range (fib) map puts
+1 21 range (fib) map print

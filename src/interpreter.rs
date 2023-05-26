@@ -1,9 +1,10 @@
-use std::error::Error;
-use std::io::Read;
-use std::slice::Iter;
-
 use crate::lexer::*;
 use crate::vm::*;
+use std::error::Error;
+use std::fs::read_to_string;
+
+use std::io::Read;
+use std::slice::Iter;
 
 macro_rules! maeel_expect {
     ($tokens:expr, $variant:ident) => {{
@@ -60,7 +61,7 @@ macro_rules! maeelvm_binop {
 
 fn parse_xs(
     tokens: &mut Iter<Token>,
-    vm: &mut VMStack,
+    vm: &mut VM,
     vars: &mut hashbrown::HashMap<String, VMType>,
     funs: &mut hashbrown::HashMap<String, Vec<Token>>,
 ) -> Result<(), Box<dyn Error>> {
@@ -114,10 +115,10 @@ fn parse_xs(
 
 pub fn process_tokens<'a>(
     tokens: &'a mut Iter<Token>,                          /* Program tokens */
-    vm: &'a mut VMStack,                                  /* Program vm stack */
+    vm: &'a mut VM,                                       /* Program vm stack */
     vars: &'a mut hashbrown::HashMap<String, VMType>,     /* Global vars */
     funs: &'a mut hashbrown::HashMap<String, Vec<Token>>, /* Global funs */
-) -> Result<&'a mut VMStack, Box<dyn Error>> {
+) -> Result<&'a mut VM, Box<dyn Error>> {
     while let Some(token) = tokens.next() {
         match token {
             // Call anonymous funs
@@ -264,6 +265,26 @@ pub fn process_tokens<'a>(
             Token::Identifier(identifier) => match identifier.as_str() {
                 "print" => print!("{}", vm.peek()?),
 
+                "vmdup" => vm.dup()?,
+
+                "vmswap" => vm.swap()?,
+
+                "vmover" => vm.over()?,
+
+                "vmrot" => vm.rot()?,
+
+                "type" => match vm.peek()? {
+                    VMType::Float(_) => maeelvm_push!(vm, VMType::String(String::from("float"))),
+                    VMType::Integer(_) => {
+                        maeelvm_push!(vm, VMType::String(String::from("integer")))
+                    }
+                    VMType::String(_) => maeelvm_push!(vm, VMType::String(String::from("string"))),
+                    VMType::Array(_) => maeelvm_push!(vm, VMType::String(String::from("array"))),
+                    VMType::Function(_) => {
+                        maeelvm_push!(vm, VMType::String(String::from("function")))
+                    }
+                },
+
                 "read" => {
                     let bytes = maeelvm_expect!(vm, Integer);
                     let path = maeelvm_expect!(vm, String);
@@ -289,40 +310,35 @@ pub fn process_tokens<'a>(
                         "std" => include_str!("../stdlib/std.maeel").to_string(),
 
                         // Read file to include
-                        _ => std::fs::read_to_string(target).expect("Failed to include file"),
+                        _ => read_to_string(target).expect("Failed to include file"),
                     };
 
                     process_tokens(
                         &mut lex_into_tokens(&content).iter(),
-                        &mut VMStack::new(),            // don't copy the vm
+                        &mut VM::new(),                 // don't copy the vm
                         &mut hashbrown::HashMap::new(), // give a ref to the vars
                         funs,                           // give a ref to the funs
                     )?;
                 }
 
                 identifier => {
-                    match vars.get(identifier) {
-                        Some(value) => {
-                            maeelvm_push!(vm, value.clone()); // Push the variable content
-                            continue;
-                        }
-
-                        // Must be in funs
-                        None => {
-                            // Execute the function
-                            process_tokens(
-                                /* Extract function tokens */
-                                &mut funs
-                                    .get(identifier)
-                                    .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
-                                    .clone()
-                                    .iter(),
-                                vm,                // give a ref to the vm
-                                &mut vars.clone(), // copy the vars
-                                funs,              // give a ref to the funs
-                            )?;
-                        }
+                    if let Some(value) = vars.get(identifier) {
+                        maeelvm_push!(vm, value.clone()); // Push the variable content
+                        continue;
                     }
+
+                    let tokens = funs
+                        .get(identifier)
+                        .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
+                        .clone();
+
+                    // Execute the function
+                    process_tokens(
+                        &mut tokens.iter(),
+                        vm,                // give a ref to the vm
+                        &mut vars.clone(), // copy the vars
+                        funs,              // give a ref to the funs
+                    )?;
                 }
             },
 

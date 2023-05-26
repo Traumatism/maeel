@@ -1,30 +1,30 @@
 #[derive(Clone, Debug)]
 pub enum Token {
-    Block(Vec<Token>),  // ex: (1 1 +)
-    String(String),     // ex: "abc"
-    Identifier(String), // ex: abc
-    Integer(i64),       // ex: 123
-    Float(f64),         // ex: 12.3
-    Call,               // &
-    Plus,               // +
-    Minus,              // -
-    Times,              // *
-    Modulo,             // %
-    Divide,             // /
-    Equal,              // =
-    GreaterThan,        // >
-    LowerThan,          // <
-    Get,                // get
-    Clear,              // clear
-    Assignment,         // ->
-    FunctionDefinition, // fun
-    ArrayStart,         // {
-    ArrayEnd,           // }
-    BlockStart,         // (
-    BlockEnd,           // )
-    Then,               // =>
-    For,                // for
-    While,              // while
+    Block(Vec<Token>),
+    String(String),
+    Identifier(String),
+    Integer(i64),
+    Float(f32),
+    Call,
+    Plus,
+    Minus,
+    Times,
+    Modulo,
+    Divide,
+    Equal,
+    GreaterThan,
+    LowerThan,
+    Get,
+    Clear,
+    Assignment,
+    FunctionDefinition,
+    ArrayStart,
+    ArrayEnd,
+    BlockStart,
+    BlockEnd,
+    Then,
+    For,
+    While,
 }
 
 fn extract_blocks(tokens: &[Token]) -> Vec<Token> {

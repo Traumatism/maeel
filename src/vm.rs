@@ -1,9 +1,11 @@
 use super::lexer::*;
+use std::error::Error;
+use std::ptr::*;
 
 /// Values that can be processed by the virtual machine.
 #[derive(Clone)]
 pub enum VMType {
-    Float(f64),
+    Float(f32),
     Integer(i64),
     String(String),
     Array(Vec<VMType>),
@@ -49,7 +51,7 @@ impl PartialOrd for VMType {
             (VMType::Integer(a), VMType::Integer(b)) => Some(a.cmp(b)),
             (VMType::Float(a), VMType::Float(b)) => Some(a.total_cmp(b)),
             (VMType::Integer(a), VMType::Float(b)) | (VMType::Float(b), VMType::Integer(a)) => {
-                Some(b.total_cmp(&(*a as f64)))
+                Some(b.total_cmp(&(*a as f32)))
             }
 
             (a, b) => panic!("Cannot compare {a} and {b}"),
@@ -62,8 +64,8 @@ impl PartialEq for VMType {
         match (self, other) {
             (VMType::String(a), VMType::String(b)) => a == b,
             (VMType::Array(a), VMType::Array(b)) => a == b,
-            (VMType::Float(a), VMType::Integer(b)) => *a == (*b as f64),
-            (VMType::Integer(a), VMType::Float(b)) => (*a as f64) == *b,
+            (VMType::Float(a), VMType::Integer(b)) => *a == (*b as f32),
+            (VMType::Integer(a), VMType::Float(b)) => (*a as f32) == *b,
             (VMType::Integer(a), VMType::Integer(b)) => a == b,
             (VMType::Float(a), VMType::Float(b)) => a == b,
 
@@ -85,7 +87,7 @@ impl std::ops::Sub for VMType {
 
             // int - float
             (VMType::Float(x), VMType::Integer(m)) | (VMType::Integer(m), VMType::Float(x)) => {
-                VMType::Float(m as f64 - x)
+                VMType::Float(m as f32 - x)
             }
 
             (a, b) => panic!("Cannot substract {a} and {b}"),
@@ -106,7 +108,7 @@ impl std::ops::Mul for VMType {
 
             // float * float
             (VMType::Float(x), VMType::Integer(m)) | (VMType::Integer(m), VMType::Float(x)) => {
-                VMType::Float(x * m as f64)
+                VMType::Float(x * m as f32)
             }
 
             (a, b) => panic!("Cannot multiply {a} and {b}"),
@@ -130,7 +132,7 @@ impl std::ops::Add for VMType {
 
             // int + float
             (VMType::Integer(m), VMType::Float(x)) | (VMType::Float(x), VMType::Integer(m)) => {
-                VMType::Float(m as f64 + x)
+                VMType::Float(m as f32 + x)
             }
 
             // array + e and e + array
@@ -156,10 +158,10 @@ impl std::ops::Rem for VMType {
             (VMType::Float(x), VMType::Float(y)) => VMType::Float(x % y),
 
             // int % float
-            (VMType::Integer(m), VMType::Float(x)) => VMType::Float(m as f64 % x),
+            (VMType::Integer(m), VMType::Float(x)) => VMType::Float(m as f32 % x),
 
             // float % int
-            (VMType::Float(x), VMType::Integer(m)) => VMType::Float(x % m as f64),
+            (VMType::Float(x), VMType::Integer(m)) => VMType::Float(x % m as f32),
 
             (a, b) => panic!("Cannot divide {a} and {b}"),
         }
@@ -172,49 +174,56 @@ impl std::ops::Div for VMType {
     fn div(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             // int / int
-            (VMType::Integer(m), VMType::Integer(n)) => VMType::Float(m as f64 / n as f64),
+            (VMType::Integer(m), VMType::Integer(n)) => VMType::Float(m as f32 / n as f32),
 
             // float / float
             (VMType::Float(x), VMType::Float(y)) => VMType::Float(x / y),
 
             // int / float
-            (VMType::Integer(m), VMType::Float(x)) => VMType::Float(m as f64 / x),
+            (VMType::Integer(m), VMType::Float(x)) => VMType::Float(m as f32 / x),
 
             // float / int
-            (VMType::Float(x), VMType::Integer(m)) => VMType::Float(x / m as f64),
+            (VMType::Float(x), VMType::Integer(m)) => VMType::Float(x / m as f32),
 
             (a, b) => panic!("Cannot divide {a} and {b}"),
         }
     }
 }
-struct Node(VMType, *mut Node);
+pub struct Node(VMType, *mut Node);
 
-pub struct VMStack {
+pub struct VM {
     head: *mut Node,
 }
 
-impl VMStack {
+impl VM {
     pub fn new() -> Self {
-        VMStack {
-            head: std::ptr::null_mut(),
-        }
+        VM { head: null_mut() }
     }
 
     pub fn push(&mut self, value: VMType) {
-        self.head = Box::into_raw(Box::new(Node(value, self.head)))
+        let new_node = Box::into_raw(Box::new(Node(value, null_mut())));
+        if !self.head.is_null() {
+            unsafe {
+                (*new_node).1 = self.head;
+            }
+        }
+
+        self.head = new_node;
     }
 
-    pub fn pop(&mut self) -> Result<VMType, Box<dyn std::error::Error>> {
+    pub fn pop(&mut self) -> Result<VMType, Box<dyn Error>> {
         if self.head.is_null() {
             Err("Stack is empty".into())
         } else {
-            let node = unsafe { Box::from_raw(self.head) };
-            self.head = node.1;
-            Ok(node.0)
+            unsafe {
+                let node = Box::from_raw(self.head);
+                self.head = node.1;
+                Ok(node.0)
+            }
         }
     }
 
-    pub fn peek(&self) -> Result<&VMType, Box<dyn std::error::Error>> {
+    pub fn peek(&self) -> Result<&VMType, Box<dyn Error>> {
         if self.head.is_null() {
             Err("Stack is empty".into())
         } else {
@@ -224,12 +233,74 @@ impl VMStack {
 
     pub fn clear(&mut self) {
         while !self.head.is_null() {
-            self.head = unsafe { Box::from_raw(self.head) }.1
+            unsafe {
+                let node = Box::from_raw(self.head);
+                self.head = node.1;
+            }
+        }
+    }
+
+    pub fn swap(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.head.is_null() {
+            Err("Stack is empty".into())
+        } else if unsafe { (*self.head).1.is_null() } {
+            Err("Stack has only one element".into())
+        } else {
+            unsafe {
+                let node1 = &mut *self.head;
+                let node2 = &mut *node1.1;
+                let temp = read(&node1.0);
+                write(&mut node1.0, read(&node2.0));
+                write(&mut node2.0, temp);
+            }
+            Ok(())
+        }
+    }
+
+    pub fn dup(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.head.is_null() {
+            Err("Stack is empty".into())
+        } else {
+            self.push(unsafe { (*self.head).0.clone() });
+            Ok(())
+        }
+    }
+
+    pub fn over(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.head.is_null() {
+            Err("Stack is empty".into())
+        } else if unsafe { (*self.head).1.is_null() } {
+            Err("Stack has only one element".into())
+        } else {
+            let value = unsafe { (*(*self.head).1).0.clone() };
+            self.push(value);
+            Ok(())
+        }
+    }
+
+    pub fn rot(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.head.is_null() {
+            Err("Stack is empty".into())
+        } else if unsafe { (*self.head).1.is_null() } || unsafe { (*(*self.head).1).1.is_null() } {
+            Err("Stack has less than three elements".into())
+        } else {
+            unsafe {
+                let node1 = &mut *self.head;
+                let node2 = &mut *(*self.head).1;
+                let node3 = &mut *(*(*self.head).1).1;
+
+                let temp = read(&node1.0);
+
+                write(&mut node1.0, read(&node2.0));
+                write(&mut node2.0, read(&node3.0));
+                write(&mut node3.0, temp);
+            }
+            Ok(())
         }
     }
 }
 
-impl Drop for VMStack {
+impl Drop for VM {
     fn drop(&mut self) {
         self.clear()
     }
