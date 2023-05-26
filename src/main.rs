@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 mod vm;
 use vm::*;
 
@@ -22,9 +20,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initial run
     process_tokens(
         &mut lex_into_tokens(&content).iter(),
-        &mut VMStack::new(),     // data stack
-        &mut HashMap::default(), // globals (variables)
-        &mut HashMap::default(), // functions
+        &mut VMStack::new(),                // data stack
+        &mut hashbrown::HashMap::default(), // globals (variables)
+        &mut hashbrown::HashMap::default(), // functions
     )?;
 
     Ok(())

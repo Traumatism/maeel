@@ -10,6 +10,12 @@ pub enum VMType {
     Function(Vec<Token>),
 }
 
+impl Default for VMType {
+    fn default() -> Self {
+        Self::Integer(0)
+    }
+}
+
 impl std::fmt::Display for VMType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

@@ -29,6 +29,7 @@ pub enum Token {
 
 fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
     let mut output = Vec::new();
+
     let mut tokens_iter = tokens.iter();
 
     while let Some(token) = tokens_iter.next() {
