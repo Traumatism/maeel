@@ -26,7 +26,12 @@ macro_rules! maeelvm_expect {
         match $vm.pop() {
             Ok(VMType::$variant_a(value)) => VMType::$variant_a(value.clone()),
             Ok(VMType::$variant_b(value)) => VMType::$variant_b(value.clone()),
-            other => panic!("Expected {}, got {}", stringify!($variant), other?),
+            other => panic!(
+                "Expected {} or {}, got {}",
+                stringify!($variant_a),
+                stringify!($variant_b),
+                other?
+            ),
         }
     }};
 }
@@ -117,12 +122,7 @@ pub fn process_tokens<'a>(
         match token {
             // Call anonymous funs
             Token::Call => {
-                process_tokens(
-                    &mut maeelvm_expect!(vm, Function).iter(),
-                    vm,
-                    &mut vars.clone(),
-                    funs,
-                )?;
+                process_tokens(&mut maeelvm_expect!(vm, Function).iter(), vm, vars, funs)?;
             }
 
             Token::FunctionDefinition => {
@@ -138,8 +138,9 @@ pub fn process_tokens<'a>(
                             break;
                         }
 
-                        Token::Identifier(_) => {
-                            function_block.extend(vec![next_token.clone(), Token::Assignment]);
+                        Token::Identifier(value) => {
+                            function_block
+                                .extend(vec![Token::Identifier(value.clone()), Token::Assignment]);
                         }
 
                         _ => panic!(),
@@ -288,8 +289,7 @@ pub fn process_tokens<'a>(
                         "std" => include_str!("../stdlib/std.maeel").to_string(),
 
                         // Read file to include
-                        _ => std::fs::read_to_string(format!("{}.maeel", target.replace('.', "/")))
-                            .expect("Failed to include file"),
+                        _ => std::fs::read_to_string(target).expect("Failed to include file"),
                     };
 
                     process_tokens(
