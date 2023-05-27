@@ -123,7 +123,12 @@ pub fn process_tokens<'a>(
         match token {
             // Call anonymous funs
             Token::Call => {
-                process_tokens(&mut maeelvm_expect!(vm, Function).iter(), vm, vars, funs)?;
+                process_tokens(
+                    &mut maeelvm_expect!(vm, Function).iter(),
+                    vm,                // give a ref to the vm
+                    &mut vars.clone(), // copy the vars
+                    funs,              // give a ref to the funs
+                )?;
             }
 
             Token::FunctionDefinition => {
@@ -265,15 +270,18 @@ pub fn process_tokens<'a>(
             Token::Identifier(identifier) => match identifier.as_str() {
                 "print" => print!("{}", vm.peek()?),
 
+                "break" => break,
+
+                "vmdrop" => {
+                    vm.pop()?;
+                }
+
                 "vmdup" => vm.dup()?,
-
                 "vmswap" => vm.swap()?,
-
                 "vmover" => vm.over()?,
-
                 "vmrot" => vm.rot()?,
 
-                "type" => match vm.peek()? {
+                "vmtype" => match vm.peek()? {
                     VMType::Float(_) => maeelvm_push!(vm, VMType::String(String::from("float"))),
                     VMType::Integer(_) => {
                         maeelvm_push!(vm, VMType::String(String::from("integer")))
@@ -327,14 +335,13 @@ pub fn process_tokens<'a>(
                         continue;
                     }
 
-                    let tokens = funs
+                    let function_block = funs
                         .get(identifier)
                         .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
                         .clone();
 
-                    // Execute the function
                     process_tokens(
-                        &mut tokens.iter(),
+                        &mut function_block.iter(),
                         vm,                // give a ref to the vm
                         &mut vars.clone(), // copy the vars
                         funs,              // give a ref to the funs

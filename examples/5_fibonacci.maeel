@@ -1,8 +1,9 @@
 "std" include
 
 fun fib n (
-    n 2 < vmdup => (1 vmswap)
-    not => (n 1- fib n 2- fib +)
+    n 2 <
+        dup => (1)
+        not => (n 1- fib n 2- fib+)
 )
 
 1 21 range (fib) map print

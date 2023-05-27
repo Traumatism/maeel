@@ -31,40 +31,6 @@ fun rot a b c
     c a b
 )
 
-fun drop2 (
-    drop drop
-)
-
-fun drop3
-(
-    drop drop2
-)
-
-fun vmdup2
-(
-    vmdup vmdup
-)
-
-fun vmdup3
-(
-    vmdup vmdup2
-)
-
-fun vmover2
-(
-    vmover vmover
-)
-
-fun vmover3
-(
-    vmover vmover2
-)
-
-fun vmrot2
-(
-    vmrot vmrot
-)
-
 fun format
 (
     | Output string
@@ -75,7 +41,7 @@ fun format
         -> char
 
         | If the char is a %, push the
-        | stack top element (and drop it)
+        | stack top element (and vmdrop it)
         char "%" =     => (o vmswap +)
 
         | Otherwise, push the char
@@ -85,19 +51,19 @@ fun format
     o
 )
 
-| Print and drop the stack top value
+| Print and vmdrop the stack top value
 fun puts
 (
-    print drop
+    print vmdrop
 )
 
-| Print and drop a digit
+| Print and vmdrop a digit
 fun puts_digit
 (
     int2char puts
 )
 
-| Print and drop the stack top value
+| Print and vmdrop the stack top value
 | with a newline
 fun putsln
 (
@@ -144,7 +110,7 @@ fun match
         vmdup 0 get vmswap 1 get -> fn value = => (fn+)
     )
 
-    vmdup 0 vmswap for (drop 1+) 0 = => ("Unknown case!" panic)
+    vmdup 0 vmswap for (vmdrop 1+) 0 = => ("Unknown case!" panic)
 
     last
 )
@@ -284,7 +250,7 @@ fun gteq
 
 fun len
 (
-    0 vmswap for (drop 1+)
+    0 vmswap for (vmdrop 1+)
 )
 
 fun first
@@ -304,7 +270,7 @@ fun third
 
 fun last
 (
-    vmdup 0 vmswap for (drop 1+) 1- get
+    vmdup 0 vmswap for (vmdrop 1+) 1- get
 )
 
 fun merge
@@ -322,12 +288,12 @@ fun count xs x
 
 fun contains xs x
 (
-    xs 0 vmswap for (drop 1+) -> xs_len
+    xs 0 vmswap for (vmdrop 1+) -> xs_len
     0 -> i
 
     0 1 while
     (
-        xs i get x = => (drop 1)
+        xs i get x = => (vmdrop 1)
         i 1+ -> i
         i xs_len <
     )
@@ -337,20 +303,20 @@ fun reverse xs
 (
     {} -> ys
 
-    xs 0 vmswap for (drop 1+) vmdup 1 gteq while
+    xs 0 vmswap for (vmdrop 1+) vmdup 1 gteq while
     (
         1- vmdup xs vmswap get ys+ -> ys
         vmdup 1 gteq
     )
 
-    drop ys
+    vmdrop ys
 )
 
 fun pop
 (
     {} -> ys
 
-    vmdup 0 vmswap for (drop 1+) -> xs_len
+    vmdup 0 vmswap for (vmdrop 1+) -> xs_len
     vmdup 0 get take1 -> y -> xs
 
     1 1 xs_len < while
@@ -358,14 +324,12 @@ fun pop
         xs vmover get ys+ -> ys 1+ vmdup xs_len <
     )
 
-    ys y + vmswap drop
+    ys y + vmswap vmdrop
 )
 
-fun push
+fun push x
 (
-    take1
-    vmswap
-    for (+)
+    {x} vmswap for (+)
 )
 
 fun take n
@@ -374,7 +338,7 @@ fun take n
 
     0 n range for
     (
-        drop xs + -> xs
+        vmdrop xs + -> xs
     )
 
     xs reverse
@@ -397,8 +361,7 @@ fun take3 a b c
 
 fun string2array
 (
-    {} vmswap
-    for (+)
+    {} vmswap for (+)
 )
 
 | Convert a digit to a char
@@ -448,7 +411,7 @@ fun fact n
 fun sqrt x
 (
     0 5 range
-    (vmdup x vmswap/ vmswap+ 2/ vmswap drop)
+    (vmdup x vmswap/ vmswap+ 2/ vmswap vmdrop)
     x 2/
     reduce
 )
@@ -474,14 +437,11 @@ fun pow base exp
 (
     | Generate a list of size 'exp' with only 'base'
     | and multiply all these 'base' togather
-    0 exp range (drop base) map product
+    0 exp range (vmdrop base) map product
 )
 
 fun range
 (
     vmover vmover < vmrot ->end ->start
-    {} vmswap while
-    (
-        start+ start 1+ vmdup ->start end <
-    )
+    {} vmswap while (start+ start 1+ vmdup ->start end <)
 )
