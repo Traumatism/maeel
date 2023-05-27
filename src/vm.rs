@@ -12,6 +12,130 @@ pub enum VMType {
     Function(Vec<Token>),
 }
 
+struct Node(VMType, *mut Node);
+
+pub struct VM(*mut Node);
+
+impl VM {
+    pub fn new() -> Self {
+        VM(null_mut())
+    }
+
+    pub fn push(&mut self, value: VMType) {
+        let new_node = Box::into_raw(Box::new(Node(value, null_mut())));
+
+        if !self.0.is_null() {
+            unsafe {
+                (*new_node).1 = self.0;
+            }
+        }
+
+        self.0 = new_node;
+    }
+
+    pub fn pop(&mut self) -> Result<VMType, Box<dyn Error>> {
+        if self.0.is_null() {
+            return Err("Stack is empty".into());
+        }
+
+        unsafe {
+            let node = Box::from_raw(self.0);
+            self.0 = node.1;
+            Ok(node.0)
+        }
+    }
+
+    pub fn peek(&self) -> Result<&VMType, Box<dyn Error>> {
+        if self.0.is_null() {
+            return Err("Stack is empty".into());
+        }
+
+        unsafe { Ok(&(*self.0).0) }
+    }
+
+    pub fn clear(&mut self) {
+        while !self.0.is_null() {
+            unsafe {
+                self.0 = Box::from_raw(self.0).1;
+            }
+        }
+    }
+
+    pub fn swap(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.0.is_null() {
+            return Err("Stack is empty".into());
+        }
+
+        if unsafe { (*self.0).1.is_null() } {
+            return Err("Stack has only one element".into());
+        }
+
+        unsafe {
+            let node1 = &mut *self.0;
+            let node2 = &mut *node1.1;
+
+            let temp = read(&node1.0);
+
+            write(&mut node1.0, read(&node2.0));
+            write(&mut node2.0, temp);
+        }
+
+        Ok(())
+    }
+
+    pub fn dup(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.0.is_null() {
+            return Err("Stack is empty".into());
+        }
+
+        self.push(unsafe { (*self.0).0.clone() });
+        Ok(())
+    }
+
+    pub fn over(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.0.is_null() {
+            return Err("Stack is empty".into());
+        }
+
+        if unsafe { (*self.0).1.is_null() } {
+            return Err("Stack has only one element".into());
+        }
+
+        self.push(unsafe { (*(*self.0).1).0.clone() });
+        Ok(())
+    }
+
+    pub fn rot(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.0.is_null() {
+            return Err("Stack is empty".into());
+        }
+
+        if unsafe { (*self.0).1.is_null() } || unsafe { (*(*self.0).1).1.is_null() } {
+            return Err("Stack has less than three elements".into());
+        }
+
+        unsafe {
+            let node1 = &mut *self.0;
+            let node2 = &mut *(*self.0).1;
+            let node3 = &mut *(*(*self.0).1).1;
+
+            let temp = read(&node1.0);
+
+            write(&mut node1.0, read(&node2.0));
+            write(&mut node2.0, read(&node3.0));
+            write(&mut node3.0, temp);
+        }
+
+        Ok(())
+    }
+}
+
+impl Drop for VM {
+    fn drop(&mut self) {
+        self.clear()
+    }
+}
+
 impl std::fmt::Display for VMType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -187,121 +311,5 @@ impl std::ops::Div for VMType {
 
             (a, b) => panic!("Cannot divide {a} and {b}"),
         }
-    }
-}
-pub struct Node(VMType, *mut Node);
-
-pub struct VM {
-    head: *mut Node,
-}
-
-impl VM {
-    pub fn new() -> Self {
-        VM { head: null_mut() }
-    }
-
-    pub fn push(&mut self, value: VMType) {
-        let new_node = Box::into_raw(Box::new(Node(value, null_mut())));
-        if !self.head.is_null() {
-            unsafe {
-                (*new_node).1 = self.head;
-            }
-        }
-
-        self.head = new_node;
-    }
-
-    pub fn pop(&mut self) -> Result<VMType, Box<dyn Error>> {
-        if self.head.is_null() {
-            Err("Stack is empty".into())
-        } else {
-            unsafe {
-                let node = Box::from_raw(self.head);
-                self.head = node.1;
-                Ok(node.0)
-            }
-        }
-    }
-
-    pub fn peek(&self) -> Result<&VMType, Box<dyn Error>> {
-        if self.head.is_null() {
-            Err("Stack is empty".into())
-        } else {
-            unsafe { Ok(&(*self.head).0) }
-        }
-    }
-
-    pub fn clear(&mut self) {
-        while !self.head.is_null() {
-            unsafe {
-                let node = Box::from_raw(self.head);
-                self.head = node.1;
-            }
-        }
-    }
-
-    pub fn swap(&mut self) -> Result<(), Box<dyn Error>> {
-        if self.head.is_null() {
-            Err("Stack is empty".into())
-        } else if unsafe { (*self.head).1.is_null() } {
-            Err("Stack has only one element".into())
-        } else {
-            unsafe {
-                let node1 = &mut *self.head;
-                let node2 = &mut *node1.1;
-                let temp = read(&node1.0);
-                write(&mut node1.0, read(&node2.0));
-                write(&mut node2.0, temp);
-            }
-            Ok(())
-        }
-    }
-
-    pub fn dup(&mut self) -> Result<(), Box<dyn Error>> {
-        if self.head.is_null() {
-            Err("Stack is empty".into())
-        } else {
-            self.push(unsafe { (*self.head).0.clone() });
-            Ok(())
-        }
-    }
-
-    pub fn over(&mut self) -> Result<(), Box<dyn Error>> {
-        if self.head.is_null() {
-            Err("Stack is empty".into())
-        } else if unsafe { (*self.head).1.is_null() } {
-            Err("Stack has only one element".into())
-        } else {
-            let value = unsafe { (*(*self.head).1).0.clone() };
-            self.push(value);
-            Ok(())
-        }
-    }
-
-    pub fn rot(&mut self) -> Result<(), Box<dyn Error>> {
-        if self.head.is_null() {
-            Err("Stack is empty".into())
-        } else if unsafe { (*self.head).1.is_null() } || unsafe { (*(*self.head).1).1.is_null() } {
-            Err("Stack has less than three elements".into())
-        } else {
-            unsafe {
-                let node1 = &mut *self.head;
-                let node2 = &mut *(*self.head).1;
-                let node3 = &mut *(*(*self.head).1).1;
-
-                let temp = read(&node1.0);
-
-                write(&mut node1.0, read(&node2.0));
-                write(&mut node2.0, read(&node3.0));
-                write(&mut node3.0, temp);
-            }
-            Ok(())
-        }
-    }
-}
-
-impl Drop for VM {
-    fn drop(&mut self) {
-        self.clear()
     }
 }
