@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 #[derive(Clone, Debug)]
 pub enum Token {
     Block(Vec<Token>),
@@ -27,45 +29,6 @@ pub enum Token {
     While,
 }
 
-fn extract_blocks(tokens: &[Token]) -> Vec<Token> {
-    let mut output = Vec::new();
-
-    let mut tokens_iter = tokens.iter();
-
-    while let Some(token) = tokens_iter.next() {
-        output.push(match token {
-            Token::BlockStart => {
-                let mut depth: u8 = 1;
-                let mut block_tokens = Vec::new();
-
-                while depth > 0 {
-                    match tokens_iter.next() {
-                        Some(Token::BlockEnd) => {
-                            block_tokens.push(Token::BlockEnd);
-                            depth -= 1
-                        }
-
-                        Some(Token::BlockStart) => {
-                            block_tokens.push(Token::BlockStart);
-                            depth += 1
-                        }
-
-                        Some(token) => block_tokens.push(token.clone()),
-
-                        None => break,
-                    }
-                }
-
-                Token::Block(extract_blocks(&block_tokens))
-            }
-
-            token => token.clone(),
-        })
-    }
-
-    output
-}
-
 macro_rules! take_with_predicate {
     ($character:expr, $characters:expr, $p:expr) => {{
         let content = std::iter::once($character)
@@ -85,7 +48,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut depth: u8 = 0;
 
     // Output tokens
-    let mut tokens = Vec::default();
+    let mut tokens = VecDeque::new();
 
     // Peekable, so we can look the next value without
     // poping it
@@ -107,12 +70,12 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             ' ' | '\n' => continue,
 
             '(' => {
-                tokens.push(Token::BlockStart);
+                tokens.push_back(Token::BlockStart);
                 depth += 1;
             }
 
             ')' => {
-                tokens.push(Token::BlockEnd);
+                tokens.push_back(Token::BlockEnd);
                 depth -= 1;
             }
 
@@ -159,7 +122,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     });
                 }
 
-                tokens.push(Token::String(content))
+                tokens.push_back(Token::String(content))
             }
 
             // Lexify identifiers
@@ -169,7 +132,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     character.is_alphanumeric() || character == '_'
                 });
 
-                tokens.push(match content.as_str() {
+                tokens.push_back(match content.as_str() {
                     "fun" => Token::FunctionDefinition,
                     "while" => Token::While,
                     "for" => Token::For,
@@ -188,7 +151,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
                 // Numeric contains . => it is a float, otherwise,
                 // it is an integer
-                tokens.push(if content.contains('.') {
+                tokens.push_back(if content.contains('.') {
                     assert_eq!(content.matches('.').count(), 1); // Float must contain one point
                     Token::Float(content.parse().unwrap())
                 } else {
@@ -199,24 +162,24 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             // Lexify equal symbol, or if
             '=' => match characters.peek() {
                 Some('>') => {
-                    tokens.push(Token::Then);
+                    tokens.push_back(Token::Then);
                     characters.next();
                 }
 
-                _ => tokens.push(Token::Equal),
+                _ => tokens.push_back(Token::Equal),
             },
 
             // Lexify minus symbol, or assignment
             '-' => match characters.peek() {
                 Some('>') => {
-                    tokens.push(Token::Assignment);
+                    tokens.push_back(Token::Assignment);
                     characters.next();
                 }
 
-                _ => tokens.push(Token::Minus),
+                _ => tokens.push_back(Token::Minus),
             },
 
-            _ => tokens.push(match character {
+            _ => tokens.push_back(match character {
                 '+' => Token::Plus,
                 '*' => Token::Times,
                 '/' => Token::Divide,
@@ -237,6 +200,32 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     // Code block depth should be equal to zero
     assert_eq!(depth, 0);
 
-    // Extract code blocks from the tokens stream
-    extract_blocks(tokens.as_slice())
+    let mut output = Vec::new();
+    let mut stack: Vec<Vec<Token>> = Vec::new();
+    let mut block_tokens = Vec::new();
+
+    for token in tokens.iter() {
+        match token {
+            Token::BlockStart => {
+                stack.push(block_tokens);
+                block_tokens = Vec::new();
+            }
+
+            Token::BlockEnd => {
+                let nested_tokens = block_tokens.clone();
+
+                if let Some(prev_tokens) = stack.pop() {
+                    block_tokens = prev_tokens;
+                    block_tokens.push(Token::Block(nested_tokens));
+                } else {
+                    output.push(Token::Block(nested_tokens));
+                }
+            }
+            _ => block_tokens.push(token.clone()),
+        }
+    }
+
+    output.append(&mut block_tokens);
+
+    output
 }

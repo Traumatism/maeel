@@ -2,7 +2,6 @@ use super::lexer::*;
 use std::error::Error;
 use std::ptr::*;
 
-/// Values that can be processed by the virtual machine.
 #[derive(Clone)]
 pub enum VMType {
     Float(f32),
@@ -16,11 +15,13 @@ struct Node(VMType, *mut Node);
 
 pub struct VM(*mut Node);
 
-impl VM {
-    pub fn new() -> Self {
+impl Default for VM {
+    fn default() -> Self {
         VM(null_mut())
     }
+}
 
+impl VM {
     pub fn push(&mut self, value: VMType) {
         let new_node = Box::into_raw(Box::new(Node(value, null_mut())));
 
@@ -233,6 +234,10 @@ impl std::ops::Mul for VMType {
             // float * float
             (VMType::Float(x), VMType::Integer(m)) | (VMType::Integer(m), VMType::Float(x)) => {
                 VMType::Float(x * m as f32)
+            }
+
+            (VMType::Integer(m), VMType::String(s)) | (VMType::String(s), VMType::Integer(m)) => {
+                VMType::String(s.repeat(m as usize))
             }
 
             (a, b) => panic!("Cannot multiply {a} and {b}"),

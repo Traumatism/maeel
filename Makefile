@@ -8,10 +8,10 @@ vscode:
 	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && cp -r ide ~/.vscode/extensions/maeel-syntax-highlighting
 
 test:
-	cargo build -q && mv target/debug/maeel ./maeel.tmp && ./maeel.tmp stdlib/tests.maeel || rm maeel.tmp
+	cargo build -q --release && mv target/release/maeel ./maeel.tmp && ./maeel.tmp stdlib/tests.maeel || rm maeel.tmp
 
 clean: 
 	rm ./maeel ./maeel.tmp Cargo.lock || rm -r target
 
 bench:
-	cargo build -q --release && hyperfine "target/release/maeel stdlib/tests.maeel"
+	cargo build -q --release && mv target/release/maeel ./maeel.tmp && hyperfine "./maeel.tmp stdlib/tests.maeel" || rm maeel.tmp

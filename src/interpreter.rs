@@ -1,8 +1,8 @@
 use crate::lexer::*;
 use crate::vm::*;
+
 use std::error::Error;
 use std::fs::read_to_string;
-
 use std::io::Read;
 use std::slice::Iter;
 
@@ -10,6 +10,7 @@ macro_rules! maeel_expect {
     ($tokens:expr, $variant:ident) => {{
         match $tokens.next() {
             Some(Token::$variant(value)) => value.clone(),
+
             other => panic!("Expected {}, got {:?}", stringify!($variant), other),
         }
     }};
@@ -19,6 +20,7 @@ macro_rules! maeelvm_expect {
     ($vm:expr, $variant:ident) => {{
         match $vm.pop() {
             Ok(VMType::$variant(value)) => value.clone(),
+
             other => panic!("Expected {}, got {}", stringify!($variant), other?),
         }
     }};
@@ -323,7 +325,7 @@ pub fn process_tokens<'a>(
 
                     process_tokens(
                         &mut lex_into_tokens(&content).iter(),
-                        &mut VM::new(),                 // don't copy the vm
+                        &mut VM::default(),             // don't copy the vm
                         &mut hashbrown::HashMap::new(), // give a ref to the vars
                         funs,                           // give a ref to the funs
                     )?;
