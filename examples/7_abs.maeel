@@ -1,0 +1,12 @@
+"std" include
+
+fun neg (0 swap-)
+
+fun abs x (
+    x 0 < => (x neg)
+    x 0 = x 0 > or => (x)
+)
+
+10 neg abs print
+"\n" print
+10 abs print

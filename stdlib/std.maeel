@@ -104,15 +104,10 @@ fun reduce xs fn init
 fun match
 (
     vmswap -> value
-
-    {} vmswap for
-    (
-        vmdup 0 get vmswap 1 get -> fn value = => (fn+)
-    )
-
-    vmdup 0 vmswap for (vmdrop 1+) 0 = => ("Unknown case!" panic)
-
-    last
+    {} vmswap for (vmdup 0 get vmswap 1 get ->fn value= => (fn+))
+    vmdup 0 vmswap for (vmdrop 1+) dup
+    0= => ("Unknown case!" panic)
+    1- get
 )
 
 fun xor p q
@@ -402,9 +397,10 @@ fun bool2string
     match
 )
 
-fun fact n
-(
-    1 n 1 + range product
+fun fact (
+    vmdup 1> vmover 0=
+        => (1 vmswap)
+        => (vmdup 1- fact vmswap *)
 )
 
 | Square root approximation
