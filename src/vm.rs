@@ -1,4 +1,5 @@
-use super::lexer::*;
+use crate::lexer::*;
+
 use std::error::Error;
 use std::ptr::*;
 
@@ -42,6 +43,7 @@ impl VM {
         unsafe {
             let node = Box::from_raw(self.0);
             self.0 = node.1;
+
             Ok(node.0)
         }
     }
@@ -90,6 +92,7 @@ impl VM {
         }
 
         self.push(unsafe { (*self.0).0.clone() });
+
         Ok(())
     }
 
@@ -103,6 +106,7 @@ impl VM {
         }
 
         self.push(unsafe { (*(*self.0).1).0.clone() });
+
         Ok(())
     }
 

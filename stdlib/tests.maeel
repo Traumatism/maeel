@@ -1,6 +1,6 @@
 "std" include
 
-1 2 3 take3                            {1 2 3}                     "take #1"                   assert_eq
+1 2 3 take3                             {1 2 3}                     "take #1"                   assert_eq
 3 2 +                                   5                           "add #1"                    assert_eq
 3 2 *                                   6                           "mul #1"                    assert_eq
 3 2 -                                   1                           "sub #1"                    assert_eq

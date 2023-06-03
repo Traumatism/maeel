@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 
 #[derive(Clone, Debug)]
 pub enum Token {
-    Block(Vec<Token>),
-    String(String),
+    Block(Vec<Token>), /* separated by BlockStart and BlockEnd */
+    String(String),    /* separated by double quotes */
     Identifier(String),
     Integer(i64),
     Float(f32),
@@ -200,15 +200,15 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     // Code block depth should be equal to zero
     assert_eq!(depth, 0);
 
-    let mut output = Vec::new();
-    let mut stack: Vec<Vec<Token>> = Vec::new();
-    let mut block_tokens = Vec::new();
+    let mut output = Vec::default();
+    let mut stack: Vec<Vec<Token>> = Vec::default();
+    let mut block_tokens = Vec::default();
 
     for token in tokens.iter() {
         match token {
             Token::BlockStart => {
                 stack.push(block_tokens);
-                block_tokens = Vec::new();
+                block_tokens = Vec::default();
             }
 
             Token::BlockEnd => {

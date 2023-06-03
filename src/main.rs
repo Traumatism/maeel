@@ -19,7 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Initial run
     process_tokens(
-        &mut lex_into_tokens(&content).iter(),
+        &lex_into_tokens(&content),
         &mut VM::default(),                 // data stack
         &mut hashbrown::HashMap::default(), // globals (variables)
         &mut hashbrown::HashMap::default(), // functions
