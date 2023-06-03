@@ -85,23 +85,23 @@ fn parse_array(
             Token::Block(tmp_tokens) => maeelvm_push!(xs, Function, tmp_tokens),
 
             Token::Identifier(identifier) => {
-                if let Some(value) = vars.get(&identifier) {
-                    maeelvm_push!(vm, value.clone()); // Push the variable content
-
-                    if identifier.starts_with('_') {
-                        vars.remove(&identifier);
+                match vars.get(&identifier) {
+                    Some(value) => {
+                        maeelvm_push!(xs, value.clone()); // Push the variable content
+                        continue;
                     }
 
-                    continue;
+                    // Must be in funs
+                    None => {
+                        maeelvm_push!(
+                            xs,
+                            Function,
+                            funs.get(&identifier)
+                                .cloned()
+                                .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
+                        );
+                    }
                 }
-
-                maeelvm_push!(
-                    xs,
-                    Function,
-                    funs.get(&identifier)
-                        .cloned()
-                        .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
-                );
             }
 
             other => panic!("Found unexpected token while parsing array: {other:?}"),
