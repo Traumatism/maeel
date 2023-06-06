@@ -1,12 +1,9 @@
 "std" include
 
-fun neg (0 swap-)
-
-fun abs x (
-    x 0 < => (x neg)
+fun valeur_absolue x (
+    x 0 < => (0 x -)
     x 0 = x 0 > or => (x)
 )
 
-10 neg abs print
-"\n" print
-10 abs print
+10 valeur_absolue print
+0 10 - valeur_absolue print

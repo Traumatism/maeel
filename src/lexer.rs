@@ -208,17 +208,20 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
         match token {
             Token::BlockStart => {
                 stack.push(block_tokens);
+
                 block_tokens = Vec::default();
             }
 
             Token::BlockEnd => {
                 let nested_tokens = block_tokens.clone();
 
-                if let Some(prev_tokens) = stack.pop() {
-                    block_tokens = prev_tokens;
-                    block_tokens.push(Token::Block(nested_tokens));
-                } else {
-                    output.push(Token::Block(nested_tokens));
+                match stack.pop() {
+                    Some(prev_tokens) => {
+                        block_tokens = prev_tokens;
+                        block_tokens.push(Token::Block(nested_tokens));
+                    }
+
+                    _ => output.push(Token::Block(nested_tokens)),
                 }
             }
             _ => block_tokens.push(token.clone()),
