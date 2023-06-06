@@ -1,5 +1,4 @@
 mod vm;
-use vm::*;
 
 mod lexer;
 use lexer::*;
@@ -17,10 +16,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )
     .expect("Failed to open file");
 
+    // let mut vm = vm::IkuyoVM::<vm::MaeelType, 1>::default();
+    let mut vm = vm::BocchiVM::default();
+
     // Initial run
     process_tokens(
         &lex_into_tokens(&content),
-        &mut VM::default(),                 // data stack
+        &mut vm,                            // data stack
         &mut hashbrown::HashMap::default(), // globals (variables)
         &mut hashbrown::HashMap::default(), // functions
     )?;

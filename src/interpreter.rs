@@ -1,3 +1,5 @@
+use hashbrown::HashMap;
+
 use crate::lexer::*;
 use crate::vm::*;
 
@@ -9,6 +11,7 @@ macro_rules! maeel_expect {
     ($tokens:expr, $variant:ident) => {{
         match $tokens.pop() {
             Some(Token::$variant(value)) => value,
+
             other => panic!("Expected {}, got {:?}", stringify!($variant), other),
         }
     }};
@@ -17,15 +20,18 @@ macro_rules! maeel_expect {
 macro_rules! maeelvm_expect {
     ($vm:expr, $variant:ident) => {{
         match $vm.pop() {
-            Ok(VMType::$variant(value)) => value,
+            Ok(MaeelType::$variant(value)) => value,
+
             other => panic!("Expected {}, got {}", stringify!($variant), other?),
         }
     }};
 
     ($vm:expr, $variant_a:ident, $variant_b:ident) => {{
         match $vm.pop() {
-            Ok(VMType::$variant_a(value)) => VMType::$variant_a(value),
-            Ok(VMType::$variant_b(value)) => VMType::$variant_b(value),
+            Ok(MaeelType::$variant_a(value)) => MaeelType::$variant_a(value),
+
+            Ok(MaeelType::$variant_b(value)) => MaeelType::$variant_b(value),
+
             other => panic!(
                 "Expected {} or {}, got {}",
                 stringify!($variant_a),
@@ -38,7 +44,7 @@ macro_rules! maeelvm_expect {
 
 macro_rules! maeelvm_push {
     ($vm:expr, $variant:ident, $value:expr) => {
-        $vm.push(VMType::$variant($value))
+        $vm.push(MaeelType::$variant($value))
     };
 
     ($vm:expr, $value:expr) => {
@@ -49,19 +55,21 @@ macro_rules! maeelvm_push {
 macro_rules! maeelvm_binop {
     ($vm:expr, $operator:tt) => {{
         let (a, b) = ($vm.pop()?, $vm.pop()?);
+
         maeelvm_push!($vm, b $operator a)
     }};
 
     ($vm:expr, $operator:tt, $variant:ident) => {{
         let (a, b) = ($vm.pop()?, $vm.pop()?);
-        maeelvm_push!($vm, $variant, (b $operator a) as i64);
+
+        maeelvm_push!($vm, $variant, (b $operator a) as i64)?;
     }};
 }
 
 fn parse_array(
     tokens: &mut Vec<Token>,
-    vm: &mut VM,
-    vars: &mut hashbrown::HashMap<String, VMType>,
+    vm: &mut dyn MaeelVM<Data = MaeelType>,
+    vars: &mut hashbrown::HashMap<String, MaeelType>,
     funs: &mut hashbrown::HashMap<String, Vec<Token>>,
 ) -> Result<(), Box<dyn Error>> {
     let mut xs = Vec::default();
@@ -108,16 +116,16 @@ fn parse_array(
         }
     }
 
-    maeelvm_push!(vm, Array, xs);
+    maeelvm_push!(vm, Array, xs)?;
     Ok(())
 }
 
 pub fn process_tokens<'a>(
-    tokens_iter: &[Token],                                /* Program tokens */
-    vm: &'a mut VM,                                       /* Program vm stack */
-    vars: &'a mut hashbrown::HashMap<String, VMType>,     /* Global vars */
-    funs: &'a mut hashbrown::HashMap<String, Vec<Token>>, /* Global funs */
-) -> Result<&'a mut VM, Box<dyn Error>> {
+    tokens_iter: &[Token],                     /* Program tokens */
+    vm: &mut dyn MaeelVM<Data = MaeelType>,    /* Program stack VM */
+    vars: &'a mut HashMap<String, MaeelType>,  /* Global vars */
+    funs: &'a mut HashMap<String, Vec<Token>>, /* Global funs */
+) -> Result<(), Box<dyn Error>> {
     let mut tokens = tokens_iter.iter().rev().cloned().collect::<Vec<Token>>();
 
     while let Some(token) = tokens.pop() {
@@ -142,19 +150,19 @@ pub fn process_tokens<'a>(
                         Token::Block(tmp_tokens) => {
                             fun_tokens.reverse();
                             fun_tokens.extend(tmp_tokens);
+                            fun_tokens.reverse();
 
                             break;
                         }
 
-                        Token::Identifier(value) => {
-                            fun_tokens.extend([Token::Identifier(value), Token::Assignment]);
+                        Token::Identifier(_) => {
+                            fun_tokens.push(tmp_token);
+                            fun_tokens.push(Token::Assignment);
                         }
 
                         _ => panic!(),
                     }
                 }
-
-                fun_tokens.reverse();
 
                 funs.insert(fun_name, fun_tokens);
             }
@@ -176,16 +184,16 @@ pub fn process_tokens<'a>(
 
                 // For requires an indexable on the stack top
                 match maeelvm_expect!(vm, Array, String) {
-                    VMType::Array(xs) => {
+                    MaeelType::Array(xs) => {
                         xs.iter().for_each(|x| {
-                            maeelvm_push!(vm, x.clone());
+                            maeelvm_push!(vm, x.clone()).unwrap();
                             process_tokens(&tmp_tokens, vm, vars, funs).unwrap();
                         });
                     }
 
-                    VMType::String(string) => {
+                    MaeelType::String(string) => {
                         string.chars().for_each(|x| {
-                            maeelvm_push!(vm, String, x.to_string());
+                            maeelvm_push!(vm, String, x.to_string()).unwrap();
                             process_tokens(&tmp_tokens, vm, vars, funs).unwrap();
                         });
                     }
@@ -227,51 +235,51 @@ pub fn process_tokens<'a>(
             Token::Equal => maeelvm_binop!(vm, ==, Integer),
 
             // Process the 'add' binary operation
-            Token::Plus => maeelvm_binop!(vm, +),
+            Token::Plus => maeelvm_binop!(vm, +)?,
 
             // Process the 'substract' binary operation
-            Token::Minus => maeelvm_binop!(vm, -),
+            Token::Minus => maeelvm_binop!(vm, -)?,
 
             // Process the 'multiply' binary operation
-            Token::Times => maeelvm_binop!(vm, *),
+            Token::Times => maeelvm_binop!(vm, *)?,
 
             // Process the 'divide' binary operation
-            Token::Divide => maeelvm_binop!(vm, /),
+            Token::Divide => maeelvm_binop!(vm, /)?,
 
             // Process the 'modulo' binary operation
-            Token::Modulo => maeelvm_binop!(vm, %),
+            Token::Modulo => maeelvm_binop!(vm, %)?,
 
             // Clear the vm stack
-            Token::Clear => vm.clear(),
+            Token::Clear => vm.clear()?,
 
             // Push a string to the stack
-            Token::String(content) => maeelvm_push!(vm, String, content),
+            Token::String(content) => maeelvm_push!(vm, String, content)?,
 
             // Push a float to the stack
-            Token::Float(content) => maeelvm_push!(vm, Float, content),
+            Token::Float(content) => maeelvm_push!(vm, Float, content)?,
 
             // Push an integer to the stack
-            Token::Integer(content) => maeelvm_push!(vm, Integer, content),
+            Token::Integer(content) => maeelvm_push!(vm, Integer, content)?,
 
             // Push an anonymous function to the stack
-            Token::Block(tokens) => maeelvm_push!(vm, Function, tokens),
+            Token::Block(tokens) => maeelvm_push!(vm, Function, tokens)?,
 
             // Get the n'th element of an indexable
             Token::Get => {
                 let index = maeelvm_expect!(vm, Integer) as usize;
 
                 match vm.pop() {
-                    Ok(VMType::Array(xs)) => {
+                    Ok(MaeelType::Array(xs)) => {
                         maeelvm_push!(vm, xs.get(index).unwrap().clone())
                     }
 
-                    Ok(VMType::String(string)) => {
-                        maeelvm_push!(vm, String, string.chars().nth(index).unwrap().to_string());
+                    Ok(MaeelType::String(string)) => {
+                        maeelvm_push!(vm, String, string.chars().nth(index).unwrap().to_string())
                     }
 
                     Ok(other) => panic!("{other} is not indexable!"),
                     _ => panic!("Nothing to index!"),
-                }
+                }?
             }
 
             Token::Identifier(identifier) => match identifier.as_str() {
@@ -279,24 +287,35 @@ pub fn process_tokens<'a>(
 
                 "break" => break,
 
-                "vmdrop" => {
-                    vm.pop()?;
-                }
+                "vmdrop" => vm.fastpop()?,
 
                 "vmdup" => vm.dup()?,
+
                 "vmswap" => vm.swap()?,
+
                 "vmover" => vm.over()?,
+
                 "vmrot" => vm.rot()?,
 
                 "vmtype" => match vm.peek()? {
-                    VMType::Float(_) => maeelvm_push!(vm, VMType::String(String::from("float"))),
-                    VMType::Integer(_) => {
-                        maeelvm_push!(vm, VMType::String(String::from("integer")))
+                    MaeelType::Float(_) => {
+                        maeelvm_push!(vm, MaeelType::String(String::from("float")))?
                     }
-                    VMType::String(_) => maeelvm_push!(vm, VMType::String(String::from("string"))),
-                    VMType::Array(_) => maeelvm_push!(vm, VMType::String(String::from("array"))),
-                    VMType::Function(_) => {
-                        maeelvm_push!(vm, VMType::String(String::from("function")))
+
+                    MaeelType::Integer(_) => {
+                        maeelvm_push!(vm, MaeelType::String(String::from("integer")))?
+                    }
+
+                    MaeelType::String(_) => {
+                        maeelvm_push!(vm, MaeelType::String(String::from("string")))?
+                    }
+
+                    MaeelType::Array(_) => {
+                        maeelvm_push!(vm, MaeelType::String(String::from("array")))?
+                    }
+
+                    MaeelType::Function(_) => {
+                        maeelvm_push!(vm, MaeelType::String(String::from("function")))?
                     }
                 },
 
@@ -314,9 +333,9 @@ pub fn process_tokens<'a>(
                         vm,
                         Array,
                         buf.iter()
-                            .map(|byte| VMType::Integer(*byte as i64))
+                            .map(|byte| MaeelType::Integer(*byte as i64))
                             .collect()
-                    );
+                    )?
                 }
 
                 "include" => {
@@ -336,12 +355,7 @@ pub fn process_tokens<'a>(
 
                 identifier => {
                     if let Some(value) = vars.get(identifier) {
-                        maeelvm_push!(vm, value.clone()); // Push the variable content
-
-                        if identifier.starts_with('_') {
-                            vars.remove(identifier);
-                        }
-
+                        maeelvm_push!(vm, value.clone())?;
                         continue;
                     }
 
@@ -363,5 +377,5 @@ pub fn process_tokens<'a>(
         };
     }
 
-    Ok(vm)
+    Ok(())
 }
