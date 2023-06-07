@@ -69,8 +69,8 @@ macro_rules! maeelvm_binop {
 fn parse_array(
     tokens: &mut Vec<Token>,
     vm: &mut dyn MaeelVM<Data = MaeelType>,
-    vars: &mut hashbrown::HashMap<String, MaeelType>,
-    funs: &mut hashbrown::HashMap<String, Vec<Token>>,
+    vars: &mut HashMap<String, MaeelType>,
+    funs: &mut HashMap<String, Vec<Token>>,
 ) -> Result<(), Box<dyn Error>> {
     let mut xs = Vec::default();
 
@@ -120,11 +120,11 @@ fn parse_array(
     Ok(())
 }
 
-pub fn process_tokens<'a>(
-    tokens_iter: &[Token],                     /* Program tokens */
-    vm: &mut dyn MaeelVM<Data = MaeelType>,    /* Program stack VM */
-    vars: &'a mut HashMap<String, MaeelType>,  /* Global vars */
-    funs: &'a mut HashMap<String, Vec<Token>>, /* Global funs */
+pub fn process_tokens(
+    tokens_iter: &[Token],                  /* Program tokens */
+    vm: &mut dyn MaeelVM<Data = MaeelType>, /* Program stack VM */
+    vars: &mut HashMap<String, MaeelType>,  /* Global vars */
+    funs: &mut HashMap<String, Vec<Token>>, /* Global funs */
 ) -> Result<(), Box<dyn Error>> {
     let mut tokens = tokens_iter.iter().rev().cloned().collect::<Vec<Token>>();
 
@@ -132,12 +132,7 @@ pub fn process_tokens<'a>(
         match token {
             // Call anonymous funs
             Token::Call => {
-                process_tokens(
-                    &maeelvm_expect!(vm, Function),
-                    vm,                // give a ref to the vm
-                    &mut vars.clone(), // copy the vars
-                    funs,              // give a ref to the funs
-                )?;
+                process_tokens(&maeelvm_expect!(vm, Function), vm, &mut vars.clone(), funs)?;
             }
 
             Token::FunctionDefinition => {

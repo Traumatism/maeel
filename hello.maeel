@@ -1,8 +1,0 @@
-"std" include
-
-fun factorial n (
-    n 1 = => (1)
-    n 1 > => (n dup 1 - factorial *)
-)
-
-7 factorial print

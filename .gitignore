@@ -17,3 +17,4 @@ Cargo.lock
 *.o
 *.ml
 maeel_ocaml/
+ignore/
