@@ -52,20 +52,6 @@ macro_rules! maeelvm_push {
     };
 }
 
-macro_rules! maeelvm_binop {
-    ($vm:expr, $operator:tt) => {{
-        let (a, b) = ($vm.pop()?, $vm.pop()?);
-
-        maeelvm_push!($vm, b $operator a)
-    }};
-
-    ($vm:expr, $operator:tt, $variant:ident) => {{
-        let (a, b) = ($vm.pop()?, $vm.pop()?);
-
-        maeelvm_push!($vm, $variant, (b $operator a) as i64)?;
-    }};
-}
-
 fn parse_array(
     tokens: &mut Vec<Token>,
     vm: &mut dyn MaeelVM<Data = MaeelType>,
@@ -80,7 +66,6 @@ fn parse_array(
 
             Token::ArrayStart => {
                 parse_array(tokens, vm, vars, funs)?;
-
                 maeelvm_push!(xs, vm.pop()?);
             }
 
@@ -130,7 +115,6 @@ pub fn process_tokens(
 
     while let Some(token) = tokens.pop() {
         match token {
-            // Call anonymous funs
             Token::Call => {
                 process_tokens(&maeelvm_expect!(vm, Function), vm, &mut vars.clone(), funs)?;
             }
@@ -220,46 +204,32 @@ pub fn process_tokens(
                 vars.insert(maeel_expect!(tokens, Identifier), vm.pop()?);
             }
 
-            // Process the 'is greater than' binary operation
-            Token::GreaterThan => maeelvm_binop!(vm, >, Integer),
+            Token::GreaterThan => vm.binary_op(|a, b| MaeelType::Integer((b > a) as i64))?, /* Process "greater than" binary operation */
 
-            // Process the 'is lower than' binary operation
-            Token::LowerThan => maeelvm_binop!(vm, <, Integer),
+            Token::LowerThan => vm.binary_op(|a, b| MaeelType::Integer((b < a) as i64))?, /* Process "lower than" binary operation */
 
-            // Process the 'is equal to' binary operation
-            Token::Equal => maeelvm_binop!(vm, ==, Integer),
+            Token::Equal => vm.binary_op(|a, b| MaeelType::Integer((b == a) as i64))?, /* Process "equal" binary operation */
 
-            // Process the 'add' binary operation
-            Token::Plus => maeelvm_binop!(vm, +)?,
+            Token::Plus => vm.binary_op(|a, b| b + a)?, /* Process "add" binary operation */
 
-            // Process the 'substract' binary operation
-            Token::Minus => maeelvm_binop!(vm, -)?,
+            Token::Minus => vm.binary_op(|a, b| b - a)?, /* Process "substract" binary operation */
 
-            // Process the 'multiply' binary operation
-            Token::Times => maeelvm_binop!(vm, *)?,
+            Token::Times => vm.binary_op(|a, b| b * a)?, /* Process "multiply" binary operation */
 
-            // Process the 'divide' binary operation
-            Token::Divide => maeelvm_binop!(vm, /)?,
+            Token::Divide => vm.binary_op(|a, b| b / a)?, /* Process "divide" binary operation */
 
-            // Process the 'modulo' binary operation
-            Token::Modulo => maeelvm_binop!(vm, %)?,
+            Token::Modulo => vm.binary_op(|a, b| b % a)?, /* Process "modulo" binary operation */
 
-            // Clear the vm stack
-            Token::Clear => vm.clear()?,
+            Token::Clear => vm.clear()?, /* Clear the VM stack */
 
-            // Push a string to the stack
-            Token::String(content) => maeelvm_push!(vm, String, content)?,
+            Token::String(content) => maeelvm_push!(vm, String, content)?, /* Push a string */
 
-            // Push a float to the stack
-            Token::Float(content) => maeelvm_push!(vm, Float, content)?,
+            Token::Float(content) => maeelvm_push!(vm, Float, content)?, /* Push a float */
 
-            // Push an integer to the stack
-            Token::Integer(content) => maeelvm_push!(vm, Integer, content)?,
+            Token::Integer(content) => maeelvm_push!(vm, Integer, content)?, /* Push an integer */
 
-            // Push an anonymous function to the stack
-            Token::Block(tokens) => maeelvm_push!(vm, Function, tokens)?,
+            Token::Block(tokens) => maeelvm_push!(vm, Function, tokens)?, /* Push an anonymous function */
 
-            // Get the n'th element of an indexable
             Token::Get => {
                 let index = maeelvm_expect!(vm, Integer) as usize;
 
@@ -282,15 +252,15 @@ pub fn process_tokens(
 
                 "break" => break,
 
-                "vmdrop" => vm.fastpop()?,
+                "vmdrop" => vm.fastpop()?, /* Process "fastpop" VM operation */
 
-                "vmdup" => vm.dup()?,
+                "vmdup" => vm.dup()?, /* Process "dup" VM operation */
 
-                "vmswap" => vm.swap()?,
+                "vmswap" => vm.swap()?, /* Process "swap" VM operation */
 
-                "vmover" => vm.over()?,
+                "vmover" => vm.over()?, /* Process "over" VM operation */
 
-                "vmrot" => vm.rot()?,
+                "vmrot" => vm.rot()?, /* Process "rotate" VM operation */
 
                 "vmtype" => match vm.peek()? {
                     MaeelType::Float(_) => {
