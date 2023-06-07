@@ -40,26 +40,38 @@ impl<T: Clone, const MAX_SIZE: usize> MaeelVM for IkuyoVM<T, MAX_SIZE> {
     fn dup(&mut self) -> VMOutput<()> {
         /* Making sure the stack is not empty */
         assert!(self.sp > 0, "Stack is empty");
+        assert!(self.sp < self.buffer.len(), "Stack overflow");
 
-        self.push(self.peek()?.clone())
+        let buffer_ptr = self.buffer.as_mut_ptr();
+
+        unsafe {
+            ptr::write(
+                buffer_ptr.add(self.sp),
+                (*buffer_ptr.add(self.sp - 1)).clone(),
+            )
+        }
+
+        self.sp += 1; /* Increase stack pointer */
+
+        Ok(())
     }
 
     fn swap(&mut self) -> VMOutput<()> {
         /* Making sure the stack contains at least two values */
         assert!(self.sp > 1, "Stack has less than two elements");
 
-        unsafe {
-            ptr::swap(
-                self.buffer.as_mut_ptr().add(self.sp - 1),
-                self.buffer.as_mut_ptr().add(self.sp - 2),
-            )
-        }
+        let buffer_ptr = self.buffer.as_mut_ptr();
+
+        unsafe { ptr::swap(buffer_ptr.add(self.sp - 1), buffer_ptr.add(self.sp - 2)) }
 
         Ok(())
     }
 
     fn fastpop(&mut self) -> VMOutput<()> {
-        self.pop()?;
+        /* Making sure the stack is not empty */
+        assert!(self.sp > 0, "Stack is empty");
+
+        self.sp -= 1; /* Decrease stack pointer */
 
         Ok(())
     }
@@ -81,15 +93,17 @@ impl<T: Clone, const MAX_SIZE: usize> MaeelVM for IkuyoVM<T, MAX_SIZE> {
         /* Making sure the stack contains at least three values */
         assert!(self.sp > 2, "Stack has less than three elements");
 
+        let buffer_ptr = self.buffer.as_mut_ptr();
+
         unsafe {
-            let node1 = self.buffer.as_mut_ptr().add(self.sp - 1);
-            let node2 = self.buffer.as_mut_ptr().add(self.sp - 2);
-            let node3 = self.buffer.as_mut_ptr().add(self.sp - 3);
+            let node1 = buffer_ptr.add(self.sp - 1);
+            let node2 = buffer_ptr.add(self.sp - 2);
+            let node3 = buffer_ptr.add(self.sp - 3);
 
             let temp = ptr::read(node1);
 
-            ptr::write(node1, ptr::read(node2));
-            ptr::write(node2, ptr::read(node3));
+            ptr::swap(node1, node2);
+            ptr::swap(node2, node3);
             ptr::write(node3, temp)
         }
 
@@ -99,7 +113,19 @@ impl<T: Clone, const MAX_SIZE: usize> MaeelVM for IkuyoVM<T, MAX_SIZE> {
     fn over(&mut self) -> VMOutput<()> {
         /* Making sure the stack contains at least two values */
         assert!(self.sp > 1, "Stack has less than two elements");
+        assert!(self.sp < self.buffer.len(), "Stack overflow");
 
-        self.push(unsafe { ptr::read(self.buffer.as_ptr().add(self.sp - 2)) })
+        let buffer_ptr = self.buffer.as_mut_ptr();
+
+        unsafe {
+            ptr::write(
+                buffer_ptr.add(self.sp),
+                ptr::read(buffer_ptr.add(self.sp - 2)),
+            )
+        }
+
+        self.sp += 1; /* Increase stack pointer */
+
+        Ok(())
     }
 }

@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 
 #[derive(Clone, Debug)]
 pub enum Token {
-    Block(Vec<Token>), /* separated by BlockStart and BlockEnd */
-    String(String),    /* separated by double quotes */
+    Block(Vec<Token>), /* Separated by BlockStart and BlockEnd */
+    String(String),    /* Separated by double quotes */
     Identifier(String),
     Integer(i64),
     Float(f32),
@@ -43,6 +43,7 @@ macro_rules! take_with_predicate {
     }};
 }
 
+#[inline(always)]
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     // Code block depth
     let mut depth: u8 = 0;

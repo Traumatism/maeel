@@ -1,3 +1,5 @@
+use hashbrown::HashMap;
+
 mod vm;
 
 mod lexer;
@@ -16,15 +18,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )
     .expect("Failed to open file");
 
-    // let mut vm = vm::IkuyoVM::<vm::MaeelType, 1>::default();
-    let mut vm = vm::BocchiVM::default();
-
-    // Initial run
     process_tokens(
         &lex_into_tokens(&content),
-        &mut vm,                            // data stack
-        &mut hashbrown::HashMap::default(), // globals (variables)
-        &mut hashbrown::HashMap::default(), // functions
+        &mut vm::BocchiVM::default(),
+        &mut HashMap::default(),
+        &mut HashMap::default(),
     )?;
 
     Ok(())
