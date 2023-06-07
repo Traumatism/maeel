@@ -29,4 +29,19 @@ pub trait MaeelVM {
 
     /// Rotate the three highests values of the stack
     fn rot(&mut self) -> VMOutput<()>;
+
+    /// Perform a binary operation
+    fn binary_op(&mut self, app: fn(Self::Data, Self::Data) -> Self::Data) -> VMOutput<()> {
+        let a = self.pop()?;
+        let b = self.pop()?;
+
+        self.push(app(a, b))
+    }
+
+    /// Perform an unary operation
+    fn unary_op(&mut self, app: fn(Self::Data) -> Self::Data) -> VMOutput<()> {
+        let a = self.pop()?;
+
+        self.push(app(a))
+    }
 }
