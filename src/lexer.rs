@@ -45,14 +45,9 @@ macro_rules! take_with_predicate {
 
 #[inline(always)]
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
-    // Code block depth
-    let mut depth: u8 = 0;
+    let mut depth: u8 = 0; /* Code block depth */
+    let mut tokens = VecDeque::new(); /* Output tokens */
 
-    // Output tokens
-    let mut tokens = VecDeque::new();
-
-    // Peekable, so we can look the next value without
-    // poping it
     let mut characters = code.chars().peekable();
 
     while let Some(character) = characters.next() {
@@ -60,14 +55,14 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             // Comments are ignored
             '|' => {
                 for character in characters.by_ref() {
-                    if character != '\n' {
-                        continue;
+                    if character == '\n'
+                    /* Comment ends at end-of-line */
+                    {
+                        break;
                     }
-                    break;
                 }
             }
 
-            // Whitespaces are ignored
             ' ' | '\n' => continue,
 
             '(' => {
@@ -82,20 +77,20 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
             // Lexify strings
             '"' => {
-                let content_vec: Vec<char> = characters
+                let content_vector: Vec<char> = characters
                     .by_ref()
                     .take_while(|&character| character != '"')
                     .collect();
 
                 let mut index = 0;
-                let mut content = String::with_capacity(content_vec.len());
+                let mut content = String::with_capacity(content_vector.len());
 
-                while index < content_vec.len() {
-                    let character = content_vec[index];
+                while index < content_vector.len() {
+                    let character = content_vector[index];
 
                     index += 1;
 
-                    content.push(match (character, content_vec.get(index)) {
+                    content.push(match (character, content_vector.get(index)) {
                         ('\\', Some(next_character)) => {
                             index += 1;
 
@@ -201,15 +196,14 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     // Code block depth should be equal to zero
     assert_eq!(depth, 0);
 
+    let mut stack = Vec::default();
     let mut output = Vec::default();
-    let mut stack: Vec<Vec<Token>> = Vec::default();
     let mut block_tokens = Vec::default();
 
     for token in tokens.iter() {
         match token {
             Token::BlockStart => {
                 stack.push(block_tokens);
-
                 block_tokens = Vec::default();
             }
 
@@ -217,19 +211,19 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 let nested_tokens = block_tokens.clone();
 
                 match stack.pop() {
-                    Some(prev_tokens) => {
-                        block_tokens = prev_tokens;
+                    Some(previous_tokens) => {
+                        block_tokens = previous_tokens;
                         block_tokens.push(Token::Block(nested_tokens));
                     }
 
                     _ => output.push(Token::Block(nested_tokens)),
                 }
             }
+
             _ => block_tokens.push(token.clone()),
         }
     }
 
     output.append(&mut block_tokens);
-
     output
 }
