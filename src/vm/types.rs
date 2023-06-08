@@ -1,12 +1,23 @@
 use crate::lexer::*;
 
-#[derive(Clone)]
 pub enum MaeelType {
     Float(f32),
     Integer(i64),
     String(String),
     Array(Vec<Self>),
     Function(Vec<Token>),
+}
+
+impl Clone for MaeelType {
+    fn clone(&self) -> Self {
+        match self {
+            MaeelType::Float(a) => MaeelType::Float(*a),
+            MaeelType::Integer(a) => MaeelType::Integer(*a),
+            MaeelType::String(a) => MaeelType::String(a.clone()),
+            MaeelType::Array(a) => MaeelType::Array(a.clone()),
+            MaeelType::Function(a) => MaeelType::Function(a.clone()),
+        }
+    }
 }
 
 impl std::fmt::Display for MaeelType {

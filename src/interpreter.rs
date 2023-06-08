@@ -60,8 +60,8 @@ fn parse_array(
 ) -> Result<(), Box<dyn Error>> {
     let mut xs = Vec::default();
 
-    while let Some(tmp_token) = tokens.pop() {
-        match tmp_token {
+    while let Some(temporary_token) = tokens.pop() {
+        match temporary_token {
             Token::ArrayEnd => break,
 
             Token::ArrayStart => {
@@ -75,7 +75,7 @@ fn parse_array(
 
             Token::Integer(value) => maeelvm_push!(xs, Integer, value),
 
-            Token::Block(tmp_tokens) => maeelvm_push!(xs, Function, tmp_tokens),
+            Token::Block(temporary_tokens) => maeelvm_push!(xs, Function, temporary_tokens),
 
             Token::Identifier(identifier) => {
                 match vars.get(&identifier) {
@@ -106,12 +106,16 @@ fn parse_array(
 }
 
 pub fn process_tokens(
-    tokens_iter: &[Token],                  /* Program tokens */
+    tokens: &[Token],                       /* Program tokens */
     vm: &mut dyn MaeelVM<Data = MaeelType>, /* Program stack VM */
     vars: &mut HashMap<String, MaeelType>,  /* Global vars */
     funs: &mut HashMap<String, Vec<Token>>, /* Global funs */
 ) -> Result<(), Box<dyn Error>> {
-    let mut tokens = tokens_iter.iter().rev().cloned().collect::<Vec<Token>>();
+    let mut tokens: Vec<Token> = tokens
+        .iter()
+        .rev() /* Reverse the tokens */
+        .cloned() /* Clone the tokens */
+        .collect(); /* Return it as a vector */
 
     while let Some(token) = tokens.pop() {
         match token {
@@ -124,18 +128,18 @@ pub fn process_tokens(
 
                 let mut fun_tokens = Vec::default();
 
-                while let Some(tmp_token) = tokens.pop() {
-                    match tmp_token {
-                        Token::Block(tmp_tokens) => {
+                while let Some(temporary_tokens) = tokens.pop() {
+                    match temporary_tokens {
+                        Token::Block(temporary_tokens) => {
                             fun_tokens.reverse();
-                            fun_tokens.extend(tmp_tokens);
+                            fun_tokens.extend(temporary_tokens);
                             fun_tokens.reverse();
 
                             break;
                         }
 
                         Token::Identifier(_) => {
-                            fun_tokens.push(tmp_token);
+                            fun_tokens.push(temporary_tokens);
                             fun_tokens.push(Token::Assignment);
                         }
 
@@ -143,37 +147,37 @@ pub fn process_tokens(
                     }
                 }
 
-                funs.insert(fun_name, fun_tokens);
+                funs.insert(fun_name.clone(), fun_tokens);
             }
 
             // Parse while statement
             Token::While => {
                 // While requires a code block to execute
-                let tmp_tokens = maeel_expect!(tokens, Block);
+                let temporary_tokens = maeel_expect!(tokens, Block);
 
                 while maeelvm_expect!(vm, Integer) == 1 {
-                    process_tokens(&tmp_tokens, vm, vars, funs)?;
+                    process_tokens(&temporary_tokens, vm, vars, funs)?;
                 }
             }
 
             // Parse for statement
             Token::For => {
                 // For requires a code block to execute
-                let tmp_tokens = maeel_expect!(tokens, Block);
+                let temporary_tokens = maeel_expect!(tokens, Block);
 
                 // For requires an indexable on the stack top
                 match maeelvm_expect!(vm, Array, String) {
                     MaeelType::Array(xs) => {
                         xs.iter().for_each(|x| {
                             maeelvm_push!(vm, x.clone()).unwrap();
-                            process_tokens(&tmp_tokens, vm, vars, funs).unwrap();
+                            process_tokens(&temporary_tokens, vm, vars, funs).unwrap();
                         });
                     }
 
                     MaeelType::String(string) => {
                         string.chars().for_each(|x| {
                             maeelvm_push!(vm, String, x.to_string()).unwrap();
-                            process_tokens(&tmp_tokens, vm, vars, funs).unwrap();
+                            process_tokens(&temporary_tokens, vm, vars, funs).unwrap();
                         });
                     }
 
@@ -184,11 +188,11 @@ pub fn process_tokens(
             // Parse if statement
             Token::Then => {
                 // Then requires a code block to execute
-                let tmp_tokens = maeel_expect!(tokens, Block);
+                let temporary_tokens = maeel_expect!(tokens, Block);
 
                 // Check if stack top value is a TRUE value
                 if maeelvm_expect!(vm, Integer) == 1 {
-                    tmp_tokens
+                    temporary_tokens
                         .iter()
                         .rev()
                         .cloned()
@@ -332,12 +336,7 @@ pub fn process_tokens(
                 }
             },
 
-            // This should not be here
-            Token::BlockStart | Token::ArrayEnd => {
-                panic!()
-            }
-
-            // uhm
+            Token::BlockStart | Token::ArrayEnd => panic!(),
             Token::BlockEnd => {}
         };
     }
