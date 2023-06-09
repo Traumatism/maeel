@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     process_tokens(
         &lex_into_tokens(&content),
-        &mut vm::IkuyoVM::<MaeelType, 24>::default(),
+        &mut vm::BocchiVM::<MaeelType>::default(),
         &mut HashMap::default(),
         &mut HashMap::default(),
     )?;

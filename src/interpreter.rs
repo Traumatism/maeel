@@ -7,6 +7,12 @@ use std::error::Error;
 use std::fs::read_to_string;
 use std::io::Read;
 
+#[derive(Clone)]
+pub struct Function {
+    tokens: Vec<Token>,
+    inline: bool,
+}
+
 macro_rules! maeel_expect {
     ($tokens:expr, $variant:ident) => {{
         match $tokens.pop() {
@@ -56,7 +62,7 @@ fn parse_array(
     tokens: &mut Vec<Token>,
     vm: &mut dyn MaeelVM<Data = MaeelType>,
     vars: &mut HashMap<String, MaeelType>,
-    funs: &mut HashMap<String, Vec<Token>>,
+    funs: &mut HashMap<String, Function>,
 ) -> Result<(), Box<dyn Error>> {
     let mut xs = Vec::default();
 
@@ -69,13 +75,13 @@ fn parse_array(
                 maeelvm_push!(xs, vm.pop()?);
             }
 
-            Token::String(value) => maeelvm_push!(xs, String, value),
+            Token::String(value) => xs.push(MaeelType::String(value)),
 
-            Token::Float(value) => maeelvm_push!(xs, Float, value),
+            Token::Float(value) => xs.push(MaeelType::Float(value)),
 
-            Token::Integer(value) => maeelvm_push!(xs, Integer, value),
+            Token::Integer(value) => xs.push(MaeelType::Integer(value)),
 
-            Token::Block(temporary_tokens) => maeelvm_push!(xs, Function, temporary_tokens),
+            Token::Block(value) => xs.push(MaeelType::Function(value)),
 
             Token::Identifier(identifier) => {
                 match vars.get(&identifier) {
@@ -86,13 +92,13 @@ fn parse_array(
 
                     // Must be in funs
                     None => {
-                        maeelvm_push!(
-                            xs,
-                            Function,
-                            funs.get(&identifier)
-                                .cloned()
-                                .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
-                        );
+                        let fun = funs
+                            .get(&identifier)
+                            .unwrap_or_else(|| panic!("{identifier} isn't in scope!"));
+
+                        let tokens = &fun.tokens;
+
+                        maeelvm_push!(xs, Function, tokens.clone());
                     }
                 }
             }
@@ -105,11 +111,11 @@ fn parse_array(
     Ok(())
 }
 
-pub fn process_tokens(
-    tokens: &[Token],                       /* Program tokens */
-    vm: &mut dyn MaeelVM<Data = MaeelType>, /* Program stack VM */
-    vars: &mut HashMap<String, MaeelType>,  /* Global vars */
-    funs: &mut HashMap<String, Vec<Token>>, /* Global funs */
+pub fn process_tokens<'a>(
+    tokens: &'a [Token],                       /* Program tokens */
+    vm: &'a mut dyn MaeelVM<Data = MaeelType>, /* Program stack VM */
+    vars: &'a mut HashMap<String, MaeelType>,  /* Global vars */
+    funs: &'a mut HashMap<String, Function>,   /* Global funs */
 ) -> Result<(), Box<dyn Error>> {
     let mut tokens: Vec<Token> = tokens
         .iter()
@@ -124,7 +130,13 @@ pub fn process_tokens(
             }
 
             Token::FunctionDefinition => {
-                let fun_name = maeel_expect!(tokens, Identifier);
+                let mut fun_name = maeel_expect!(tokens, Identifier);
+                let mut inline = false;
+
+                if fun_name == "inline" {
+                    inline = true;
+                    fun_name = maeel_expect!(tokens, Identifier);
+                }
 
                 let mut fun_tokens = Vec::default();
 
@@ -147,7 +159,13 @@ pub fn process_tokens(
                     }
                 }
 
-                funs.insert(fun_name.clone(), fun_tokens);
+                funs.insert(
+                    fun_name.clone(),
+                    Function {
+                        tokens: fun_tokens,
+                        inline,
+                    },
+                );
             }
 
             // Parse while statement
@@ -185,18 +203,19 @@ pub fn process_tokens(
                 }
             }
 
-            // Parse if statement
             Token::Then => {
-                // Then requires a code block to execute
-                let temporary_tokens = maeel_expect!(tokens, Block);
+                let temporary_token = tokens.pop().unwrap();
 
-                // Check if stack top value is a TRUE value
                 if maeelvm_expect!(vm, Integer) == 1 {
-                    temporary_tokens
-                        .iter()
-                        .rev()
-                        .cloned()
-                        .for_each(|token| tokens.push(token));
+                    match temporary_token {
+                        Token::Block(temporary_tokens) => temporary_tokens
+                            .iter()
+                            .rev()
+                            .cloned()
+                            .for_each(|token| tokens.push(token)),
+
+                        _ => tokens.push(temporary_token),
+                    }
                 }
             }
 
@@ -226,13 +245,13 @@ pub fn process_tokens(
 
             Token::Clear => vm.clear()?, /* Clear the VM stack */
 
-            Token::String(content) => maeelvm_push!(vm, String, content)?, /* Push a string */
+            Token::String(content) => vm.push(MaeelType::String(content))?, /* Push a string */
 
-            Token::Float(content) => maeelvm_push!(vm, Float, content)?, /* Push a float */
+            Token::Float(content) => vm.push(MaeelType::Float(content))?, /* Push a float */
 
-            Token::Integer(content) => maeelvm_push!(vm, Integer, content)?, /* Push an integer */
+            Token::Integer(content) => vm.push(MaeelType::Integer(content))?, /* Push an integer */
 
-            Token::Block(tokens) => maeelvm_push!(vm, Function, tokens)?, /* Push an anonymous function */
+            Token::Block(content) => vm.push(MaeelType::Function(content))?, /* Push an anonymous function */
 
             Token::Get => {
                 let index = maeelvm_expect!(vm, Integer) as usize;
@@ -328,16 +347,24 @@ pub fn process_tokens(
                         continue;
                     }
 
-                    funs.get(identifier)
+                    let fun = funs
+                        .get(identifier)
                         .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
-                        .iter()
-                        .cloned()
-                        .for_each(|token| tokens.push(token));
+                        .clone();
+
+                    if fun.inline {
+                        fun.tokens
+                            .iter()
+                            .for_each(|token| tokens.push(token.clone()));
+                    } else {
+                        let mut fun_tokens = fun.tokens;
+                        fun_tokens.reverse();
+                        process_tokens(&fun_tokens, vm, &mut vars.clone(), funs)?;
+                    }
                 }
             },
 
-            Token::BlockStart | Token::ArrayEnd => panic!(),
-            Token::BlockEnd => {}
+            Token::BlockEnd | Token::BlockStart | Token::ArrayEnd => panic!(),
         };
     }
 
