@@ -1,266 +1,154 @@
-fun drop
-(
-    -> _
-)
+fun drop a ()
 
-fun dup a
-(
-    a a
-)
+fun dup a (a a)
 
-fun swap a b
-(
-    b a
-)
+fun swap a b (b a)
 
-fun over a b
-(
-    a b a
-)
+fun over a b (a b a)
 
-fun rot a b c
-(
-    c a b
-)
+fun rot a b c (c a b)
 
-fun format
-(
-    | Output string
-    "" -> o
+fun format (
+    "" -> output
 
-    for
-    (
-        -> char
-        char "%" =     => (o vmswap +)
-        char "%" = not => (o char +) -> o
+    for (
+        vmdup ->
+            char "%" = => (output vmswap +)
+            char "%" = not => (output char +)
+
+        -> output
     )
 
-    o
+    output
 )
 
-fun inline puts
-(
-    print vmdrop
+fun inline puts (print vmdrop)
+
+fun inline puts_digit (int2char print vmdrop)
+
+fun inline putsln ("%\n" format print vmdrop)
+
+fun inline println ("%\n" format print)
+
+fun map fn ({} vmswap for (fn& +))
+
+fun filter p (
+    {} -> ys for (vmdup p& => (ys vmswap + -> ys)) ys
 )
 
-fun inline puts_digit
-(
-    int2char puts
-)
+fun reduce xs fn init (init xs for (vmswap fn&))
 
-fun inline putsln
-(
-    "%\n" format puts
-)
-
-fun inline println
-(
-    "%\n" format print
-)
-
-fun map fn
-(
-    {} vmswap for (fn& +)
-)
-
-fun filter p
-(
-    {} -> ys
-
-    for
-    (
-        vmdup p& => (ys vmswap + -> ys)
-    )
-
-    ys
-)
-
-fun reduce xs fn init
-(
-    init xs for (vmswap fn&)
-)
-
-fun match
-(
+fun match (
     vmswap -> value
-    {} vmswap for (vmdup 0 get vmswap 1 get -> fn value= => (fn+))
-    vmdup 0 vmswap for (vmdrop 1+) dup
-    0= => ("Unknown case!" panic)
+
+    {} vmswap for (
+        vmdup 0 get vmswap 1 get -> fn value = => (fn+)
+    )
+
+    vmdup 0 = => ("Unknown case!" panic)
+    vmdup 0 vmswap for (vmdrop 1+)
+
     1- get
 )
 
-fun xor p q
-(
-    {p q}
-    {{{1 1} 0} {{0 0} 0} {{0 1} 1} {{1 0} 1}}
-    match
-)
 
-fun inline and
-(
-    + 2 =
-)
+fun inline xor (vmover vmover or vmrot not vmswap not or and)
 
-fun inline or
-(
-    + vmdup 2 = => (1 -)
-)
+fun inline and (+ 2=)
 
-fun inline not
-(
-    vmdup 0 = => (1 vmswap) 1 = => 0
-)
+fun inline or (+ vmdup 2= => (1-))
 
-fun inline panic
-(
-    "PANIC: %" format putsln 1 0 %
-)
+fun inline not (vmdup 0= => (1 vmswap) 1= => 0)
 
-fun inline unix_input
-(
-    {}
+fun inline panic ("PANIC: %" format putsln 1 0 %)
 
-    1 while
-    (
+fun inline unix_input (
+    {} 1 while (
         "/dev/stdin" 1 read 0 get vmdup vmrot +
         vmswap 10 = not
     )
 )
 
-fun unix_random_numbers n mod
-(
+fun unix_random_numbers n mod (
     "/dev/random" n read (mod %) map
 )
 
-fun inline assert_eq
-(
+fun inline assert_eq (
     vmrot = vmdup bool2string vmrot vmrot
     "% (%)" format putsln
     not => ("" panic)
 )
 
-fun inline sum
-((+) 0 reduce)
+fun inline sum (0 vmswap for (+))
 
-fun inline product
-((*) 1 reduce)
+fun inline product (1 vmswap for (*))
 
-fun inline null
-(0 =)
+fun inline null (0 =)
 
-fun inline inc
-(1 +)
+fun inline inc (1 +)
 
-fun inline dec
-(1 -)
+fun inline dec (1 -)
 
-fun inline divides
-(
-    % 0 =
-)
+fun inline divides (% 0 =)
 
-fun inline even
-(
-    2 % 0 =
-)
+fun inline even (2 % 0 =)
 
-fun inline odd
-(
-    2 % 1 =
-)
+fun inline odd (2 % 1 =)
 
-fun inline positive
-(
-    vmdup 0 = => (1 vmswap) 0 > => 1
-)
+fun inline pom (vmdup not)
 
-fun inline pom
-(
-    vmdup not
-)
+fun inline inverse (1 vmswap /)
 
-fun inline inverse
-(
-    1 vmswap/
-)
+fun inline square (vmdup*)
 
-fun inline square
-(
-    vmdup*
-)
+fun inline cube (vmdup vmdup*)
 
-fun inline cube
-(
-    vmdup vmdup*
-)
+fun inline lteq (vmover vmover < vmrot = or)
 
-fun inline lteq
-(
-    vmover vmover < vmrot = or
-)
+fun inline gteq (vmover vmover > vmrot = or)
 
-fun inline gteq
-(
-    vmover vmover > vmrot = or
-)
+fun inline len (0 vmswap for (vmdrop 1+))
 
-fun inline len
-(
-    0 vmswap for (vmdrop 1+)
-)
+fun inline first (0 get)
 
-fun inline first
-(
-    0 get
-)
+fun inline second (1 get)
 
-fun inline second
-(
-    1 get
-)
+fun inline third (3 get)
 
-fun inline third
-(
-    3 get
-)
-
-fun inline last
-(
+fun inline last (
     vmdup 0 vmswap for (vmdrop 1+) 1- get
 )
 
-fun inline merge
-(
+fun inline merge (
     {} vmrot vmrot for (+) vmswap for (+)
 )
 
-fun count xs x
-(
-    xs
-    (x = vmdup => (1 vmswap) not => 0)
-    map
-    (+) 0 reduce
+fun count xs x (
+    0 xs for (
+        x = vmdup
+            => (1 vmswap)
+        not => 0 +
+    )
 )
 
-fun contains xs x
-(
+fun contains xs x (
     xs 0 vmswap for (vmdrop 1+) -> xs_len
+
     0 -> i
 
-    0 1 while
-    (
+    0 1 while (
         xs i get x = => (vmdrop 1)
         i 1 + -> i
         i xs_len <
     )
 )
 
-fun reverse xs
-(
+fun reverse xs (
     {} -> ys
 
-    xs 0 vmswap for (vmdrop 1+) vmdup 1 gteq while
-    (
+    xs 0 vmswap for (vmdrop 1+)
+
+    vmdup 1 gteq while (
         1- vmdup xs vmswap get ys+ -> ys
         vmdup 1 gteq
     )
@@ -268,87 +156,53 @@ fun reverse xs
     vmdrop ys
 )
 
-fun pop
-(
+fun pop (
     {} -> ys
 
     vmdup 0 vmswap for (vmdrop 1+) -> xs_len
     vmdup 0 get take1 -> y -> xs
 
-    1 1 xs_len < while
-    (
-        xs vmover get ys+ -> ys 1+ vmdup xs_len <
+    1 1 xs_len < while (
+        xs vmover get ys+ -> ys 1+
+        vmdup xs_len <
     )
 
     ys y + vmswap vmdrop
 )
 
-fun inline push
-(
-    take1 vmswap for (+)
-)
+fun inline push (take1 vmswap for (+))
 
-fun take n
-(
-    {} -> xs
+fun inline take (0 vmswap range {} vmswap for (vmdrop +) reverse)
 
-    0 n range for (vmdrop xs + -> xs)
+fun take1 a ({a})
 
-    xs reverse
-)
+fun take2 a b ({a b})
 
-fun take1 a
-(
-    {a}
-)
+fun take3 a b c ({a b c})
 
-fun take2 a b
-(
-    {a b}
-)
+fun inline string2array ({} vmswap for (+))
 
-fun take3 a b c
-(
-    {a b c}
-)
-
-fun string2array
-(
-    {} vmswap for (+)
-)
-
-| Convert a digit to a char
-fun inline int2char
-(
+fun inline int2char (
     {{0 "0"} {1 "1"} {2 "2"} {3 "3"} {4 "4"}
     {5 "5"} {6 "6"} {7 "7"} {8 "8"} {9 "9"}}
     match
 )
 
-| Convert a single character into an integer
-fun inline char2int
-(
+fun inline char2int (
     {{"0" 0} {"1" 1} {"2" 2} {"3" 3} {"4" 4}
     {"5" 5} {"6" 6} {"7" 7} {"8" 8} {"9" 9}}
     match
 )
 
-| Convert a string into an integer
-fun inline str2int
-(
-    0 vmswap for (vmswap 10 * vmswap char2int +)
+fun inline str2int (
+    0 vmswap for (
+        vmswap 10 * vmswap char2int +
+    )
 )
 
-| Convert an array into a string
-fun inline array2string
-(
-    "" vmswap for (+)
-)
+fun inline array2string ("" vmswap for (+))
 
-fun inline bool2string
-(
-    {{1 "true"} {0 "false"}} match
-)
+fun inline bool2string ({{1 "true"} {0 "false"}} match)
 
 fun inline fact (
     vmdup vmdup 1 > while (
@@ -357,27 +211,25 @@ fun inline fact (
     ) vmdrop
 )
 
-fun sqrt x
-(
-    0 5 range
-    (vmdup x vmswap / vmswap+ 2 / vmswap vmdrop)
-    x 2 /
-    reduce
+fun sqrt x (
+    x 2 / 0 5 range for (
+        vmswap vmdup x
+        vmswap / vmswap + 2 /
+        vmswap vmdrop
+    )
 )
 
-fun log base n
-(
-    0 n base gteq while
-    (1 + n base / vmdup -> n base gteq)
+fun log base n (
+    0 n base gteq while (
+        1 + n base / vmdup -> n base gteq
+    )
 )
 
-fun pow base exp
-(
-    0 exp range (vmdrop base) map product
+fun pow base exp (
+    {} 0 exp range for (vmdrop base +) product
 )
 
-fun range
-(
+fun range (
     vmover vmover < vmrot -> e -> s
-    {} vmswap while (s + s 1 + vmdup -> s e <)
+    {} vmswap while (s+ s 1+ vmdup -> s e <)
 )
