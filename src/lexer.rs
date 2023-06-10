@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 
 #[derive(Clone, Debug)]
 pub enum Token {
-    Block(Vec<Token>), /* Separated by BlockStart and BlockEnd */
-    String(String),    /* Separated by double quotes */
+    Block(Vec<Token>),
+    String(String),
     Identifier(String),
     Integer(i64),
     Float(f32),

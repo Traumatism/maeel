@@ -32,16 +32,13 @@ pub trait MaeelVM {
 
     /// Perform a binary operation
     fn binary_op(&mut self, app: fn(Self::Data, Self::Data) -> Self::Data) -> VMOutput<()> {
-        let a = self.pop()?;
-        let b = self.pop()?;
-
-        self.push(app(a, b))
+        let output = app(self.pop()?, self.pop()?);
+        self.push(output)
     }
 
     /// Perform an unary operation
     fn unary_op(&mut self, app: fn(Self::Data) -> Self::Data) -> VMOutput<()> {
-        let a = self.pop()?;
-
-        self.push(app(a))
+        let output = app(self.pop()?);
+        self.push(output)
     }
 }
