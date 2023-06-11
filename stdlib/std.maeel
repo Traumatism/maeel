@@ -30,7 +30,7 @@ fun inline putsln ("%\n" format print vmdrop)
 
 fun inline println ("%\n" format print)
 
-fun map fn ({} vmswap for (fn& +))
+fun map fn ({} vmswap for ( fn & +))
 
 fun filter p (
     {} -> ys for (vmdup p& => (ys vmswap + -> ys)) ys
