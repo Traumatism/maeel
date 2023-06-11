@@ -7,9 +7,15 @@ use std::error::Error;
 use std::fs::read_to_string;
 use std::io::Read;
 
+/// Representation of a function
 #[derive(Clone)]
 pub struct Function {
+    /* Function tokens */
     tokens: Vec<Token>,
+
+    /* If function is not inline, function tokens will be called
+    recursively. Otherwise, it will push function tokens on the
+    main tokens stack */
     inline: bool,
 }
 
@@ -100,11 +106,13 @@ fn parse_array(
 }
 
 pub fn process_tokens<'a>(
-    tokens: &'a [Token],                       /* Program tokens */
-    vm: &'a mut dyn MaeelVM<Data = MaeelType>, /* Program stack VM */
-    vars: &'a mut HashMap<String, MaeelType>,  /* Global vars */
-    funs: &'a mut HashMap<String, Function>,   /* Global funs */
+    tokens: &'a [Token],                        /* Program tokens */
+    vm: &'a mut dyn MaeelVM<Data = MaeelType>,  /* Program stack VM */
+    vars: &'a mut HashMap<String, MaeelType>,   /* Global vars */
+    funs: &'a mut HashMap<String, Function>,    /* Global funs */
+    structs: &mut HashMap<String, Vec<String>>, /* Global structs */
 ) -> Result<(), Box<dyn Error>> {
+    // Parse the tokens into a stack
     let mut tokens: Vec<Token> = tokens
         .iter()
         .rev() /* Reverse the tokens */
@@ -113,92 +121,43 @@ pub fn process_tokens<'a>(
 
     while let Some(token) = tokens.pop() {
         match token {
+            Token::At => match vm.pop() {
+                Ok(MaeelType::Structure(structure)) => vm.push(
+                    structure
+                        .get(&maeel_expect!(tokens, Identifier))
+                        .unwrap()
+                        .clone(),
+                )?,
+
+                _ => panic!(),
+            },
+
             Token::Call => {
-                process_tokens(&maeelvm_expect!(vm, Function), vm, &mut vars.clone(), funs)?;
-            }
-
-            Token::FunctionDefinition => {
-                let mut fun_name = maeel_expect!(tokens, Identifier);
-                let mut inline = false;
-
-                if fun_name == "inline" {
-                    inline = true;
-                    fun_name = maeel_expect!(tokens, Identifier)
-                }
-
-                let mut fun_tokens = Vec::default();
-
-                while let Some(temporary_tokens) = tokens.pop() {
-                    match temporary_tokens {
-                        Token::Block(temporary_tokens) => {
-                            fun_tokens.reverse();
-                            fun_tokens.extend(temporary_tokens);
-                            fun_tokens.reverse();
-
-                            break;
-                        }
-
-                        Token::Identifier(_) => {
-                            fun_tokens.push(temporary_tokens);
-                            fun_tokens.push(Token::Assignment);
-                        }
-
-                        _ => panic!(),
-                    }
-                }
-
-                funs.insert(
-                    fun_name.clone(),
-                    Function {
-                        tokens: fun_tokens,
-                        inline,
-                    },
-                );
-            }
-
-            Token::While => {
-                let temporary_tokens = maeel_expect!(tokens, Block);
-
-                while maeelvm_expect!(vm, Integer) == 1 {
-                    process_tokens(&temporary_tokens, vm, vars, funs)?;
-                }
-            }
-
-            Token::For => {
-                let temporary_tokens = maeel_expect!(tokens, Block);
-
-                match maeelvm_expect!(vm, Array, String) {
-                    MaeelType::Array(xs) => {
-                        xs.iter().for_each(|x| {
-                            vm.push(x.clone()).unwrap();
-                            process_tokens(&temporary_tokens, vm, vars, funs).unwrap();
-                        });
-                    }
-
-                    MaeelType::String(string) => {
-                        string.chars().for_each(|x| {
-                            vm.push(MaeelType::String(x.to_string())).unwrap();
-                            process_tokens(&temporary_tokens, vm, vars, funs).unwrap();
-                        });
-                    }
-
-                    other => panic!("{other} is not indexable!"),
-                }
+                process_tokens(
+                    &maeelvm_expect!(vm, Function),
+                    vm,
+                    &mut vars.clone(),
+                    funs,
+                    structs,
+                )?;
             }
 
             Token::Then => {
                 let temporary_token = tokens.pop().unwrap();
 
-                if maeelvm_expect!(vm, Integer) == 1 {
-                    match temporary_token {
+                match vm.pop() {
+                    Ok(MaeelType::Integer(1)) => match temporary_token {
                         Token::Block(temporary_tokens) => temporary_tokens
                             .iter()
                             .rev()
-                            .cloned()
-                            .for_each(|token| tokens.push(token)),
+                            .for_each(|token| tokens.push(token.clone())),
 
                         _ => tokens.push(temporary_token),
-                    }
+                    },
+
+                    Ok(MaeelType::Integer(0)) => {}
+
+                    _ => panic!(),
                 }
             }
 
@@ -208,23 +167,7 @@ pub fn process_tokens<'a>(
                 vars.insert(maeel_expect!(tokens, Identifier), vm.pop()?);
             }
 
-            Token::GreaterThan => vm.binary_op(|a, b| MaeelType::Integer((b > a) as i64))?, /* Process "greater than" binary operation */
-
-            Token::LowerThan => vm.binary_op(|a, b| MaeelType::Integer((b < a) as i64))?, /* Process "lower than" binary operation */
-
-            Token::Equal => vm.binary_op(|a, b| MaeelType::Integer((b == a) as i64))?, /* Process "equal" binary operation */
-
-            Token::Plus => vm.binary_op(|a, b| b + a)?, /* Process "add" binary operation */
-
-            Token::Minus => vm.binary_op(|a, b| b - a)?, /* Process "substract" binary operation */
-
-            Token::Times => vm.binary_op(|a, b| b * a)?, /* Process "multiply" binary operation */
-
-            Token::Divide => vm.binary_op(|a, b| b / a)?, /* Process "divide" binary operation */
-
-            Token::Modulo => vm.binary_op(|a, b| b % a)?, /* Process "modulo" binary operation */
-
-            Token::Clear => vm.clear()?, /* Clear the VM stack */
+            Token::BinaryOP(app) => vm.binary_op(app)?, /* Perform a binary operation */
 
             Token::String(content) => vm.push(MaeelType::String(content))?, /* Push a string */
 
@@ -234,23 +177,119 @@ pub fn process_tokens<'a>(
 
             Token::Block(content) => vm.push(MaeelType::Function(content))?, /* Push an anonymous function */
 
-            Token::Get => {
-                let index = maeelvm_expect!(vm, Integer) as usize;
-
-                match vm.pop() {
-                    Ok(MaeelType::Array(xs)) => vm.push(xs.get(index).unwrap().clone()),
-
-                    Ok(MaeelType::String(string)) => vm.push(MaeelType::String(
-                        string.chars().nth(index).unwrap().to_string(),
-                    )),
-
-                    Ok(other) => panic!("{other} is not indexable!"),
-                    _ => panic!("Nothing to index!"),
-                }?
-            }
-
             Token::Identifier(identifier) => match identifier.as_str() {
                 "print" => print!("{}", vm.peek()?), /* Print the top token */
+
+                "for" => {
+                    let temporary_tokens = maeel_expect!(tokens, Block);
+
+                    match maeelvm_expect!(vm, Array, String) {
+                        MaeelType::Array(xs) => {
+                            xs.iter().for_each(|x| {
+                                vm.push(x.clone()).unwrap();
+                                process_tokens(&temporary_tokens, vm, vars, funs, structs).unwrap();
+                            });
+                        }
+
+                        MaeelType::String(string) => {
+                            string.chars().for_each(|x| {
+                                vm.push(MaeelType::String(x.to_string())).unwrap();
+                                process_tokens(&temporary_tokens, vm, vars, funs, structs).unwrap();
+                            });
+                        }
+
+                        other => panic!("{other} is not indexable!"),
+                    }
+                }
+
+                "while" => {
+                    let temporary_tokens = maeel_expect!(tokens, Block);
+
+                    while match vm.pop() {
+                        Ok(MaeelType::Integer(1)) => true,  /* Continue looping */
+                        Ok(MaeelType::Integer(0)) => false, /* Stop looping */
+                        _ => panic!(),                      /* No boolean on the stack */
+                    } {
+                        process_tokens(&temporary_tokens, vm, vars, funs, structs)?
+                    }
+                }
+
+                "struct" => {
+                    let struct_name = maeel_expect!(tokens, Identifier);
+                    let mut struct_fields = Vec::default();
+
+                    while let Some(temporary_tokens) = tokens.pop() {
+                        match temporary_tokens {
+                            Token::Dot => {
+                                break;
+                            }
+
+                            Token::Identifier(identifier) => {
+                                struct_fields.push(identifier);
+                            }
+
+                            _ => panic!(),
+                        }
+                    }
+
+                    structs.insert(struct_name, struct_fields);
+                }
+
+                "fun" => {
+                    let mut fun_name = maeel_expect!(tokens, Identifier);
+                    let mut inline = false;
+
+                    if fun_name == "inline" {
+                        inline = true;
+                        fun_name = maeel_expect!(tokens, Identifier)
+                    }
+
+                    let mut fun_tokens = Vec::default();
+
+                    while let Some(temporary_token) = tokens.pop() {
+                        match temporary_token {
+                            Token::Block(temporary_tokens) => {
+                                fun_tokens.reverse();
+                                fun_tokens.extend(temporary_tokens);
+                                fun_tokens.reverse();
+
+                                break;
+                            }
+
+                            Token::Identifier(_) => {
+                                fun_tokens.push(temporary_token);
+                                fun_tokens.push(Token::Assignment);
+                            }
+
+                            _ => panic!(),
+                        }
+                    }
+
+                    funs.insert(
+                        fun_name.clone(),
+                        Function {
+                            tokens: fun_tokens,
+                            inline,
+                        },
+                    );
+                }
+
+                "clear" => vm.clear()?,
+
+                "get" => {
+                    let index = maeelvm_expect!(vm, Integer) as usize;
+
+                    match vm.pop() {
+                        Ok(MaeelType::Array(xs)) => vm.push(xs.get(index).unwrap().clone()),
+
+                        Ok(MaeelType::String(string)) => vm.push(MaeelType::String(
+                            string.chars().nth(index).unwrap().to_string(),
+                        )),
+
+                        Ok(other) => panic!("{other} is not indexable!"),
+                        _ => panic!("Nothing to index!"),
+                    }?
+                }
 
                 "break" => break, /* Stop processing the tokens */
 
@@ -292,36 +331,43 @@ pub fn process_tokens<'a>(
                     lex_into_tokens(&content)
                         .iter()
                         .rev()
-                        .cloned()
-                        .for_each(|token| tokens.push(token))
+                        .for_each(|token| tokens.push(token.clone()))
                 }
 
                 identifier => {
                     if let Some(value) = vars.get(identifier) {
                         vm.push(value.clone())?;
                         continue;
+                    } else if let Some(fun) = funs.get(identifier) {
+                        if fun.inline {
+                            fun.tokens
+                                .iter()
+                                .for_each(|token| tokens.push(token.clone()));
+
+                            continue;
+                        }
+
+                        let mut fun_tokens = fun.tokens.clone();
+
+                        fun_tokens.reverse();
+
+                        process_tokens(&fun_tokens, vm, &mut vars.clone(), funs, structs)?;
+                    } else if let Some(fields) = structs.get(identifier) {
+                        let mut structure: HashMap<String, MaeelType> =
+                            HashMap::with_capacity(fields.len());
+
+                        fields.iter().rev().for_each(|key| {
+                            structure.insert(key.clone(), vm.pop().unwrap());
+                        });
+
+                        vm.push(MaeelType::Structure(structure))?
+                    } else {
+                        panic!()
                     }
-
-                    let fun = funs
-                        .get(identifier)
-                        .unwrap_or_else(|| panic!("{identifier} isn't in scope!"))
-                        .clone();
-
-                    if fun.inline {
-                        fun.tokens
-                            .iter()
-                            .for_each(|token| tokens.push(token.clone()));
-                        continue;
-                    }
-
-                    let mut fun_tokens = fun.tokens;
-
-                    fun_tokens.reverse();
-                    process_tokens(&fun_tokens, vm, &mut vars.clone(), funs)?;
                 }
             },
 
-            Token::BlockEnd | Token::BlockStart | Token::ArrayEnd => panic!(),
+            Token::BlockEnd | Token::BlockStart | Token::ArrayEnd | Token::Dot => panic!(),
         };
     }
 

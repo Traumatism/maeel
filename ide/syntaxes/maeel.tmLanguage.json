@@ -11,7 +11,21 @@
 			"name": "comment.line.maeel"
 		},
 		{
-			"match": "(fun\\s+inline|fun)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+([a-zA-Z_\\s][a-zA-Z0-9_\\s]*)?",
+			"match": "(struct)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+([a-zA-Z_\\s][a-zA-Z0-9_\\s]*)?",
+			"captures": {
+				"2": {
+					"name": "keyword.control.maeel"
+				},
+				"1": {
+					"name": "entity.name.class.maeel"
+				},
+				"0": {
+					"name": "variable.parameter.function.maeel"
+				}
+			}
+		},
+		{
+			"match": "(fun\\s+inline|fun)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s+([a-zA-Z_\\s][a-zA-Z0-9_\\s]*)?\\s*",
 			"captures": {
 				"2": {
 					"name": "keyword.control.maeel"
@@ -29,7 +43,7 @@
 			"match": "(=>|\\bwhile\\b|\\bfor\\b|\\bthen\\b)"
 		},
 		{
-			"match": "(->)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
+			"match": "(@|\\->)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
 			"captures": {
 				"1": {
 					"name": "keyword.operator.assignment.maeel"

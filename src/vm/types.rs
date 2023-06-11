@@ -1,3 +1,5 @@
+use hashbrown::HashMap;
+
 use crate::lexer::*;
 
 pub enum MaeelType {
@@ -6,16 +8,18 @@ pub enum MaeelType {
     String(String),
     Array(Vec<Self>),
     Function(Vec<Token>),
+    Structure(HashMap<String, Self>),
 }
 
 impl Clone for MaeelType {
     fn clone(&self) -> Self {
         match self {
-            MaeelType::Float(a) => MaeelType::Float(*a),
-            MaeelType::Integer(a) => MaeelType::Integer(*a),
-            MaeelType::String(a) => MaeelType::String(a.clone()),
-            MaeelType::Array(a) => MaeelType::Array(a.clone()),
-            MaeelType::Function(a) => MaeelType::Function(a.clone()),
+            Self::Float(a) => Self::Float(*a),
+            Self::Integer(a) => Self::Integer(*a),
+            Self::String(a) => Self::String(a.clone()),
+            Self::Array(a) => Self::Array(a.clone()),
+            Self::Function(a) => Self::Function(a.clone()),
+            Self::Structure(a) => Self::Structure(a.clone()),
         }
     }
 }
@@ -35,7 +39,21 @@ impl std::fmt::Display for MaeelType {
                         write!(f, " ").unwrap();
                     }
 
-                    write!(f, "{}", &x).unwrap();
+                    write!(f, "{}", x).unwrap();
+                });
+
+                write!(f, "}}")
+            }
+
+            Self::Structure(x) => {
+                write!(f, "{{")?;
+
+                x.iter().enumerate().for_each(|(i, (k, v))| {
+                    if i > 0 {
+                        write!(f, " ").unwrap();
+                    }
+
+                    write!(f, "{}: {}", k, v).unwrap();
                 });
 
                 write!(f, "}}")

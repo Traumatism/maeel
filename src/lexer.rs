@@ -1,32 +1,24 @@
 use std::collections::VecDeque;
 
+use crate::vm::MaeelType;
+
 #[derive(Clone, Debug)]
 pub enum Token {
-    Block(Vec<Token>),
-    String(String),
-    Identifier(String),
-    Integer(i64),
-    Float(f32),
-    Call,
-    Plus,
-    Minus,
-    Times,
-    Modulo,
-    Divide,
-    Equal,
-    GreaterThan,
-    LowerThan,
-    Get,
-    Clear,
-    Assignment,
-    FunctionDefinition,
-    ArrayStart,
-    ArrayEnd,
-    BlockStart,
-    BlockEnd,
-    Then,
-    For,
-    While,
+    Block(Vec<Token>),                               /* (...) */
+    String(String),                                  /* "abc" */
+    Identifier(String),                              /* abc */
+    Integer(i64),                                    /* 123 */
+    Float(f32),                                      /* 123.123 */
+    BinaryOP(fn(MaeelType, MaeelType) -> MaeelType), /* T x T -> T */
+    Dot,                                             /* . */
+    At,                                              /* @ */
+    Call,                                            /* & */
+    Assignment,                                      /* -> */
+    Then,                                            /* => */
+    ArrayStart,                                      /* { */
+    ArrayEnd,                                        /* } */
+    BlockStart,                                      /* ( */
+    BlockEnd,                                        /* ) */
 }
 
 macro_rules! take_with_predicate {
@@ -43,16 +35,14 @@ macro_rules! take_with_predicate {
     }};
 }
 
-#[inline(always)]
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
-    let mut depth: u8 = 0; /* Code block depth */
-    let mut tokens = VecDeque::new(); /* Output tokens */
-
+    let mut depth = 0;
+    let mut tokens = VecDeque::new();
     let mut characters = code.chars().peekable();
 
     while let Some(character) = characters.next() {
         match character {
-            // Comments are ignored
+            /* Parse comments */
             '|' => {
                 for character in characters.by_ref() {
                     if character == '\n'
@@ -63,19 +53,22 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 }
             }
 
+            /* Ignore whitespaces */
             ' ' | '\n' => continue,
 
+            /* Code block start */
             '(' => {
                 tokens.push_back(Token::BlockStart);
                 depth += 1;
             }
 
+            /* Code block end */
             ')' => {
                 tokens.push_back(Token::BlockEnd);
                 depth -= 1;
             }
 
-            // Lexify strings
+            /* Parse strings */
             '"' => {
                 let content_vector: Vec<char> = characters
                     .by_ref()
@@ -121,79 +114,81 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 tokens.push_back(Token::String(content))
             }
 
-            // Lexify identifiers
+            /* Parse identifiers */
             'a'..='z' | 'A'..='Z' | '_' => {
-                // Identifier content
                 let content = take_with_predicate!(character, characters, |&character| {
                     character.is_alphanumeric() || character == '_'
                 });
 
-                tokens.push_back(match content.as_str() {
-                    "fun" => Token::FunctionDefinition,
-                    "while" => Token::While,
-                    "for" => Token::For,
-                    "get" => Token::Get,
-                    "clear" => Token::Clear,
-                    _ => Token::Identifier(content),
-                });
+                tokens.push_back(Token::Identifier(content));
             }
 
-            // Lexify numerics
+            /* Parse numerics (float/integers) */
             '0'..='9' => {
-                // Numeric content
                 let content = take_with_predicate!(character, characters, |&character| {
                     character.is_ascii_digit() || character == '.' || character == '_'
                 });
 
-                // Numeric contains . => it is a float, otherwise,
-                // it is an integer
                 tokens.push_back(if content.contains('.') {
-                    assert_eq!(content.matches('.').count(), 1); // Float must contain one point
+                    assert_eq!(content.matches('.').count(), 1);
+
                     Token::Float(content.parse().unwrap())
                 } else {
                     Token::Integer(content.parse().unwrap())
                 });
             }
 
-            // Lexify equal symbol, or if
+            /* Parse equal/then */
             '=' => match characters.peek() {
-                Some('>') => {
+                Some('>') =>
+                /* Then */
+                {
                     tokens.push_back(Token::Then);
                     characters.next();
                 }
 
-                _ => tokens.push_back(Token::Equal),
+                _ =>
+                /* Equal */
+                {
+                    tokens.push_back(Token::BinaryOP(|a, b| MaeelType::Integer((b == a) as i64)))
+                }
             },
 
-            // Lexify minus symbol, or assignment
+            /* Parse minus/assignment */
             '-' => match characters.peek() {
-                Some('>') => {
+                Some('>') =>
+                /* Assignment*/
+                {
                     tokens.push_back(Token::Assignment);
                     characters.next();
                 }
 
-                _ => tokens.push_back(Token::Minus),
+                _ =>
+                /* Minus */
+                {
+                    tokens.push_back(Token::BinaryOP(|a, b| b - a))
+                }
             },
 
             _ => tokens.push_back(match character {
-                '+' => Token::Plus,
-                '*' => Token::Times,
-                '/' => Token::Divide,
-                '%' => Token::Modulo,
-                '=' => Token::Equal,
-                '<' => Token::LowerThan,
-                '>' => Token::GreaterThan,
+                '+' => Token::BinaryOP(|a, b| b + a),
+                '*' => Token::BinaryOP(|a, b| b * a),
+                '/' => Token::BinaryOP(|a, b| b / a),
+                '%' => Token::BinaryOP(|a, b| b % a),
+                '<' => Token::BinaryOP(|a, b| MaeelType::Integer((b < a) as i64)),
+                '>' => Token::BinaryOP(|a, b| MaeelType::Integer((b > a) as i64)),
                 '(' => Token::BlockStart,
                 ')' => Token::BlockEnd,
                 '{' => Token::ArrayStart,
                 '}' => Token::ArrayEnd,
                 '&' => Token::Call,
+                '.' => Token::Dot,
+                '@' => Token::At,
                 character => panic!("{character}"),
             }),
         }
     }
 
-    // Code block depth should be equal to zero
     assert_eq!(depth, 0);
 
     let mut stack = Vec::default();
