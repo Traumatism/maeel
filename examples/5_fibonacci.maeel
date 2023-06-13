@@ -5,4 +5,10 @@ fun fib n (
     n 1 > => (n 1- fib n 2- fib+)
 )
 
+fun inline fibb (
+    dup 3 <
+        dup => (drop drop 1 1)
+        0 = => (dup 1- fib swap 2- fib +)
+)
+
 1 21 range (fib) map print
