@@ -26,9 +26,9 @@ fun inline fourth (4 get)
 
 fun inline and (+ 2=)
 
-fun inline or (+ dup 2= => (1-))
+fun inline or a b (a b + a b * -)
 
-fun inline not (dup 0= => (1 swap) 1= => 0)
+fun inline not (1 swap -)
 
 fun inline xor (
     over over or rot not swap not or and
@@ -147,14 +147,11 @@ fun inline assert_eq (
 fun inline len (0 swap for (drop 1+))
 
 fun inline last (
-    dup 0 swap
-    for (drop 1+)
-    1- get
+    dup 0 swap for (drop 1+) 1- get
 )
 
 fun inline merge (
-    {} rot rot
-    for (+) swap for (+)
+    {} rot rot for (+) swap for (+)
 )
 
 fun count xs x (
