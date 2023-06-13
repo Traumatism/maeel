@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut vm = vm::BocchiVM::default();
 
     #[cfg(all(maeelvm = "nijika"))]
-    let mut vm = vm::NijikaVM::<32>::default();
+    let mut vm = vm::NijikaVM::<64>::default();
 
     vm.process_tokens(
         &lex_into_tokens(&read_to_string(args().nth(1).unwrap())?),

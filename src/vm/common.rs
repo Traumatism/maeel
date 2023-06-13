@@ -87,9 +87,7 @@ pub trait MaeelVM {
                 Token::Block(value) => xs.push(MaeelType::Function(value)),
 
                 Token::Identifier(identifier) => match vars.get(&identifier) {
-                    Some(value) => {
-                        xs.push(value.clone());
-                    }
+                    Some(value) => xs.push(value.clone()),
 
                     _ => panic!(),
                 },
@@ -211,7 +209,29 @@ pub trait MaeelVM {
                 }
 
                 Token::Identifier(identifier) => match identifier.as_str() {
-                    "print" => print!("{}", self.peek()?), /* Print the top token */
+                    /* Print the top token */
+                    "print" => print!("{}", self.peek()?),
+
+                    /* Stop processing the tokens */
+                    "break" => break,
+
+                    /* Process "clear" VM operation */
+                    "clear" => self.clear()?,
+
+                    /* Process "fastpop" VM operation */
+                    "drop" => self.fastpop()?,
+
+                    /* Process "dup" VM operation */
+                    "dup" => self.dup()?,
+
+                    /* Process "swap" VM operation */
+                    "swap" => self.swap()?,
+
+                    /* Process "over" VM operation */
+                    "over" => self.over()?,
+
+                    /* Process "rotate" VM operation */
+                    "rot" => self.rot()?,
 
                     "for" => {
                         let temporary_tokens = match tokens.pop() {
@@ -334,8 +354,6 @@ pub trait MaeelVM {
                         funs.insert(fun_name.clone(), (fun_tokens, inline));
                     }
 
-                    "clear" => self.clear()?,
-
                     "get" => {
                         let index = match self.pop() {
                             Ok(MaeelType::Integer(value)) => value as usize,
@@ -354,24 +372,6 @@ pub trait MaeelVM {
                             _ => panic!("Nothing to index!"),
                         }?
                     }
-
-                    /* Stop processing the tokens */
-                    "break" => break,
-
-                    /* Process "fastpop" VM operation */
-                    "drop" => self.fastpop()?,
-
-                    /* Process "dup" VM operation */
-                    "dup" => self.dup()?,
-
-                    /* Process "swap" VM operation */
-                    "swap" => self.swap()?,
-
-                    /* Process "over" VM operation */
-                    "over" => self.over()?,
-
-                    /* Process "rotate" VM operation */
-                    "rot" => self.rot()?,
 
                     "read" => {
                         let bytes = match self.pop() {
