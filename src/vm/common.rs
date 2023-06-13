@@ -105,10 +105,10 @@ pub trait MaeelVM {
 
     fn process_tokens<'a>(
         &mut self,
-        tokens: &'a [Token],                        /* Program tokens */
-        vars: &'a mut HashMap<String, MaeelType>,   /* Global vars */
-        funs: &'a mut HashMap<String, Fun>,         /* Global funs */
-        structs: &mut HashMap<String, Vec<String>>, /* Global structs */
+        tokens: &'a [Token],                           /* Program tokens */
+        vars: &'a mut HashMap<String, MaeelType>,      /* Global vars */
+        funs: &'a mut HashMap<String, Fun>,            /* Global funs */
+        structs: &'a mut HashMap<String, Vec<String>>, /* Global structs */
     ) -> VMOutput<()> {
         // Parse the tokens into a stack
         let mut tokens = tokens
