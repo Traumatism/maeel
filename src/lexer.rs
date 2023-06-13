@@ -12,7 +12,7 @@ pub enum Token {
     BinaryOP(BinApp),   /* T x T -> T */
     Colon,              /* : */
     Dot,                /* . */
-    Call,               /* & */
+    Call,               /* &, ! */
     Assignment,         /* -> */
     Then,               /* => */
     ArrayStart,         /* { */
@@ -187,7 +187,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 ')' => Token::BlockEnd,
                 '{' => Token::ArrayStart,
                 '}' => Token::ArrayEnd,
-                '&' => Token::Call,
+                '!' | '&' => Token::Call,
                 '.' => Token::Dot,
                 ':' => Token::Colon,
                 character => panic!("{character}"),

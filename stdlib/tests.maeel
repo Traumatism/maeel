@@ -43,14 +43,14 @@
 {1 1 2} 1 count                         2                           "count #1"                  assert_eq
 {1 1 2} 2 count                         1                           "count #2"                  assert_eq
 {1 1 2} 3 count                         0                           "count #3"                  assert_eq
-{1 2 3} (1 +) List.map print                 {2 3 4}                     "map #1"                    assert_eq
-{1 2 3 4} (even) List.filter                 {2 4}                       "filter #1"                 assert_eq
-1 12 range (odd) List.filter                 {1 3 5 7 9 11}              "filter #2"                 assert_eq
+{1 2 3} (1 +) map print                 {2 3 4}                     "map #1"                    assert_eq
+{1 2 3 4} (even) filter                 {2 4}                       "filter #1"                 assert_eq
+1 12 range (odd) filter                 {1 3 5 7 9 11}              "filter #2"                 assert_eq
 2 even                                  1                           "even #1"                   assert_eq
 3 even                                  0                           "even #2"                   assert_eq
 2 odd                                   0                           "odd #1"                   assert_eq
 3 odd                                   1                           "odd #2"                   assert_eq
-{1 2 3 4 5} (+) 0 List.reduce                15                          "reduce #1"                 assert_eq
+{1 2 3 4 5} (+) 0 reduce                15                          "reduce #1"                 assert_eq
 {1 2 3} 1 contains                      1                           "contains #1"               assert_eq
 {1 2 3} 4 contains                      0                           "contains #2"               assert_eq
 {1 2 3} len                             3                           "len #1"                    assert_eq
