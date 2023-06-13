@@ -68,19 +68,23 @@ fun inline lteq (over over< rot= or)
 
 fun inline gteq (over over> rot= or)
 
-fun map fn (
+struct __ListImpl map filter reduce.
+
+fun __lst_map fn (
     {} swap for (fn&+)
 )
 
-fun filter p (
+fun __lst_filter p (
     {} -> xs
     for (dup p& => (xs swap + -> xs))
     xs
 )
 
-fun reduce xs fn init (
+fun __lst_reduce xs fn init (
     init xs for (swap fn&)
 )
+
+__lst_map __lst_filter __lst_reduce __ListImpl -> List
 
 fun format (
     "" -> output
@@ -133,7 +137,7 @@ fun inline unix_input (
 )
 
 fun unix_random_numbers n mod (
-    "/dev/random" n read (mod%) map
+    "/dev/random" n read (mod%) List.map
 )
 
 fun inline assert_eq (
