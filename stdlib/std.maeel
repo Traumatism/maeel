@@ -24,15 +24,13 @@ fun inline third (3 get)
 
 fun inline fourth (4 get)
 
-fun inline and (+ 2=)
+fun inline and (*)
 
-fun inline or (over over + rot * -)
+fun inline or (+ 0= 1 swap -)
 
 fun inline not (1 swap -)
 
-fun inline xor (
-    over over or rot not swap not or and
-)
+fun inline xor (+ 2%)
 
 fun inline puts (print drop)
 
