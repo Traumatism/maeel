@@ -1,3 +1,5 @@
+pub use std::ptr;
+
 mod types;
 pub use types::*;
 
@@ -9,5 +11,3 @@ pub use bocchi::*;
 
 mod ikuyo;
 pub use ikuyo::*;
-
-pub use std::ptr;

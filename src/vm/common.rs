@@ -1,16 +1,35 @@
-pub type VMOutput<T> = Result<T, Box<dyn std::error::Error>>;
+use hashbrown::HashMap;
+
+use crate::lexer::*;
+use crate::vm::*;
+
+use std::error::Error;
+use std::fs::read_to_string;
+use std::fs::File;
+use std::io::Read;
+
+/* Function type */
+pub type Fun = (Vec<Token>, bool);
+
+/* Binary VM application */
+pub type BinApp = fn(MaeelType, MaeelType) -> MaeelType;
+
+/* Default VM function output */
+pub type VMOutput<T> = Result<T, Box<dyn Error>>;
 
 pub trait MaeelVM {
-    type Data;
+    fn push_variable(&mut self, name: String, value: MaeelType) -> VMOutput<()>;
+
+    fn get_variable(&mut self, name: String) -> VMOutput<&MaeelType>;
 
     /// Get the top value from the stack (without dropping it)
-    fn peek(&self) -> VMOutput<&Self::Data>;
+    fn peek(&self) -> VMOutput<&MaeelType>;
 
     /// Push a value to the stack
-    fn push(&mut self, value: Self::Data) -> VMOutput<()>;
+    fn push(&mut self, value: MaeelType) -> VMOutput<()>;
 
     /// Get the top value from the stack (and drop it)
-    fn pop(&mut self) -> VMOutput<Self::Data>;
+    fn pop(&mut self) -> VMOutput<MaeelType>;
 
     /// Drop the top value from the stack
     fn fastpop(&mut self) -> VMOutput<()>;
@@ -31,14 +50,394 @@ pub trait MaeelVM {
     fn rot(&mut self) -> VMOutput<()>;
 
     /// Perform a binary operation
-    fn binary_op(&mut self, app: fn(Self::Data, Self::Data) -> Self::Data) -> VMOutput<()> {
+    fn binary_op(&mut self, app: BinApp) -> VMOutput<()> {
         let output = app(self.pop()?, self.pop()?);
         self.push(output)
     }
 
-    /// Perform an unary operation
-    fn unary_op(&mut self, app: fn(Self::Data) -> Self::Data) -> VMOutput<()> {
-        let output = app(self.pop()?);
-        self.push(output)
+    fn parse_array(
+        &mut self,
+        tokens: &mut Vec<Token>,
+        vars: &mut HashMap<String, MaeelType>,
+    ) -> VMOutput<()> {
+        let mut xs = Vec::default();
+
+        while let Some(temporary_token) = tokens.pop() {
+            match temporary_token {
+                /* Stop parsing the array */
+                Token::ArrayEnd => break,
+
+                /* Parse an array inside an array */
+                Token::ArrayStart => {
+                    self.parse_array(tokens, vars)?;
+                    xs.push(self.pop()?);
+                }
+
+                /* Push a string to the current array */
+                Token::String(value) => xs.push(MaeelType::String(value)),
+
+                /* Push a float to the current array */
+                Token::Float(value) => xs.push(MaeelType::Float(value)),
+
+                /* Push an integer to the current array */
+                Token::Integer(value) => xs.push(MaeelType::Integer(value)),
+
+                /* Push a code block to the current array */
+                Token::Block(value) => xs.push(MaeelType::Function(value)),
+
+                Token::Identifier(identifier) => match vars.get(&identifier) {
+                    Some(value) => {
+                        xs.push(value.clone());
+                    }
+
+                    _ => panic!(),
+                },
+
+                _ => panic!("Found unexpected token while parsing array"),
+            }
+        }
+
+        /* Finally, push the array on the stack */
+        self.push(MaeelType::Array(xs))?;
+
+        Ok(())
+    }
+
+    fn process_tokens<'a>(
+        &mut self,
+        tokens: &'a [Token],                        /* Program tokens */
+        vars: &'a mut HashMap<String, MaeelType>,   /* Global vars */
+        funs: &'a mut HashMap<String, Fun>,         /* Global funs */
+        structs: &mut HashMap<String, Vec<String>>, /* Global structs */
+    ) -> VMOutput<()> {
+        // Parse the tokens into a stack
+        let mut tokens = tokens
+            .iter()
+            .rev() /* Reverse the tokens */
+            .cloned() /* Clone the tokens */
+            .collect::<Vec<Token>>(); /* Return it as a vector */
+
+        while let Some(token) = tokens.pop() {
+            match token {
+                Token::BlockEnd | Token::BlockStart | Token::ArrayEnd => panic!(),
+
+                Token::BinaryOP(app) => self.binary_op(app)?, /* Perform a binary operation */
+
+                Token::String(content) => self.push(MaeelType::String(content))?, /* Push a string */
+
+                Token::Float(content) => self.push(MaeelType::Float(content))?, /* Push a float */
+
+                Token::Integer(content) => self.push(MaeelType::Integer(content))?, /* Push an integer */
+
+                Token::Block(content) => self.push(MaeelType::Function(content))?, /* Push an anonymous function */
+
+                Token::ArrayStart => self.parse_array(&mut tokens, vars)?,
+
+                Token::Dot => match self.pop() {
+                    Ok(MaeelType::Structure(structure)) => self.push(
+                        structure
+                            .get(&match tokens.pop() {
+                                Some(Token::Identifier(value)) => value,
+                                _ => panic!(),
+                            })
+                            .unwrap()
+                            .clone(),
+                    )?,
+
+                    _ => panic!(),
+                },
+
+                Token::Colon => self.push(MaeelType::Function(
+                    funs.get(&match tokens.pop() {
+                        Some(Token::Identifier(value)) => value,
+                        _ => panic!(),
+                    })
+                    .unwrap()
+                    .0
+                    .iter()
+                    .cloned()
+                    .rev()
+                    .collect(),
+                ))?,
+
+                Token::Call => {
+                    let binding = match self.pop() {
+                        Ok(MaeelType::Function(value)) => value,
+                        _ => panic!(),
+                    };
+
+                    self.process_tokens(&binding, &mut vars.clone(), funs, structs)?;
+                }
+
+                Token::Then => {
+                    let temporary_token = tokens.pop();
+
+                    match self.pop() {
+                        Ok(MaeelType::Integer(1)) => match temporary_token {
+                            Some(Token::Block(temporary_tokens)) => temporary_tokens
+                                .iter()
+                                .rev()
+                                .for_each(|token| tokens.push(token.clone())),
+
+                            Some(temporary_token) => tokens.push(temporary_token),
+
+                            None => panic!(),
+                        },
+
+                        Ok(MaeelType::Integer(0)) => {}
+
+                        _ => panic!(),
+                    }
+                }
+
+                Token::Assignment => {
+                    let name = match tokens.pop() {
+                        Some(Token::Identifier(value)) => value,
+                        _ => panic!(),
+                    };
+
+                    vars.insert(name, self.pop()?);
+                }
+
+                Token::Identifier(identifier) => match identifier.as_str() {
+                    "print" => print!("{}", self.peek()?), /* Print the top token */
+
+                    "for" => {
+                        let temporary_tokens = match tokens.pop() {
+                            Some(Token::Block(value)) => value,
+
+                            _ => panic!(),
+                        };
+
+                        match self.pop() {
+                            Ok(MaeelType::Array(xs)) => {
+                                xs.iter().for_each(|x| {
+                                    self.push(x.clone()).unwrap();
+
+                                    self.process_tokens(&temporary_tokens, vars, funs, structs)
+                                        .unwrap();
+                                });
+                            }
+
+                            Ok(MaeelType::String(string)) => {
+                                string.chars().for_each(|x| {
+                                    self.push(MaeelType::String(x.to_string())).unwrap();
+
+                                    self.process_tokens(&temporary_tokens, vars, funs, structs)
+                                        .unwrap();
+                                });
+                            }
+
+                            _ => panic!(),
+                        }
+                    }
+
+                    "while" => {
+                        let temporary_tokens = match tokens.pop() {
+                            Some(Token::Block(value)) => value,
+
+                            _ => panic!(),
+                        };
+
+                        while match self.pop() {
+                            Ok(MaeelType::Integer(1)) => true,  /* Continue looping */
+                            Ok(MaeelType::Integer(0)) => false, /* Stop looping */
+                            _ => panic!(),                      /* No boolean on the stack */
+                        } {
+                            self.process_tokens(&temporary_tokens, vars, funs, structs)?
+                        }
+                    }
+
+                    "struct" => {
+                        let struct_name = match tokens.pop() {
+                            Some(Token::Identifier(value)) => value,
+
+                            _ => panic!(),
+                        };
+
+                        let mut struct_fields = Vec::default();
+
+                        while let Some(temporary_tokens) = tokens.pop() {
+                            match temporary_tokens {
+                                Token::Dot => {
+                                    break;
+                                }
+
+                                Token::Identifier(identifier) => {
+                                    struct_fields.push(identifier);
+                                }
+
+                                _ => panic!(),
+                            }
+                        }
+
+                        structs.insert(struct_name, struct_fields);
+                    }
+
+                    "fun" => {
+                        let mut fun_name = match tokens.pop() {
+                            Some(Token::Identifier(value)) => value,
+                            _ => panic!(),
+                        };
+
+                        let mut inline = false;
+
+                        if fun_name == "inline" {
+                            inline = true;
+
+                            fun_name = match tokens.pop() {
+                                Some(Token::Identifier(value)) => value,
+                                _ => panic!(),
+                            }
+                        }
+
+                        let mut fun_tokens = Vec::default();
+
+                        while let Some(temporary_token) = tokens.pop() {
+                            match temporary_token {
+                                Token::Block(temporary_tokens) => {
+                                    fun_tokens.reverse();
+                                    fun_tokens.extend(temporary_tokens);
+                                    fun_tokens.reverse();
+
+                                    break;
+                                }
+
+                                Token::Identifier(_) => {
+                                    fun_tokens.push(temporary_token);
+                                    fun_tokens.push(Token::Assignment);
+                                }
+
+                                _ => panic!(),
+                            }
+                        }
+
+                        funs.insert(fun_name.clone(), (fun_tokens, inline));
+                    }
+
+                    "clear" => self.clear()?,
+
+                    "get" => {
+                        let index = match self.pop() {
+                            Ok(MaeelType::Integer(value)) => value,
+
+                            _ => panic!(),
+                        } as usize;
+
+                        match self.pop() {
+                            Ok(MaeelType::Array(xs)) => self.push(xs.get(index).unwrap().clone()),
+
+                            Ok(MaeelType::String(string)) => self.push(MaeelType::String(
+                                string.chars().nth(index).unwrap().to_string(),
+                            )),
+
+                            Ok(other) => panic!("{other} is not indexable!"),
+                            _ => panic!("Nothing to index!"),
+                        }?
+                    }
+
+                    "break" => break, /* Stop processing the tokens */
+
+                    "drop" => self.fastpop()?, /* Process "fastpop" VM operation */
+
+                    "dup" => self.dup()?, /* Process "dup" VM operation */
+
+                    "swap" => self.swap()?, /* Process "swap" VM operation */
+
+                    "over" => self.over()?, /* Process "over" VM operation */
+
+                    "rot" => self.rot()?, /* Process "rotate" VM operation */
+
+                    "read" => {
+                        let bytes = match self.pop() {
+                            Ok(MaeelType::Integer(value)) => value,
+
+                            _ => panic!(),
+                        };
+
+                        let path = match self.pop() {
+                            Ok(MaeelType::String(value)) => value,
+
+                            _ => panic!(),
+                        };
+
+                        assert!(bytes >= 0);
+
+                        let mut buf = vec![0u8; bytes as usize];
+
+                        File::open(path)?.read_exact(&mut buf)?;
+
+                        self.push(MaeelType::Array(
+                            buf.iter()
+                                .map(|byte| MaeelType::Integer(*byte as i64))
+                                .collect(),
+                        ))?
+                    }
+
+                    "include" => {
+                        let target = match self.pop() {
+                            Ok(MaeelType::String(value)) => value,
+
+                            _ => panic!(),
+                        };
+
+                        let content = match target.as_str() {
+                            "std" => include_str!("../../stdlib/std.maeel").to_string(),
+
+                            _ => read_to_string(target).expect("Failed to include file"),
+                        };
+
+                        lex_into_tokens(&content)
+                            .iter()
+                            .rev()
+                            .for_each(|token| tokens.push(token.clone()))
+                    }
+
+                    identifier => {
+                        if let Some(value) = vars.get(identifier) {
+                            self.push(value.clone())?;
+
+                            if identifier.starts_with('_') {
+                                vars.remove(identifier);
+                            }
+
+                            continue;
+                        }
+
+                        if let Some(fun) = funs.get(identifier) {
+                            if fun.1
+                            /* Inline function */
+                            {
+                                fun.0.iter().for_each(|token| tokens.push(token.clone()));
+                                continue;
+                            }
+
+                            let mut fun_tokens = fun.0.clone();
+                            fun_tokens.reverse();
+                            self.process_tokens(&fun_tokens, &mut vars.clone(), funs, structs)?;
+
+                            continue;
+                        }
+
+                        if let Some(fields) = structs.get(identifier) {
+                            let mut structure =
+                                HashMap::<String, MaeelType>::with_capacity(fields.len());
+
+                            fields.iter().rev().for_each(|key| {
+                                structure.insert(key.clone(), self.pop().unwrap());
+                            });
+
+                            self.push(MaeelType::Structure(structure))?;
+
+                            continue;
+                        }
+
+                        panic!()
+                    }
+                },
+            };
+        }
+
+        Ok(())
     }
 }

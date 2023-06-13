@@ -14,4 +14,4 @@ clean:
 	rm ./maeel ./maeel.tmp Cargo.lock || rm -r target
 
 bench:
-	cargo build -q --release && mv target/release/maeel ./maeel.tmp && hyperfine "./maeel.tmp stdlib/tests.maeel" || rm maeel.tmp
+	RUSTFLAGS='--cfg maeelvm="ikuyo"' cargo build -q --release && mv target/release/maeel ./maeel.tmp && hyperfine "./maeel.tmp stdlib/tests.maeel" || rm maeel.tmp

@@ -1,3 +1,5 @@
+use hashbrown::HashMap;
+
 use super::*;
 
 struct VMNode<T> {
@@ -15,22 +17,22 @@ impl<T> VMNode<T> {
     }
 }
 
-pub struct BocchiVM<T> {
-    head: *mut VMNode<T>, /* Raw pointer to the head node */
+pub struct BocchiVM {
+    vars: HashMap<String, MaeelType>,
+    head: *mut VMNode<MaeelType>, /* Raw pointer to the head node */
 }
 
-impl<T> Default for BocchiVM<T> {
+impl Default for BocchiVM {
     fn default() -> Self {
         BocchiVM {
+            vars: HashMap::default(),
             head: ptr::null_mut(),
         }
     }
 }
 
-impl<T: Clone> MaeelVM for BocchiVM<T> {
-    type Data = T;
-
-    fn push(&mut self, value: T) -> VMOutput<()> {
+impl MaeelVM for BocchiVM {
+    fn push(&mut self, value: MaeelType) -> VMOutput<()> {
         let future_head = VMNode::new(value); /* Create a new node */
 
         if !self.head.is_null() {
@@ -45,7 +47,7 @@ impl<T: Clone> MaeelVM for BocchiVM<T> {
         Ok(())
     }
 
-    fn pop(&mut self) -> VMOutput<T> {
+    fn pop(&mut self) -> VMOutput<MaeelType> {
         if self.head.is_null()
         /* Making sure the stack contains at least one value */
         {
@@ -75,7 +77,7 @@ impl<T: Clone> MaeelVM for BocchiVM<T> {
         Ok(())
     }
 
-    fn peek(&self) -> VMOutput<&T> {
+    fn peek(&self) -> VMOutput<&MaeelType> {
         if self.head.is_null()
         /* Making sure the stack contains at least one value */
         {
@@ -157,5 +159,19 @@ impl<T: Clone> MaeelVM for BocchiVM<T> {
         }
 
         Ok(())
+    }
+
+    fn push_variable(&mut self, name: String, value: MaeelType) -> VMOutput<()> {
+        self.vars.insert(name, value);
+
+        Ok(())
+    }
+
+    fn get_variable(&mut self, name: String) -> VMOutput<&MaeelType> {
+        if let Some(value) = self.vars.get(&name) {
+            Ok(value)
+        } else {
+            Err("Variable not found".into())
+        }
     }
 }

@@ -1,34 +1,40 @@
-use std::collections::VecDeque;
+use crate::vm::{BinApp, MaeelType};
 
-use crate::vm::MaeelType;
+use std::iter::once;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum Token {
-    Block(Vec<Token>),                               /* (...) */
-    String(String),                                  /* "abc" */
-    Identifier(String),                              /* abc */
-    Integer(i64),                                    /* 123 */
-    Float(f32),                                      /* 123.123 */
-    BinaryOP(fn(MaeelType, MaeelType) -> MaeelType), /* T x T -> T */
-    Dot,                                             /* . */
-    At,                                              /* @ */
-    Call,                                            /* & */
-    Assignment,                                      /* -> */
-    Then,                                            /* => */
-    ArrayStart,                                      /* { */
-    ArrayEnd,                                        /* } */
-    BlockStart,                                      /* ( */
-    BlockEnd,                                        /* ) */
+    Block(Vec<Token>),  /* (...) */
+    String(String),     /* "abc" */
+    Identifier(String), /* abc */
+    Integer(i64),       /* 123 */
+    Float(f32),         /* 123.123 */
+    BinaryOP(BinApp),   /* T x T -> T */
+    Colon,              /* : */
+    Dot,                /* . */
+    Call,               /* & */
+    Assignment,         /* -> */
+    Then,               /* => */
+    ArrayStart,         /* { */
+    ArrayEnd,           /* } */
+    BlockStart,         /* ( */
+    BlockEnd,           /* ) */
+}
+
+macro_rules! binary_op {
+    ($operator:tt) => {
+        Token::BinaryOP(|a, b| b $operator a)
+    };
 }
 
 macro_rules! take_with_predicate {
     ($character:expr, $characters:expr, $p:expr) => {{
-        let content = std::iter::once($character)
+        let content = once($character)
             .chain($characters.clone().take_while($p))
             .collect::<String>();
 
         (1..content.len()).for_each(|_| {
-            $characters.next().unwrap();
+            $characters.next();
         });
 
         content
@@ -37,7 +43,7 @@ macro_rules! take_with_predicate {
 
 pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     let mut depth = 0;
-    let mut tokens = VecDeque::new();
+    let mut tokens = Vec::default();
     let mut characters = code.chars().peekable();
 
     while let Some(character) = characters.next() {
@@ -58,22 +64,22 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
             /* Code block start */
             '(' => {
-                tokens.push_back(Token::BlockStart);
+                tokens.push(Token::BlockStart);
                 depth += 1;
             }
 
             /* Code block end */
             ')' => {
-                tokens.push_back(Token::BlockEnd);
+                tokens.push(Token::BlockEnd);
                 depth -= 1;
             }
 
             /* Parse strings */
             '"' => {
-                let content_vector: Vec<char> = characters
+                let content_vector = characters
                     .by_ref()
                     .take_while(|&character| character != '"')
-                    .collect();
+                    .collect::<Vec<char>>();
 
                 let mut index = 0;
                 let mut content = String::with_capacity(content_vector.len());
@@ -111,7 +117,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     });
                 }
 
-                tokens.push_back(Token::String(content))
+                tokens.push(Token::String(content))
             }
 
             /* Parse identifiers */
@@ -120,7 +126,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     character.is_alphanumeric() || character == '_'
                 });
 
-                tokens.push_back(Token::Identifier(content));
+                tokens.push(Token::Identifier(content));
             }
 
             /* Parse numerics (float/integers) */
@@ -129,7 +135,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     character.is_ascii_digit() || character == '.' || character == '_'
                 });
 
-                tokens.push_back(if content.contains('.') {
+                tokens.push(if content.contains('.') {
                     assert_eq!(content.matches('.').count(), 1);
 
                     Token::Float(content.parse().unwrap())
@@ -143,14 +149,14 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 Some('>') =>
                 /* Then */
                 {
-                    tokens.push_back(Token::Then);
+                    tokens.push(Token::Then);
                     characters.next();
                 }
 
                 _ =>
                 /* Equal */
                 {
-                    tokens.push_back(Token::BinaryOP(|a, b| MaeelType::Integer((b == a) as i64)))
+                    tokens.push(Token::BinaryOP(|a, b| MaeelType::Integer((b == a) as i64)))
                 }
             },
 
@@ -159,22 +165,22 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 Some('>') =>
                 /* Assignment*/
                 {
-                    tokens.push_back(Token::Assignment);
+                    tokens.push(Token::Assignment);
                     characters.next();
                 }
 
                 _ =>
                 /* Minus */
                 {
-                    tokens.push_back(Token::BinaryOP(|a, b| b - a))
+                    tokens.push(Token::BinaryOP(|a, b| b - a))
                 }
             },
 
-            _ => tokens.push_back(match character {
-                '+' => Token::BinaryOP(|a, b| b + a),
-                '*' => Token::BinaryOP(|a, b| b * a),
-                '/' => Token::BinaryOP(|a, b| b / a),
-                '%' => Token::BinaryOP(|a, b| b % a),
+            _ => tokens.push(match character {
+                '+' => binary_op!(+),
+                '*' => binary_op!(*),
+                '/' => binary_op!(/),
+                '%' => binary_op!(%),
                 '<' => Token::BinaryOP(|a, b| MaeelType::Integer((b < a) as i64)),
                 '>' => Token::BinaryOP(|a, b| MaeelType::Integer((b > a) as i64)),
                 '(' => Token::BlockStart,
@@ -183,7 +189,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 '}' => Token::ArrayEnd,
                 '&' => Token::Call,
                 '.' => Token::Dot,
-                '@' => Token::At,
+                ':' => Token::Colon,
                 character => panic!("{character}"),
             }),
         }
@@ -193,32 +199,33 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
 
     let mut stack = Vec::default();
     let mut output = Vec::default();
-    let mut block_tokens = Vec::default();
+    let mut temporary_tokens = Vec::default();
 
     for token in tokens.iter() {
         match token {
             Token::BlockStart => {
-                stack.push(block_tokens);
-                block_tokens = Vec::default();
+                stack.push(temporary_tokens);
+                temporary_tokens = Vec::default();
             }
 
             Token::BlockEnd => {
-                let nested_tokens = block_tokens.clone();
+                let nested_tokens = temporary_tokens.clone();
 
                 match stack.pop() {
                     Some(previous_tokens) => {
-                        block_tokens = previous_tokens;
-                        block_tokens.push(Token::Block(nested_tokens));
+                        temporary_tokens = previous_tokens;
+                        temporary_tokens.push(Token::Block(nested_tokens));
                     }
 
                     _ => output.push(Token::Block(nested_tokens)),
                 }
             }
 
-            _ => block_tokens.push(token.clone()),
+            _ => temporary_tokens.push(token.clone()),
         }
     }
 
-    output.append(&mut block_tokens);
+    output.append(&mut temporary_tokens);
+
     output
 }

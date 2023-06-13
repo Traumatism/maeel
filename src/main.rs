@@ -1,25 +1,28 @@
 use hashbrown::HashMap;
 
 mod vm;
+use vm::*;
 
 mod lexer;
 use lexer::*;
 
-mod interpreter;
-use interpreter::*;
-use vm::MaeelType;
+use std::env::args;
+use std::fs::read_to_string;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let content =
-        std::fs::read_to_string(std::env::args().collect::<Vec<String>>().get(1).unwrap())?;
+    #[cfg(any(not(maeelvm = "ikuyo"), maeelvm = "bocchi"))]
+    let mut vm = vm::BocchiVM::default();
 
-    process_tokens(
-        &lex_into_tokens(&content),
-        &mut vm::IkuyoVM::<MaeelType, 512>::default(),
-        &mut HashMap::default(),
-        &mut HashMap::default(),
-        &mut HashMap::default(),
-    )?;
+    #[cfg(all(maeelvm = "ikuyo"))]
+    let mut vm = vm::IkuyoVM::<32>::default();
 
-    Ok(())
+    vm.process_tokens(
+        &lex_into_tokens(&read_to_string(args().nth(1).unwrap())?),
+        /* Variables */
+        &mut HashMap::default(),
+        /* Functions */
+        &mut HashMap::default(),
+        /* Structures */
+        &mut HashMap::default(),
+    )
 }
