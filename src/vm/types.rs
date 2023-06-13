@@ -1,13 +1,13 @@
 use hashbrown::HashMap;
 
-use crate::lexer::*;
+use super::Fun;
 
 pub enum MaeelType {
     Float(f32),
     Integer(i64),
     String(String),
     Array(Vec<Self>),
-    Function(Vec<Token>),
+    Function(Fun),
     Structure(HashMap<String, Self>),
 }
 

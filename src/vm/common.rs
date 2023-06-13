@@ -84,7 +84,7 @@ pub trait MaeelVM {
                 Token::Integer(value) => xs.push(MaeelType::Integer(value)),
 
                 /* Push a code block to the current array */
-                Token::Block(value) => xs.push(MaeelType::Function(value)),
+                Token::Block(value) => xs.push(MaeelType::Function((value, false))),
 
                 Token::Identifier(identifier) => match vars.get(&identifier) {
                     Some(value) => xs.push(value.clone()),
@@ -136,7 +136,7 @@ pub trait MaeelVM {
                 Token::Integer(content) => self.push(MaeelType::Integer(content))?,
 
                 /* Push an anonymous function */
-                Token::Block(content) => self.push(MaeelType::Function(content))?,
+                Token::Block(content) => self.push(MaeelType::Function((content, false)))?,
 
                 /* Access structures members */
                 Token::Dot => match self.pop() {
@@ -155,18 +155,18 @@ pub trait MaeelVM {
                 },
 
                 /* Use functions as first class objects */
-                Token::Colon => self.push(MaeelType::Function(
-                    funs.get(&match tokens.pop() {
-                        Some(Token::Identifier(value)) => value,
-                        _ => panic!(),
-                    })
-                    .unwrap()
-                    .0
-                    .iter()
-                    .rev()
-                    .cloned()
-                    .collect(),
-                ))?,
+                Token::Colon => {
+                    let fun = funs
+                        .get(&match tokens.pop() {
+                            Some(Token::Identifier(value)) => value,
+                            _ => panic!(),
+                        })
+                        .unwrap();
+
+                    let funo = MaeelType::Function((fun.0.to_vec(), fun.1));
+
+                    self.push(funo)?
+                }
 
                 Token::Call => {
                     let fun = match self.pop() {
@@ -175,7 +175,18 @@ pub trait MaeelVM {
                         _ => panic!(),
                     };
 
-                    self.process_tokens(&fun, &mut vars.clone(), funs, structs)?;
+                    if fun.1
+                    /* Inline function */
+                    {
+                        fun.0.iter().for_each(|token| tokens.push(token.clone()));
+                        continue;
+                    }
+
+                    let mut fun_tokens = fun.0.clone();
+
+                    fun_tokens.reverse();
+
+                    self.process_tokens(&fun_tokens, &mut vars.clone(), funs, structs)?
                 }
 
                 Token::Then => {
