@@ -28,7 +28,7 @@ impl std::fmt::Display for MaeelType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::String(x) => write!(f, "{}", x),
-            Self::Function(tokens) => write!(f, "{:?}", tokens),
+            Self::Function(_) => write!(f, "Function"),
             Self::Float(x) => write!(f, "{}", x),
             Self::Integer(x) => write!(f, "{}", x),
             Self::Array(xs) => {

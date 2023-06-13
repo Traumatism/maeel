@@ -1,23 +1,25 @@
+use hashbrown::HashMap;
+
 use super::*;
 
-pub struct IkuyoVM<T, const MAX_SIZE: usize> {
-    buffer: [T; MAX_SIZE], /* Main stack buffer */
-    sp: usize,             /* Stack pointer */
+pub struct IkuyoVM<const MAX_SIZE: usize> {
+    buffer: [MaeelType; MAX_SIZE], /* Main stack buffer */
+    sp: usize,                     /* Stack pointer */
+    vars: HashMap<String, MaeelType>,
 }
 
-impl<T, const MAX_SIZE: usize> Default for IkuyoVM<T, MAX_SIZE> {
-    fn default() -> IkuyoVM<T, MAX_SIZE> {
+impl<const MAX_SIZE: usize> Default for IkuyoVM<MAX_SIZE> {
+    fn default() -> IkuyoVM<MAX_SIZE> {
         IkuyoVM {
+            vars: HashMap::default(),
             buffer: unsafe { std::mem::zeroed() },
             sp: 0,
         }
     }
 }
 
-impl<T: Clone, const MAX_SIZE: usize> MaeelVM for IkuyoVM<T, MAX_SIZE> {
-    type Data = T;
-
-    fn push(&mut self, item: T) -> VMOutput<()> {
+impl<const MAX_SIZE: usize> MaeelVM for IkuyoVM<MAX_SIZE> {
+    fn push(&mut self, item: MaeelType) -> VMOutput<()> {
         /* Making sure the stack is not filled */
         assert!(self.sp < self.buffer.len(), "Stack overflow");
 
@@ -28,7 +30,7 @@ impl<T: Clone, const MAX_SIZE: usize> MaeelVM for IkuyoVM<T, MAX_SIZE> {
         Ok(())
     }
 
-    fn pop(&mut self) -> VMOutput<T> {
+    fn pop(&mut self) -> VMOutput<MaeelType> {
         /* Making sure the stack is not empty */
         assert!(self.sp > 0, "Stack is empty");
 
@@ -77,12 +79,12 @@ impl<T: Clone, const MAX_SIZE: usize> MaeelVM for IkuyoVM<T, MAX_SIZE> {
     }
 
     fn clear(&mut self) -> VMOutput<()> {
-        self.sp = 0;
+        self.sp = 0; /* Reset stack pointer */
 
         Ok(())
     }
 
-    fn peek(&self) -> VMOutput<&T> {
+    fn peek(&self) -> VMOutput<&MaeelType> {
         /* Making sure the stack is not empty */
         assert!(self.sp > 0, "Stack is empty");
 
@@ -127,5 +129,19 @@ impl<T: Clone, const MAX_SIZE: usize> MaeelVM for IkuyoVM<T, MAX_SIZE> {
         self.sp += 1; /* Increase stack pointer */
 
         Ok(())
+    }
+
+    fn push_variable(&mut self, name: String, value: MaeelType) -> VMOutput<()> {
+        self.vars.insert(name, value);
+
+        Ok(())
+    }
+
+    fn get_variable(&mut self, name: String) -> VMOutput<&MaeelType> {
+        if let Some(value) = self.vars.get(&name) {
+            Ok(value)
+        } else {
+            Err("Variable not found".into())
+        }
     }
 }
