@@ -26,7 +26,7 @@ fun inline fourth (4 get)
 
 fun inline and (+ 2=)
 
-fun inline or a b (a b + a b * -)
+fun inline or (over over + rot * -)
 
 fun inline not (1 swap -)
 
