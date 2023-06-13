@@ -1,7 +1,7 @@
 use hashbrown::HashMap;
 
-use crate::lexer::*;
-use crate::vm::*;
+use crate::lexer::{lex_into_tokens, Token};
+use crate::vm::MaeelType;
 
 use std::error::Error;
 use std::fs::read_to_string;
@@ -52,6 +52,7 @@ pub trait MaeelVM {
     /// Perform a binary operation
     fn binary_op(&mut self, app: BinApp) -> VMOutput<()> {
         let output = app(self.pop()?, self.pop()?);
+
         self.push(output)
     }
 
@@ -93,7 +94,7 @@ pub trait MaeelVM {
                     _ => panic!(),
                 },
 
-                _ => panic!("Found unexpected token while parsing array"),
+                _ => panic!(),
             }
         }
 
@@ -121,23 +122,31 @@ pub trait MaeelVM {
             match token {
                 Token::BlockEnd | Token::BlockStart | Token::ArrayEnd => panic!(),
 
-                Token::BinaryOP(app) => self.binary_op(app)?, /* Perform a binary operation */
-
-                Token::String(content) => self.push(MaeelType::String(content))?, /* Push a string */
-
-                Token::Float(content) => self.push(MaeelType::Float(content))?, /* Push a float */
-
-                Token::Integer(content) => self.push(MaeelType::Integer(content))?, /* Push an integer */
-
-                Token::Block(content) => self.push(MaeelType::Function(content))?, /* Push an anonymous function */
-
+                /* Parse arrays */
                 Token::ArrayStart => self.parse_array(&mut tokens, vars)?,
 
+                /* Perform a binary operation */
+                Token::BinaryOP(app) => self.binary_op(app)?,
+
+                /* Push a string */
+                Token::String(content) => self.push(MaeelType::String(content))?,
+
+                /* Push a float */
+                Token::Float(content) => self.push(MaeelType::Float(content))?,
+
+                /* Push an integer */
+                Token::Integer(content) => self.push(MaeelType::Integer(content))?,
+
+                /* Push an anonymous function */
+                Token::Block(content) => self.push(MaeelType::Function(content))?,
+
+                /* Access structures members */
                 Token::Dot => match self.pop() {
                     Ok(MaeelType::Structure(structure)) => self.push(
                         structure
                             .get(&match tokens.pop() {
                                 Some(Token::Identifier(value)) => value,
+
                                 _ => panic!(),
                             })
                             .unwrap()
@@ -147,6 +156,7 @@ pub trait MaeelVM {
                     _ => panic!(),
                 },
 
+                /* Use functions as first class objects */
                 Token::Colon => self.push(MaeelType::Function(
                     funs.get(&match tokens.pop() {
                         Some(Token::Identifier(value)) => value,
@@ -155,18 +165,19 @@ pub trait MaeelVM {
                     .unwrap()
                     .0
                     .iter()
-                    .cloned()
                     .rev()
+                    .cloned()
                     .collect(),
                 ))?,
 
                 Token::Call => {
-                    let binding = match self.pop() {
+                    let fun = match self.pop() {
                         Ok(MaeelType::Function(value)) => value,
+
                         _ => panic!(),
                     };
 
-                    self.process_tokens(&binding, &mut vars.clone(), funs, structs)?;
+                    self.process_tokens(&fun, &mut vars.clone(), funs, structs)?;
                 }
 
                 Token::Then => {
@@ -259,7 +270,9 @@ pub trait MaeelVM {
 
                         while let Some(temporary_tokens) = tokens.pop() {
                             match temporary_tokens {
-                                Token::Dot => {
+                                Token::Dot =>
+                                /* Stop parsing structure fields on '.' */
+                                {
                                     break;
                                 }
 
@@ -271,12 +284,15 @@ pub trait MaeelVM {
                             }
                         }
 
+                        struct_fields.reverse();
+
                         structs.insert(struct_name, struct_fields);
                     }
 
                     "fun" => {
                         let mut fun_name = match tokens.pop() {
                             Some(Token::Identifier(value)) => value,
+
                             _ => panic!(),
                         };
 
@@ -287,6 +303,7 @@ pub trait MaeelVM {
 
                             fun_name = match tokens.pop() {
                                 Some(Token::Identifier(value)) => value,
+
                                 _ => panic!(),
                             }
                         }
@@ -297,7 +314,9 @@ pub trait MaeelVM {
                             match temporary_token {
                                 Token::Block(temporary_tokens) => {
                                     fun_tokens.reverse();
+
                                     fun_tokens.extend(temporary_tokens);
+
                                     fun_tokens.reverse();
 
                                     break;
@@ -319,10 +338,10 @@ pub trait MaeelVM {
 
                     "get" => {
                         let index = match self.pop() {
-                            Ok(MaeelType::Integer(value)) => value,
+                            Ok(MaeelType::Integer(value)) => value as usize,
 
                             _ => panic!(),
-                        } as usize;
+                        };
 
                         match self.pop() {
                             Ok(MaeelType::Array(xs)) => self.push(xs.get(index).unwrap().clone()),
@@ -336,17 +355,23 @@ pub trait MaeelVM {
                         }?
                     }
 
-                    "break" => break, /* Stop processing the tokens */
+                    /* Stop processing the tokens */
+                    "break" => break,
 
-                    "drop" => self.fastpop()?, /* Process "fastpop" VM operation */
+                    /* Process "fastpop" VM operation */
+                    "drop" => self.fastpop()?,
 
-                    "dup" => self.dup()?, /* Process "dup" VM operation */
+                    /* Process "dup" VM operation */
+                    "dup" => self.dup()?,
 
-                    "swap" => self.swap()?, /* Process "swap" VM operation */
+                    /* Process "swap" VM operation */
+                    "swap" => self.swap()?,
 
-                    "over" => self.over()?, /* Process "over" VM operation */
+                    /* Process "over" VM operation */
+                    "over" => self.over()?,
 
-                    "rot" => self.rot()?, /* Process "rotate" VM operation */
+                    /* Process "rotate" VM operation */
+                    "rot" => self.rot()?,
 
                     "read" => {
                         let bytes = match self.pop() {
@@ -394,17 +419,17 @@ pub trait MaeelVM {
                     }
 
                     identifier => {
-                        if let Some(value) = vars.get(identifier) {
+                        if let Some(value) = vars.get(identifier)
+                        /* Identifier is a variable */
+                        {
                             self.push(value.clone())?;
-
-                            if identifier.starts_with('_') {
-                                vars.remove(identifier);
-                            }
 
                             continue;
                         }
 
-                        if let Some(fun) = funs.get(identifier) {
+                        if let Some(fun) = funs.get(identifier)
+                        /* Identifier is a function */
+                        {
                             if fun.1
                             /* Inline function */
                             {
@@ -413,20 +438,27 @@ pub trait MaeelVM {
                             }
 
                             let mut fun_tokens = fun.0.clone();
+
                             fun_tokens.reverse();
+
                             self.process_tokens(&fun_tokens, &mut vars.clone(), funs, structs)?;
 
                             continue;
                         }
 
-                        if let Some(fields) = structs.get(identifier) {
+                        if let Some(fields) = structs.get(identifier)
+                        /* Identifier is a structure */
+                        {
+                            /* Future structure */
                             let mut structure =
                                 HashMap::<String, MaeelType>::with_capacity(fields.len());
 
-                            fields.iter().rev().for_each(|key| {
+                            /* Map each field to a value of the stack */
+                            fields.iter().for_each(|key| {
                                 structure.insert(key.clone(), self.pop().unwrap());
                             });
 
+                            /* Finally, push the structure */
                             self.push(MaeelType::Structure(structure))?;
 
                             continue;

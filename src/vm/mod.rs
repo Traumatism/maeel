@@ -9,5 +9,5 @@ pub use common::*;
 mod bocchi;
 pub use bocchi::*;
 
-mod ikuyo;
-pub use ikuyo::*;
+mod nijika;
+pub use nijika::*;

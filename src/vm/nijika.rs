@@ -2,15 +2,15 @@ use hashbrown::HashMap;
 
 use super::*;
 
-pub struct IkuyoVM<const MAX_SIZE: usize> {
+pub struct NijikaVM<const MAX_SIZE: usize> {
     buffer: [MaeelType; MAX_SIZE], /* Main stack buffer */
     sp: usize,                     /* Stack pointer */
     vars: HashMap<String, MaeelType>,
 }
 
-impl<const MAX_SIZE: usize> Default for IkuyoVM<MAX_SIZE> {
-    fn default() -> IkuyoVM<MAX_SIZE> {
-        IkuyoVM {
+impl<const MAX_SIZE: usize> Default for NijikaVM<MAX_SIZE> {
+    fn default() -> NijikaVM<MAX_SIZE> {
+        NijikaVM {
             vars: HashMap::default(),
             buffer: unsafe { std::mem::zeroed() },
             sp: 0,
@@ -18,7 +18,7 @@ impl<const MAX_SIZE: usize> Default for IkuyoVM<MAX_SIZE> {
     }
 }
 
-impl<const MAX_SIZE: usize> MaeelVM for IkuyoVM<MAX_SIZE> {
+impl<const MAX_SIZE: usize> MaeelVM for NijikaVM<MAX_SIZE> {
     fn push(&mut self, item: MaeelType) -> VMOutput<()> {
         /* Making sure the stack is not filled */
         assert!(self.sp < self.buffer.len(), "Stack overflow");
