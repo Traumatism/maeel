@@ -7,7 +7,7 @@ pub enum Token {
     Block(Vec<Token>),  /* (...) */
     String(String),     /* "abc" */
     Identifier(String), /* abc */
-    Integer(i64),       /* 123 */
+    Integer(i32),       /* 123 */
     Float(f32),         /* 123.123 */
     BinaryOP(BinApp),   /* T x T -> T */
     Colon,              /* : */
@@ -156,7 +156,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 _ =>
                 /* Equal */
                 {
-                    tokens.push(Token::BinaryOP(|a, b| MaeelType::Integer((b == a) as i64)))
+                    tokens.push(Token::BinaryOP(|a, b| MaeelType::Integer((b == a) as i32)))
                 }
             },
 
@@ -181,8 +181,8 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 '*' => binary_op!(*),
                 '/' => binary_op!(/),
                 '%' => binary_op!(%),
-                '<' => Token::BinaryOP(|a, b| MaeelType::Integer((b < a) as i64)),
-                '>' => Token::BinaryOP(|a, b| MaeelType::Integer((b > a) as i64)),
+                '<' => Token::BinaryOP(|a, b| MaeelType::Integer((b < a) as i32)),
+                '>' => Token::BinaryOP(|a, b| MaeelType::Integer((b > a) as i32)),
                 '(' => Token::BlockStart,
                 ')' => Token::BlockEnd,
                 '{' => Token::ArrayStart,
