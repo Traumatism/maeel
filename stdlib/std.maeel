@@ -56,7 +56,7 @@ fun inline even (2% 0=)
 
 fun inline odd (2% 1=)
 
-fun inline pom (dup not)
+fun inline pom (dup 1 swap -)
 
 fun inline inverse (1 swap/)
 
@@ -64,9 +64,9 @@ fun inline square (dup*)
 
 fun inline cube (dup dup*)
 
-fun inline lteq (over over< rot= or)
+fun inline lteq (over over< rot= + 0= 1 swap -)
 
-fun inline gteq (over over> rot= or)
+fun inline gteq (over over> rot= + 0= 1 swap -)
 
 fun map fn (
     {} swap for (fn&+)
@@ -88,7 +88,7 @@ fun format (
     for (
         dup ->
             char "%" = => (output swap +)
-            char "%" = not => (output char +)
+            char "%" = 1 swap - => (output char +)
 
         -> output
     )
@@ -102,7 +102,7 @@ fun formatb (
     for (
         dup ->
             char "%" = => (swap print drop)
-            char "%" = not => (print)
+            char "%" = 1 swap - => (print)
 
         -> output
     )
@@ -128,7 +128,7 @@ fun inline panic ("PANIC: %" format putsln 1 0%)
 fun inline unix_input (
     {} 1 while (
         "/dev/stdin" 1 read 0 get dup rot+
-        swap 10= not
+        swap 10 = 1 swap -
     )
 )
 
@@ -139,7 +139,7 @@ fun unix_random_numbers n mod (
 fun inline assert_eq (
     rot = dup bool2string rot rot
     "% (%)" format putsln
-    not => ("" panic)
+    1 swap - => ("" panic)
 )
 
 fun inline len (0 swap for (drop 1+))
@@ -154,7 +154,7 @@ fun inline merge (
 
 fun count xs x (
     0 xs for (
-        x= dup => (1 swap) not => 0 +
+        x= dup => (1 swap) 1 swap - => 0 +
     )
 )
 
@@ -165,36 +165,35 @@ fun contains xs x (
 
     0 1 while (
         xs i get x = => (drop 1)
-        i 1 + -> i
-        i xs_len <
+        i 1 + -> i i xs_len <
     )
 )
 
 fun reverse xs (
-    {} -> _ys
+    {} -> ys
 
     xs 0 swap for (drop 1+)
 
     dup 1 gteq while (
-        1- dup xs swap get _ys + -> _ys
+        1- dup xs swap get ys + -> ys
         dup 1 gteq
     )
 
-    drop _ys
+    drop ys
 )
 
 fun pop (
     {} -> ys
 
     dup 0 swap for (drop 1+) -> xs_len
-    dup 0 get take1 -> _y -> xs
+    dup 0 get take1 -> y -> xs
 
     1 1 xs_len < while (
         xs over get ys+ -> ys 1+
         dup xs_len <
     )
 
-    ys _y+ swap drop
+    ys y+ swap drop
 )
 
 fun inline push (take1 swap for (+))
@@ -255,9 +254,5 @@ fun pow base _exp (
 )
 
 fun range b (
-    {} swap dup b < while (
-        dup rot + swap 1 + dup b <
-    )
-
-    drop
+    {} swap dup b < while (dup rot + swap 1 + dup b <) drop
 )
