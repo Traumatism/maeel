@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="./mael.png" />
+</p>
+
 # $$\fbox{The maeel programming language}$$
 
 ![](./preview.png)

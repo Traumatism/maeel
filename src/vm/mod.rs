@@ -7,9 +7,10 @@ use std::fs::read_to_string;
 use std::fs::File;
 use std::io::Read;
 use std::ptr;
+use std::rc::Rc;
 
 /* Function type */
-pub type Fun = (Vec<Token>, bool);
+pub type Fun = (Rc<[Token]>, bool);
 
 /* Binary VM application */
 pub type BinApp = fn(MaeelType, MaeelType) -> MaeelType;
@@ -88,7 +89,9 @@ impl BocchiVM {
                 Token::Integer(value) => xs.push(MaeelType::Integer(value)),
 
                 /* Push a code block to the current array */
-                Token::Block(value) => xs.push(MaeelType::Function((value, false))),
+                Token::Block(value) => {
+                    xs.push(MaeelType::Function((value.as_slice().into(), false)))
+                }
 
                 Token::Identifier(identifier) => match vars.get(&identifier) {
                     Some(value) => xs.push(value.clone()),
@@ -108,10 +111,10 @@ impl BocchiVM {
 
     pub fn process_tokens<'a>(
         &mut self,
-        tokens: &'a mut Vec<Token>,                    /* Program tokens */
-        vars: &'a mut HashMap<String, MaeelType>,      /* Global vars */
-        funs: &'a mut HashMap<String, Fun>,            /* Global funs */
-        structs: &'a mut HashMap<String, Vec<String>>, /* Global structs */
+        tokens: &'a mut Vec<Token>,               /* Program tokens */
+        vars: &'a mut HashMap<String, MaeelType>, /* Global vars */
+        funs: &'a mut HashMap<String, Fun>,       /* Global funs */
+        structs: &'a mut HashMap<String, Rc<[String]>>, /* Global structs */
     ) -> VMOutput<()> {
         tokens.reverse();
 
@@ -135,7 +138,9 @@ impl BocchiVM {
                 Token::Integer(content) => self.push(MaeelType::Integer(content))?,
 
                 /* Push an anonymous function */
-                Token::Block(content) => self.push(MaeelType::Function((content, false)))?,
+                Token::Block(content) => {
+                    self.push(MaeelType::Function((content.as_slice().into(), false)))?
+                }
 
                 /* Access structures members */
                 Token::Dot => match self.pop() {
@@ -165,8 +170,8 @@ impl BocchiVM {
                         .unwrap();
 
                     self.push(MaeelType::Function((
-                        fun.0.to_vec(), /* Function tokens */
-                        fun.1,          /* Function inline descriptor */
+                        fun.0.clone(), /* Function tokens */
+                        fun.1,         /* Function inline descriptor */
                     )))?
                 }
 
@@ -184,8 +189,8 @@ impl BocchiVM {
                         fun.0.iter().for_each(|token| tokens.push(token.clone()));
                     } else {
                         self.process_tokens(
-                            &mut fun.0.clone(), /* Function tokens */
-                            &mut vars.clone(),  /* Clone the variables */
+                            &mut fun.0.to_vec(), /* Function tokens */
+                            &mut vars.clone(),   /* Clone the variables */
                             funs,
                             structs,
                         )?
@@ -330,7 +335,7 @@ impl BocchiVM {
 
                         struct_fields.reverse();
 
-                        structs.insert(struct_name, struct_fields);
+                        structs.insert(struct_name, struct_fields.as_slice().into());
                     }
 
                     "fun" => {
@@ -375,7 +380,7 @@ impl BocchiVM {
                             }
                         }
 
-                        funs.insert(fun_name.clone(), (fun_tokens, is_inline));
+                        funs.insert(fun_name.clone(), (fun_tokens.as_slice().into(), is_inline));
                     }
 
                     "get" => {
@@ -462,7 +467,7 @@ impl BocchiVM {
                                 continue;
                             }
 
-                            let mut fun_tokens = fun.0.clone();
+                            let mut fun_tokens = fun.0.clone().to_vec();
 
                             fun_tokens.reverse();
 
@@ -663,7 +668,6 @@ impl std::fmt::Display for MaeelType {
 
             Self::Structure(x) => {
                 write!(f, "{{")?;
-
                 x.iter().enumerate().for_each(|(i, (k, v))| {
                     if i > 0 {
                         write!(f, " ").unwrap();
