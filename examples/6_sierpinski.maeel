@@ -2,21 +2,18 @@
 
 fun sierpinski n (
     n 0 =
-    dup => ({"@"} swap)
+        dup => ({"@"} swap)
+        not => (
+            {} n 1- dup sierpinski
+            swap " " 2 rot rot pow *
+                -> blank -> smaller -> result
 
-    not => (
-        {} n 1 - dup sierpinski
-        swap " " 2 rot rot pow *
+            0 smaller len range smaller
+                for (blank dup rot + + result + -> result)
+                for (smaller swap get dup " " + swap + result + -> result)
 
-        -> blank -> smaller -> result
-
-        0 smaller len range smaller
-
-        for (blank dup rot + + result + -> result)
-        for (smaller swap get dup " " + swap + result + -> result)
-
-        result
-    )
+            result
+        )
 )
 
 5 sierpinski (println) map
