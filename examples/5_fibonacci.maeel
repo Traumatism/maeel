@@ -2,13 +2,13 @@
 
 fun fib_rec n (
     n 2 < => (1)
-    n 1 > => (n 1- fib n 2- fib+)
+    n 1 > => (n 1- fib_rec n 2- fib_rec+)
 )
 
 fun inline fib_rec_fast (
     dup 3 <
         dup => (drop drop 1 1)
-        0 = => (dup 1- fib swap 2- fib +)
+        0 = => (dup 1- fib_rec_fast swap 2- fib_rec_fast +)
 )
 
 1 20 range (fib_rec_fast) map print
