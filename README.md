@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="./mael.png" />
+    <img src="./maeel.png" />
 </p>
 
 # $$\fbox{The maeel programming language}$$
