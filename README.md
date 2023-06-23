@@ -1,10 +1,10 @@
 <p align="center">
-    <img src="./maeel.png" />
+    <img src="./assets/maeel.png" />
 </p>
 
 # $$\fbox{The maeel programming language}$$
 
-![](./preview.png)
+![](./assets/preview.png)
 
 
 [Documentation is here](docs/README.md)
