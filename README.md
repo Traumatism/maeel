@@ -5,7 +5,7 @@
 # $$\fbox{The maeel programming language}$$
 
 <p align="center">
-    <img src="./assets/example.png" />
+    <img src="./assets/review.png" height="800" width="auto"/>
 </p>
 
 
