@@ -2,7 +2,7 @@
     <img src="./assets/maeel.png" width="100" height="100"/>
 </p>
 
-# $$\fbox{The maeel programming language}$$
+# The maeel programming language
 
 <p align="center">
     <img src="./assets/review.png" height="800" width="auto"/>
