@@ -60,7 +60,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             }
 
             /* Ignore whitespaces */
-            ' ' | '\n' => continue,
+            ' ' | '\n' | '\t' => continue,
 
             /* Code block start */
             '(' => {
