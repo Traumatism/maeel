@@ -9,12 +9,14 @@ use std::io::Read;
 use std::ptr;
 use std::rc::Rc;
 
+/* MaeelVM true */
 macro_rules! True {
     () => {
         MaeelType::Integer(1)
     };
 }
 
+/* MaeelVM false */
 macro_rules! False {
     () => {
         MaeelType::Integer(0)
@@ -92,9 +94,10 @@ impl BocchiVM {
                 /* Stop parsing the array */
                 Token::ArrayEnd => break,
 
-                /* Parse an array inside an array */
+                /* Parse an array inside an array (recursive) */
                 Token::ArrayStart => {
                     self.parse_array(tokens, vars)?;
+
                     xs.push(self.pop()?);
                 }
 
@@ -115,10 +118,12 @@ impl BocchiVM {
                 Token::Identifier(identifier) => match vars.get(&identifier) {
                     Some(value) => xs.push(value.clone()),
 
-                    _ => panic!(),
+                    _ => {
+                        panic!("Unknown identifier found while parsing array: {identifier} (maybe store it inside a variable ?)")
+                    }
                 },
 
-                _ => panic!(),
+                _ => panic!("Unknown token found while parsing array"),
             }
         }
 
@@ -128,12 +133,12 @@ impl BocchiVM {
         Ok(())
     }
 
-    pub fn process_tokens<'a>(
+    pub fn process_tokens(
         &mut self,
-        tokens: &'a mut Vec<Token>,               /* Program tokens */
-        vars: &'a mut HashMap<String, MaeelType>, /* Global vars */
-        funs: &'a mut HashMap<String, Fun>,       /* Global funs */
-        structs: &'a mut HashMap<String, Rc<[String]>>, /* Global structs */
+        tokens: &mut Vec<Token>,                     /* Program tokens */
+        vars: &mut HashMap<String, MaeelType>,       /* Global vars */
+        funs: &mut HashMap<String, Fun>,             /* Global funs */
+        structs: &mut HashMap<String, Rc<[String]>>, /* Global structs */
     ) -> VMOutput<()> {
         tokens.reverse();
 
@@ -169,13 +174,13 @@ impl BocchiVM {
                             .get(&match tokens.pop() {
                                 Some(Token::Identifier(value)) => value,
 
-                                _ => panic!(),
+                                _ => panic!("Expected an identifier!"),
                             })
                             .unwrap()
                             .clone(),
                     )?,
 
-                    _ => panic!(),
+                    _ => panic!("Found a dot but no structure on the stack!"),
                 },
 
                 /* Use functions as first class objects */
@@ -185,7 +190,7 @@ impl BocchiVM {
                         .get(&match tokens.pop() {
                             Some(Token::Identifier(value)) => value,
 
-                            _ => panic!(),
+                            _ => panic!("Every colon must be followed by a function name!"),
                         })
                         .unwrap();
 
@@ -200,7 +205,7 @@ impl BocchiVM {
                     let fun = match self.pop() {
                         Ok(MaeelType::Function(value)) => value,
 
-                        _ => panic!(),
+                        _ => panic!("Tried to call something else than a function!"),
                     };
 
                     if fun.1
