@@ -10,15 +10,16 @@ pub enum Token {
     Integer(i32),       /* 123 */
     Float(f32),         /* 123.123 */
     BinaryOP(BinApp),   /* T x T -> T */
-    Colon,              /* : */
-    Dot,                /* . */
-    Call,               /* &, ! */
-    Assignment,         /* -> */
-    Then,               /* => */
-    ArrayStart,         /* { */
-    ArrayEnd,           /* } */
-    BlockStart,         /* ( */
-    BlockEnd,           /* ) */
+
+    Colon,      /* : */
+    Dot,        /* . */
+    Call,       /* &, ! */
+    Assignment, /* -> */
+    Then,       /* => */
+    ArrayStart, /* { */
+    ArrayEnd,   /* } */
+    BlockStart, /* ( */
+    BlockEnd,   /* ) */
 }
 
 macro_rules! binary_op {
