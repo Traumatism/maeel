@@ -78,4 +78,3 @@
 7 fact                                  5040                        "factorial #1"              assert_eq
 4 sqrt                                  2                           "sqrt #1"                   assert_eq
 12 15 gcd								3							"gcd #1"					assert_eq
-

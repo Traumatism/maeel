@@ -11,6 +11,7 @@
 
 [Documentation is here](docs/README.md) (I should re-write it :|)
 
+[Watching tests.maeel](stdlib/tests.maeel) might help you understand the lang better.
 
 
 ```sh
