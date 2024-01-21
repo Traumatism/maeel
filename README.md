@@ -9,7 +9,7 @@
 </p>
 
 
-[Documentation is here](docs/README.md)
+[Documentation is here](docs/README.md) (I should re-write it :|)
 
 
 
