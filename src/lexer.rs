@@ -172,12 +172,12 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
             '-' => match characters.peek() {
                 Some('>') =>
                 /* Assignment*/
-                 {
+                {
                     tokens.push(Token::Assignment);
                     characters.next();
                 }
 
-               _ =>
+                _ =>
                 /* Minus */
                 {
                     tokens.push(Token::BinaryOP(|a, b| b - a))
@@ -234,6 +234,5 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
     }
 
     output.append(&mut temporary_tokens);
-
     output
 }
