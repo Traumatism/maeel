@@ -1,1 +1,5 @@
-"Hello, world\n" print
+"Hello, world\n" -> hello_string
+
+
+hello_string print
+
