@@ -9,6 +9,18 @@ use std::io::Read;
 use std::ptr;
 use std::rc::Rc;
 
+macro_rules! True {
+    () => {
+        MaeelType::Integer(1)
+    };
+}
+
+macro_rules! False {
+    () => {
+        MaeelType::Integer(0)
+    };
+}
+
 /* Function type */
 pub type Fun = (Rc<[Token]>, bool);
 
@@ -58,6 +70,11 @@ impl Default for BocchiVM {
 impl BocchiVM {
     /// Perform a binary operation
     fn binary_op(&mut self, app: BinApp) -> VMOutput<()> {
+        /*
+        | bottom | top |  ---> | LHS(*)RHS |
+          ^ LHS    ^ RHS
+        */
+
         let output = app(self.pop()?, self.pop()?);
 
         self.push(output)
@@ -208,8 +225,7 @@ impl BocchiVM {
                     let temporary_token = tokens.pop();
 
                     match self.pop() {
-                        /* Integer(1) is true */
-                        Ok(MaeelType::Integer(1)) => match temporary_token {
+                        Ok(True!()) => match temporary_token {
                             Some(Token::Block(temporary_tokens)) => temporary_tokens
                                 .iter()
                                 .rev()
@@ -220,8 +236,7 @@ impl BocchiVM {
                             None => panic!(),
                         },
 
-                        /* Integer(0) is false */
-                        Ok(MaeelType::Integer(0)) => { /* Do nothing */ }
+                        Ok(False!()) => { /* Do nothing */ }
 
                         _ => panic!(),
                     }
@@ -310,9 +325,9 @@ impl BocchiVM {
                         };
 
                         while match self.pop() {
-                            Ok(MaeelType::Integer(1)) => true,  /* Continue looping */
-                            Ok(MaeelType::Integer(0)) => false, /* Stop looping */
-                            _ => panic!(),                      /* No boolean on the stack */
+                            Ok(True!()) => true,   /* Continue looping */
+                            Ok(False!()) => false, /* Stop looping */
+                            _ => panic!(),         /* No boolean on the stack */
                         } {
                             self.process_tokens(&mut temporary_tokens.clone(), vars, funs, structs)?
                         }
