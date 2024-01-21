@@ -19,12 +19,14 @@ pub type BinApp = fn(MaeelType, MaeelType) -> MaeelType;
 type VMOutput<T> = Result<T, Box<dyn Error>>;
 
 pub enum MaeelType {
-    Float(f32),
-    Integer(i32),
-    String(String),
-    Array(Vec<Self>),
-    Function(Fun),
-    Structure(HashMap<String, Self>),
+    /* Default types */
+    Float(f32),     /* Float type */
+    Integer(i32),   /* Integer type */
+    String(String), /* String type */
+
+    Array(Vec<Self>),                 /* Array of basic types */
+    Function(Fun),                    /* Custom type for a function (using functions as objects) */
+    Structure(HashMap<String, Self>), /* Custom type for a structure */
 }
 
 struct Guitar<T> {
@@ -120,7 +122,8 @@ impl BocchiVM {
 
         while let Some(token) = tokens.pop() {
             match token {
-                Token::BlockStart | Token::BlockEnd | Token::ArrayEnd => panic!(),
+                /* Should not be there... */
+                Token::BlockStart | Token::BlockEnd | Token::ArrayEnd => panic!("Syntax error"),
 
                 /* Parse arrays */
                 Token::ArrayStart => self.parse_array(tokens, vars)?,
@@ -186,8 +189,12 @@ impl BocchiVM {
                     if fun.1
                     /* Inline function */
                     {
+                        /* We just push functions tokens on
+                        the current tokens stack and continue */
+
                         fun.0.iter().for_each(|token| tokens.push(token.clone()));
                     } else {
+                        /* We create a new stack (functions, variables and structures are shared) */
                         self.process_tokens(
                             &mut fun.0.to_vec(), /* Function tokens */
                             &mut vars.clone(),   /* Clone the variables */
@@ -201,6 +208,7 @@ impl BocchiVM {
                     let temporary_token = tokens.pop();
 
                     match self.pop() {
+                        /* Integer(1) is true */
                         Ok(MaeelType::Integer(1)) => match temporary_token {
                             Some(Token::Block(temporary_tokens)) => temporary_tokens
                                 .iter()
@@ -212,7 +220,8 @@ impl BocchiVM {
                             None => panic!(),
                         },
 
-                        Ok(MaeelType::Integer(0)) => {}
+                        /* Integer(0) is false */
+                        Ok(MaeelType::Integer(0)) => { /* Do nothing */ }
 
                         _ => panic!(),
                     }
@@ -363,9 +372,7 @@ impl BocchiVM {
                             match temporary_token {
                                 Token::Block(temporary_tokens) => {
                                     fun_tokens.reverse(); /* First reverse */
-
                                     fun_tokens.extend(temporary_tokens);
-
                                     fun_tokens.reverse(); /* Second reverse */
 
                                     break;
@@ -437,6 +444,8 @@ impl BocchiVM {
                         };
 
                         let content = match target.as_str() {
+                            /* Standard library is included at compile time. We prefer memory
+                            usage than CPU usage... */
                             "std" => include_str!("../../stdlib/std.maeel").to_string(),
 
                             _ => read_to_string(target).expect("Failed to include file"),

@@ -73,7 +73,7 @@ fun map fn (
 )
 
 fun filter p (
-    {} -> xs
+    {} =: xs
     for (dup p& => (xs swap + -> xs))
     xs
 )
@@ -83,7 +83,7 @@ fun reduce xs fn init (
 )
 
 fun format (
-    "" -> output
+    "" =: output
 
     for (
         dup ->
@@ -97,7 +97,7 @@ fun format (
 )
 
 fun formatb (
-    "" -> output
+    "" =: output
 
     for (
         dup ->
@@ -161,8 +161,7 @@ fun count xs x (
 fun contains xs x (
     xs 0 swap for (drop 1+) -> xs_len
 
-    0 -> i
-
+    0 =: i
     0 1 while (
         xs i get x = => (drop 1)
         i 1 + -> i i xs_len <
@@ -183,10 +182,10 @@ fun reverse xs (
 )
 
 fun pop (
-    {} -> ys
+    {} =: ys
 
-    dup 0 swap for (drop 1+) -> xs_len
-    dup 0 get take1 -> y -> xs
+    dup 0 swap for (drop 1+) =: xs_len
+    dup 0 get take1 =: y =: xs
 
     1 1 xs_len < while (
         xs over get ys+ -> ys 1+
@@ -245,7 +244,7 @@ fun sqrt x (
 
 fun log base n (
     0 n base gteq while (
-        1 + n base / dup -> n base gteq
+        1 + n base / dup =: n base gteq
     )
 )
 
@@ -255,4 +254,16 @@ fun pow base _exp (
 
 fun range b (
     {} swap dup b < while (dup rot + swap 1 + dup b <) drop
+)
+
+fun gcd n1 n2 (
+	n1 n2 > => (n2 -> smaller)
+	n1 n2 lteq => (n1 -> smaller)
+	1 -> hcf
+
+	1 smaller 1+ range 
+
+	for (-> i n1 i% 0= n2 i% 0= and => (i -> hcf))
+
+	hcf
 )
