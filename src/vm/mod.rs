@@ -159,7 +159,7 @@ impl BocchiVM {
                 /* Push a float */
                 Token::Float(content) => self.push(MaeelType::Float(content))?,
 
-                /* Push an integer */
+                /* Push an integer (or a boolean?) */
                 Token::Integer(content) => self.push(MaeelType::Integer(content))?,
 
                 /* Push an anonymous function */
@@ -330,9 +330,9 @@ impl BocchiVM {
                         };
 
                         while match self.pop() {
-                            Ok(True!()) => true,   /* Continue looping */
-                            Ok(False!()) => false, /* Stop looping */
-                            _ => panic!(),         /* No boolean on the stack */
+                            Ok(True!()) => true,                     /* Continue looping */
+                            Ok(False!()) => false,                   /* Stop looping */
+                            _ => panic!("No boolean on the stack!"), /* No boolean on the stack */
                         } {
                             self.process_tokens(&mut temporary_tokens.clone(), vars, funs, structs)?
                         }
