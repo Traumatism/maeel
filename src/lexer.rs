@@ -112,7 +112,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
                                 '"' => '"',
                                 _ => {
                                     panic!(
-                                        "Invalid escape \
+                                        "{line}: invalid escape \
                                                  sequence: \\{}",
                                         next_character
                                     )
@@ -121,7 +121,7 @@ pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
                         }
 
                         ('\\', None) => {
-                            panic!("Incomplete escape sequence")
+                            panic!("{line}: incomplete escape sequence")
                         }
 
                         _ => character,
