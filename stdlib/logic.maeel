@@ -1,0 +1,13 @@
+struct __LogicImpl or and not xor implies equivalent_to.
+
+fun inline __logic_and (*)
+
+fun inline __logic_or (+ 0= 1 swap -)
+
+fun inline __logic_not (1 swap -)
+
+fun inline __logic_xor (+ 2 %)
+
+fun inline __logic_implies (swap __logic_not __logic_or)
+
+:__logic_and :__logic_or :__logic_not :__logic_xor :__logic_implies :__logic_equivalent_to __LogicImpl -> Logic

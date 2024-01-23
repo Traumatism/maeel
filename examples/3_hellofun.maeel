@@ -1,7 +1,6 @@
 "std" include
 
-fun say_hello name
-(
+fun say_hello name (
     name "Hello, % !" format putsln
 )
 
