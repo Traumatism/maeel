@@ -1,5 +1,6 @@
 use hashbrown::HashMap;
 
+use crate::lexer::TokenData;
 use crate::lexer::{lex_into_tokens, Token};
 
 use std::error::Error;
@@ -24,7 +25,7 @@ macro_rules! False {
 }
 
 /* Function type */
-pub type Fun = (Rc<[Token]>, bool);
+pub type Fun = (Rc<[TokenData]>, bool);
 
 /* Binary VM application */
 pub type BinApp = fn(MaeelType, MaeelType) -> MaeelType;
@@ -32,6 +33,7 @@ pub type BinApp = fn(MaeelType, MaeelType) -> MaeelType;
 /* Default VM function output */
 type VMOutput<T> = Result<T, Box<dyn Error>>;
 
+#[derive(Debug)]
 pub enum MaeelType {
     /* Default types */
     Float(f32),     /* Float type */
@@ -84,12 +86,14 @@ impl BocchiVM {
 
     fn parse_array(
         &mut self,
-        tokens: &mut Vec<Token>,
+        tokens: &mut Vec<TokenData>,
         vars: &mut HashMap<String, MaeelType>,
     ) -> VMOutput<()> {
         let mut xs = Vec::default();
 
-        while let Some(temporary_token) = tokens.pop() {
+        while let Some(temporary_token_data) = tokens.pop() {
+            let temporary_token = temporary_token_data.0;
+
             match temporary_token {
                 /* Stop parsing the array */
                 Token::ArrayEnd => break,
@@ -119,11 +123,14 @@ impl BocchiVM {
                     Some(value) => xs.push(value.clone()),
 
                     _ => {
-                        panic!("Unknown identifier found while parsing array: {identifier} (maybe store it inside a variable ?)")
+                        panic!("{}: unknown identifier found while parsing array: {identifier} (maybe store it inside a variable ?)", temporary_token_data.1)
                     }
                 },
 
-                _ => panic!("Unknown token found while parsing array"),
+                _ => panic!(
+                    "{}: unknown token found while parsing array",
+                    temporary_token_data.1
+                ),
             }
         }
 
@@ -135,17 +142,22 @@ impl BocchiVM {
 
     pub fn process_tokens(
         &mut self,
-        tokens: &mut Vec<Token>,                     /* Program tokens */
+        tokens: &mut Vec<TokenData>,                 /* Program tokens */
         vars: &mut HashMap<String, MaeelType>,       /* Global vars */
         funs: &mut HashMap<String, Fun>,             /* Global funs */
         structs: &mut HashMap<String, Rc<[String]>>, /* Global structs */
     ) -> VMOutput<()> {
         tokens.reverse();
 
-        while let Some(token) = tokens.pop() {
+        while let Some(token_data) = tokens.pop() {
+            let token = token_data.0;
+            let line = token_data.1;
+
             match token {
                 /* Should not be there... */
-                Token::BlockStart | Token::BlockEnd | Token::ArrayEnd => panic!("Syntax error"),
+                Token::BlockStart | Token::BlockEnd | Token::ArrayEnd => {
+                    panic!("{line}: syntax error")
+                }
 
                 /* Parse arrays */
                 Token::ArrayStart => self.parse_array(tokens, vars)?,
@@ -169,18 +181,42 @@ impl BocchiVM {
 
                 /* Access structures members */
                 Token::Dot => match self.pop() {
-                    Ok(MaeelType::Structure(structure)) => self.push(
-                        structure
-                            .get(&match tokens.pop() {
-                                Some(Token::Identifier(value)) => value,
+                    Ok(MaeelType::Structure(structure)) => {
+                        let structure_member = structure.get(&match tokens.pop() {
+                            Some((Token::Identifier(value), _)) => value,
+                            Some((other, other_line)) => {
+                                panic!("{other_line}: expected an identifier after dot; got {other:?} instead.")
+                            }
+                            None => panic!("{line}: expected an identifier after dot!"),
+                        });
 
-                                _ => panic!("Expected an identifier!"),
-                            })
-                            .unwrap()
-                            .clone(),
-                    )?,
+                        if let Some(MaeelType::Function(fun)) = structure_member {
+                            if fun.1
+                            /* Inline function */
+                            {
+                                /* We just push functions tokens on
+                                the current tokens stack and continue */
 
-                    _ => panic!("Found a dot but no structure on the stack!"),
+                                fun.0.iter().for_each(|token| tokens.push(token.clone()));
+                            } else {
+                                /* We create a new stack (functions, variables and structures are shared) */
+                                self.process_tokens(
+                                    &mut fun.0.to_vec(), /* Function tokens */
+                                    &mut vars.clone(),   /* Clone the variables */
+                                    funs,
+                                    structs,
+                                )?
+                            }
+
+                            continue;
+                        }
+
+                        self.push(structure_member.unwrap().clone())?
+                    }
+
+                    other => panic!(
+                        "{line}: found a 'dot' but no structure on the stack; got {other:?} instead"
+                    ),
                 },
 
                 /* Use functions as first class objects */
@@ -188,9 +224,9 @@ impl BocchiVM {
                     /* Function object */
                     let fun = funs
                         .get(&match tokens.pop() {
-                            Some(Token::Identifier(value)) => value,
-
-                            _ => panic!("Every colon must be followed by a function name!"),
+                            Some((Token::Identifier(value), _)) => value,
+                            Some((other, other_line)) => panic!("{other_line}: every colon must be followed by a function name; got {other:?} instead"),
+                            None => panic!("{line}: every colon must be followed by a function name."),
                         })
                         .unwrap();
 
@@ -204,8 +240,7 @@ impl BocchiVM {
                     /* Function object */
                     let fun = match self.pop() {
                         Ok(MaeelType::Function(value)) => value,
-
-                        _ => panic!("Tried to call something else than a function!"),
+                        _ => panic!("{line}: tried to call something else than a function!"),
                     };
 
                     if fun.1
@@ -231,27 +266,26 @@ impl BocchiVM {
 
                     match self.pop() {
                         Ok(True!()) => match temporary_token {
-                            Some(Token::Block(temporary_tokens)) => temporary_tokens
+                            Some((Token::Block(temporary_tokens), _)) => temporary_tokens
                                 .iter()
                                 .rev()
                                 .for_each(|token| tokens.push(token.clone())),
 
                             Some(temporary_token) => tokens.push(temporary_token),
 
-                            None => panic!(),
+                            None => panic!("{line}: expected something after '=>'"),
                         },
-
                         Ok(False!()) => { /* Do nothing */ }
-
-                        _ => panic!(),
+                        Ok(other) => panic!("{line}: '=>' expects a boolean (0 or 1) on the stack; got {other:?} instead."),
+                        Err(_) => panic!("{line}: '=>' expects a boolean (0 or 1) on the stack.")
                     }
                 }
 
                 Token::Assignment => {
                     let name = match tokens.pop() {
-                        Some(Token::Identifier(value)) => value,
-
-                        _ => panic!(),
+                        Some((Token::Identifier(value), _)) => value,
+                        Some((other, other_line)) => panic!("{other_line}: expected an identifier after '->'; got {other:?} instead."),
+                        None => panic!("{line}: expected an identifier after '->'."),
                     };
 
                     vars.insert(name, self.pop()?);
@@ -265,28 +299,44 @@ impl BocchiVM {
                     "break" => break,
 
                     /* Process "clear" VM operation */
-                    "clear" => self.clear()?,
+                    "clear" => self
+                        .clear()
+                        .unwrap_or_else(|_| panic!("{line}: failed to clear stack!")),
 
                     /* Process "fastpop" VM operation */
-                    "drop" => self.fastpop()?,
+                    "drop" => self
+                        .fastpop()
+                        .unwrap_or_else(|_| panic!("{line}: failed to drop")),
 
                     /* Process "dup" VM operation */
-                    "dup" => self.dup()?,
+                    "dup" => self
+                        .dup()
+                        .unwrap_or_else(|_| panic!("{line}: failed to dup")),
 
                     /* Process "swap" VM operation */
-                    "swap" => self.swap()?,
+                    "swap" => self
+                        .swap()
+                        .unwrap_or_else(|_| panic!("{line}: failed to swap")),
 
                     /* Process "over" VM operation */
-                    "over" => self.over()?,
+                    "over" => self
+                        .over()
+                        .unwrap_or_else(|_| panic!("{line}: failed to over")),
 
                     /* Process "rotate" VM operation */
-                    "rot" => self.rot()?,
+                    "rot" => self
+                        .rot()
+                        .unwrap_or_else(|_| panic!("{line}: failed to rotate")),
 
                     "for" => {
                         let temporary_tokens = match tokens.pop() {
-                            Some(Token::Block(value)) => value,
-
-                            _ => panic!(),
+                            Some((Token::Block(value), _)) => value,
+                            Some((other, other_line)) => {
+                                panic!("{other_line}: expected a code block after 'for'; got {other:?} instead.")
+                            }
+                            None => {
+                                panic!("{line}: expected a code block after 'for'!")
+                            }
                         };
 
                         match self.pop() {
@@ -324,15 +374,19 @@ impl BocchiVM {
 
                     "while" => {
                         let temporary_tokens = match tokens.pop() {
-                            Some(Token::Block(value)) => value,
-
-                            _ => panic!(),
+                            Some((Token::Block(value), _)) => value,
+                            Some((other, other_line)) => {
+                                panic!("{other_line}: expected a code block after 'while'; got {other:?} instead.")
+                            }
+                            None => {
+                                panic!("{line}: expected a code block after 'while'!")
+                            }
                         };
 
                         while match self.pop() {
-                            Ok(True!()) => true,                     /* Continue looping */
-                            Ok(False!()) => false,                   /* Stop looping */
-                            _ => panic!("No boolean on the stack!"), /* No boolean on the stack */
+                            Ok(True!()) => true,                             /* Continue looping */
+                            Ok(False!()) => false,                           /* Stop looping */
+                            _ => panic!("{line}: no boolean on the stack!"), /* No boolean on the stack */
                         } {
                             self.process_tokens(&mut temporary_tokens.clone(), vars, funs, structs)?
                         }
@@ -340,21 +394,22 @@ impl BocchiVM {
 
                     "struct" => {
                         let struct_name = match tokens.pop() {
-                            Some(Token::Identifier(value)) => value,
-                            _ => panic!(),
+                            Some((Token::Identifier(value), _)) => value,
+                            Some((other, other_line)) => panic!("{other_line}: expected identifier after 'struct'; got {other:?} instead."),
+                            _ => panic!("{line}: expected identifier after 'struct'."),
                         };
 
                         let mut struct_fields = Vec::default();
 
                         while let Some(temporary_tokens) = tokens.pop() {
                             match temporary_tokens {
-                                Token::Dot =>
+                                (Token::Dot, _) =>
                                 /* Stop parsing structure fields on '.' */
                                 {
                                     break;
                                 }
 
-                                Token::Identifier(identifier) => {
+                                (Token::Identifier(identifier), _) => {
                                     struct_fields.push(identifier);
                                 }
 
@@ -369,9 +424,13 @@ impl BocchiVM {
 
                     "fun" => {
                         let mut fun_name = match tokens.pop() {
-                            Some(Token::Identifier(value)) => value,
-
-                            _ => panic!(),
+                            Some((Token::Identifier(value), _)) => value,
+                            Some((other, other_line)) => {
+                                panic!("{other_line}: expected an identifier after 'fun'; got {other:?} instead.")
+                            }
+                            None => {
+                                panic!("{line}: expected an identifier after 'fun'.")
+                            }
                         };
 
                         let mut is_inline = false;
@@ -380,9 +439,13 @@ impl BocchiVM {
                             is_inline = true;
 
                             fun_name = match tokens.pop() {
-                                Some(Token::Identifier(value)) => value,
-
-                                _ => panic!(),
+                                Some((Token::Identifier(value), _)) => value,
+                                Some((other, other_line)) => {
+                                    panic!("{other_line}: expected an identifier after 'fun inline'; got {other:?} instead.")
+                                }
+                                None => {
+                                    panic!("{line}: expected an identifier after 'fun inline'.")
+                                }
                             }
                         }
 
@@ -390,7 +453,7 @@ impl BocchiVM {
 
                         while let Some(temporary_token) = tokens.pop() {
                             match temporary_token {
-                                Token::Block(temporary_tokens) => {
+                                (Token::Block(temporary_tokens), _) => {
                                     fun_tokens.reverse(); /* First reverse */
                                     fun_tokens.extend(temporary_tokens);
                                     fun_tokens.reverse(); /* Second reverse */
@@ -398,12 +461,14 @@ impl BocchiVM {
                                     break;
                                 }
 
-                                Token::Identifier(_) => {
+                                (Token::Identifier(_), line) => {
                                     fun_tokens.push(temporary_token);
-                                    fun_tokens.push(Token::Assignment);
+                                    fun_tokens.push((Token::Assignment, line));
                                 }
 
-                                _ => panic!(),
+                                (other, other_line) => {
+                                    panic!("{other_line}: expected identifier(s) or a code block after 'fun {fun_name}'; got {other:?} instead.")
+                                }
                             }
                         }
 
@@ -459,7 +524,6 @@ impl BocchiVM {
                     "include" => {
                         let target = match self.pop() {
                             Ok(MaeelType::String(value)) => value,
-
                             _ => panic!(),
                         };
 
@@ -468,7 +532,8 @@ impl BocchiVM {
                             usage than CPU usage... */
                             "std" => include_str!("../../stdlib/std.maeel").to_string(),
 
-                            _ => read_to_string(target).expect("Failed to include file"),
+                            _ => read_to_string(target)
+                                .unwrap_or_else(|_| panic!("{line}: failed to include file")),
                         };
 
                         lex_into_tokens(&content)
@@ -523,7 +588,7 @@ impl BocchiVM {
                             continue;
                         }
 
-                        panic!()
+                        panic!("Unknown identifier {identifier}")
                     }
                 },
             };

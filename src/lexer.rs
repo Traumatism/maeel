@@ -1,25 +1,32 @@
 use crate::vm::{BinApp, MaeelType};
 
-use std::iter::once;
+use std::{iter::once, ops::AddAssign};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Token {
-    Block(Vec<Token>),  /* (...) */
-    String(String),     /* "abc" */
-    Identifier(String), /* abc */
-    Integer(i32),       /* 123 */
-    Float(f32),         /* 123.123 */
-    BinaryOP(BinApp),   /* T x T -> T */
+    Block(Vec<TokenData>), /* (...) */
+    String(String),        /* "abc" */
+    Identifier(String),    /* abc */
+    Integer(i32),          /* 123 */
+    Float(f32),            /* 123.123 */
+    BinaryOP(BinApp),      /* T x T -> T */
+    Colon,                 /* : */
+    Dot,                   /* . */
+    Call,                  /* &, ! */
+    Assignment,            /* -> */
+    Then,                  /* => */
+    ArrayStart,            /* { */
+    ArrayEnd,              /* } */
+    BlockStart,            /* ( */
+    BlockEnd,              /* ) */
+}
 
-    Colon,      /* : */
-    Dot,        /* . */
-    Call,       /* &, ! */
-    Assignment, /* -> */
-    Then,       /* => */
-    ArrayStart, /* { */
-    ArrayEnd,   /* } */
-    BlockStart, /* ( */
-    BlockEnd,   /* ) */
+pub type TokenData = (Token, u16);
+
+macro_rules! empty_vec {
+    () => {
+        Vec::default()
+    };
 }
 
 macro_rules! binary_op {
@@ -42,9 +49,10 @@ macro_rules! take_with_predicate {
     }};
 }
 
-pub fn lex_into_tokens(code: &str) -> Vec<Token> {
+pub fn lex_into_tokens(code: &str) -> Vec<TokenData> {
     let mut depth = 0;
-    let mut tokens = Vec::default();
+    let mut line = 1;
+    let mut tokens = empty_vec!();
     let mut characters = code.chars().peekable();
 
     while let Some(character) = characters.next() {
@@ -60,18 +68,20 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 }
             }
 
+            '\n' => line.add_assign(1),
+
             /* Ignore whitespaces */
-            ' ' | '\n' | '\t' => continue,
+            ' ' | '\t' => continue,
 
             /* Code block start */
             '(' => {
-                tokens.push(Token::BlockStart);
+                tokens.push((Token::BlockStart, line));
                 depth += 1;
             }
 
             /* Code block end */
             ')' => {
-                tokens.push(Token::BlockEnd);
+                tokens.push((Token::BlockEnd, line));
                 depth -= 1;
             }
 
@@ -118,17 +128,16 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     });
                 }
 
-                tokens.push(Token::String(content))
+                tokens.push((Token::String(content), line))
             }
 
             /* Parse identifiers */
-            'a'..='z' | 'A'..='Z' | '_' => {
-                let content = take_with_predicate!(character, characters, |&character| {
+            'a'..='z' | 'A'..='Z' | '_' => tokens.push((
+                Token::Identifier(take_with_predicate!(character, characters, |&character| {
                     character.is_alphanumeric() || character == '_'
-                });
-
-                tokens.push(Token::Identifier(content));
-            }
+                })),
+                line,
+            )),
 
             /* Parse numerics (float/integers) */
             '0'..='9' => {
@@ -136,13 +145,16 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                     character.is_ascii_digit() || character == '.' || character == '_'
                 });
 
-                tokens.push(if content.contains('.') {
-                    assert_eq!(content.matches('.').count(), 1);
+                tokens.push((
+                    if content.contains('.') {
+                        assert_eq!(content.matches('.').count(), 1);
 
-                    Token::Float(content.parse().unwrap())
-                } else {
-                    Token::Integer(content.parse().unwrap())
-                });
+                        Token::Float(content.parse().unwrap())
+                    } else {
+                        Token::Integer(content.parse().unwrap())
+                    },
+                    line,
+                ));
             }
 
             /* Parse equal/then */
@@ -150,21 +162,24 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 Some('>') =>
                 /* Then */
                 {
-                    tokens.push(Token::Then);
+                    tokens.push((Token::Then, line));
                     characters.next();
                 }
 
                 Some(':') =>
                 /* Assignment */
                 {
-                    tokens.push(Token::Assignment);
+                    tokens.push((Token::Assignment, line));
                     characters.next();
                 }
 
                 _ =>
                 /* Equal */
                 {
-                    tokens.push(Token::BinaryOP(|a, b| MaeelType::Integer((b == a) as i32)))
+                    tokens.push((
+                        Token::BinaryOP(|a, b| MaeelType::Integer((b == a) as i32)),
+                        line,
+                    ))
                 }
             },
 
@@ -173,59 +188,64 @@ pub fn lex_into_tokens(code: &str) -> Vec<Token> {
                 Some('>') =>
                 /* Assignment*/
                 {
-                    tokens.push(Token::Assignment);
+                    tokens.push((Token::Assignment, line));
                     characters.next();
                 }
 
                 _ =>
                 /* Minus */
                 {
-                    tokens.push(Token::BinaryOP(|a, b| b - a))
+                    tokens.push((Token::BinaryOP(|a, b| b - a), line))
                 }
             },
 
-            _ => tokens.push(match character {
-                '+' => binary_op!(+),
-                '*' => binary_op!(*),
-                '/' => binary_op!(/),
-                '%' => binary_op!(%),
-                '<' => Token::BinaryOP(|a, b| MaeelType::Integer((b < a) as i32)),
-                '>' => Token::BinaryOP(|a, b| MaeelType::Integer((b > a) as i32)),
-                '(' => Token::BlockStart,
-                ')' => Token::BlockEnd,
-                '{' => Token::ArrayStart,
-                '}' => Token::ArrayEnd,
-                '!' | '&' => Token::Call,
-                '.' => Token::Dot,
-                ':' => Token::Colon,
-                character => panic!("{character}"),
-            }),
+            _ => tokens.push((
+                match character {
+                    '+' => binary_op!(+),
+                    '*' => binary_op!(*),
+                    '/' => binary_op!(/),
+                    '%' => binary_op!(%),
+                    '<' => Token::BinaryOP(|a, b| MaeelType::Integer((b < a) as i32)),
+                    '>' => Token::BinaryOP(|a, b| MaeelType::Integer((b > a) as i32)),
+                    '(' => Token::BlockStart,
+                    ')' => Token::BlockEnd,
+                    '{' => Token::ArrayStart,
+                    '}' => Token::ArrayEnd,
+                    '!' | '&' => Token::Call,
+                    '.' => Token::Dot,
+                    ':' => Token::Colon,
+
+                    character => panic!("{line}: found unknown char: {character}"),
+                },
+                line,
+            )),
         }
     }
 
     assert_eq!(depth, 0);
 
-    let mut stack = Vec::default();
-    let mut output = Vec::default();
-    let mut temporary_tokens = Vec::default();
+    let mut stack = empty_vec!();
+    let mut output = empty_vec!();
+    let mut temporary_tokens = empty_vec!();
 
     for token in tokens.iter() {
         match token {
-            Token::BlockStart => {
+            (Token::BlockStart, _) => {
                 stack.push(temporary_tokens);
-                temporary_tokens = Vec::default();
+
+                temporary_tokens = empty_vec!();
             }
 
-            Token::BlockEnd => {
+            (Token::BlockEnd, _) => {
                 let nested_tokens = temporary_tokens.clone();
 
                 match stack.pop() {
                     Some(previous_tokens) => {
                         temporary_tokens = previous_tokens;
-                        temporary_tokens.push(Token::Block(nested_tokens));
+                        temporary_tokens.push((Token::Block(nested_tokens), line));
                     }
 
-                    _ => output.push(Token::Block(nested_tokens)),
+                    _ => output.push((Token::Block(nested_tokens), line)),
                 }
             }
 

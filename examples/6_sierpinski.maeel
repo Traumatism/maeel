@@ -1,16 +1,19 @@
 "std" include
 
 fun sierpinski n (
-    n 0 =
-        dup => ({"@"} swap)
+    n 0=
+        dup => ({"+"} swap)
+
         not => (
             {} n 1- dup sierpinski
-            swap " " 2 rot rot pow *
-                -> blank -> smaller -> result
 
-            0 smaller len range smaller
-                for (blank dup rot + + result + -> result)
-                for (smaller swap get dup " " + swap + result + -> result)
+            swap " " 2 rot rot pow * ->blank ->smaller ->result
+
+            smaller for (blank dup rot ++ result+ ->result)
+
+            0 smaller len range for (
+                smaller swap get dup " "+ swap+ result+ ->result
+            )
 
             result
         )
