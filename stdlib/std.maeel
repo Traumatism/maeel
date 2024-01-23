@@ -1,20 +1,37 @@
-fun mdrop _ ()
+fun mdrop _ (
+)
 
-fun mdup a (a a)
+fun mdup a (
+    a a
+)
 
-fun mswap a b (b a)
+fun mswap a b (
+    b a
+)
 
-fun mover a b (a b a)
+fun mover a b (
+    a b a
+)
 
-fun mrot a b c (c a b)
+fun mrot a b c (
+    c a b
+)
 
-fun take1 a ({a})
+fun take1 a (
+    {a}
+)
 
-fun take2 a b ({a b})
+fun take2 a b (
+    {a b}
+)
 
-fun take3 a b c ({a b c})
+fun take3 a b c (
+    {a b c}
+)
 
-fun take4 a b c d ({a b c d})
+fun take4 a b c d (
+    {a b c d}
+)
 
 fun inline first (0 get)
 
@@ -68,18 +85,16 @@ fun inline lteq (over over< rot= + 0= 1 swap -)
 
 fun inline gteq (over over> rot= + 0= 1 swap -)
 
-fun map fn (
-    {} swap for (fn&+)
-)
+fun map fn ({} swap for (fn! +))
 
 fun filter p (
     {} =: xs
-    for (dup p& => (xs swap + -> xs))
+    for (dup p! => (xs swap + -> xs))
     xs
 )
 
 fun reduce xs fn init (
-    init xs for (swap fn&)
+    init xs for (swap fn!)
 )
 
 fun format (
