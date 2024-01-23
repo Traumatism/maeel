@@ -74,11 +74,6 @@ impl Default for BocchiVM {
 impl BocchiVM {
     /// Perform a binary operation
     fn binary_op(&mut self, app: BinApp) -> VMOutput<()> {
-        /*
-        | bottom | top |  ---> | LHS(*)RHS |
-          ^ LHS    ^ RHS
-        */
-
         let output = app(self.pop()?, self.pop()?);
 
         self.push(output)
@@ -93,6 +88,7 @@ impl BocchiVM {
 
         while let Some(temporary_token_data) = tokens.pop() {
             let temporary_token = temporary_token_data.0;
+            let temporary_line = temporary_token_data.1;
 
             match temporary_token {
                 /* Stop parsing the array */
@@ -105,32 +101,19 @@ impl BocchiVM {
                     xs.push(self.pop()?);
                 }
 
-                /* Push a string to the current array */
-                Token::String(value) => xs.push(MaeelType::String(value)),
-
-                /* Push a float to the current array */
-                Token::Float(value) => xs.push(MaeelType::Float(value)),
-
-                /* Push an integer to the current array */
-                Token::Integer(value) => xs.push(MaeelType::Integer(value)),
-
-                /* Push a code block to the current array */
-                Token::Block(value) => {
-                    xs.push(MaeelType::Function((value.as_slice().into(), false)))
+                Token::String(_) | Token::Integer(_) | Token::Float(_) | Token::Block(_) => {
+                    xs.push(temporary_token.into())
                 }
 
                 Token::Identifier(identifier) => match vars.get(&identifier) {
                     Some(value) => xs.push(value.clone()),
 
                     _ => {
-                        panic!("{}: unknown identifier found while parsing array: {identifier} (maybe store it inside a variable ?)", temporary_token_data.1)
+                        panic!("{temporary_line}: unknown identifier found while parsing array: {identifier} (maybe store it inside a variable ?)")
                     }
                 },
 
-                _ => panic!(
-                    "{}: unknown token found while parsing array",
-                    temporary_token_data.1
-                ),
+                _ => panic!("{temporary_line}: unknown token found while parsing array"),
             }
         }
 
@@ -165,18 +148,8 @@ impl BocchiVM {
                 /* Perform a binary operation */
                 Token::BinaryOP(app) => self.binary_op(app)?,
 
-                /* Push a string */
-                Token::String(content) => self.push(MaeelType::String(content))?,
-
-                /* Push a float */
-                Token::Float(content) => self.push(MaeelType::Float(content))?,
-
-                /* Push an integer (or a boolean?) */
-                Token::Integer(content) => self.push(MaeelType::Integer(content))?,
-
-                /* Push an anonymous function */
-                Token::Block(content) => {
-                    self.push(MaeelType::Function((content.as_slice().into(), false)))?
+                Token::String(_) | Token::Block(_) | Token::Float(_) | Token::Integer(_) => {
+                    self.push(token.into())?
                 }
 
                 /* Access structures members */
@@ -328,7 +301,9 @@ impl BocchiVM {
                         .rot()
                         .unwrap_or_else(|_| panic!("{line}: failed to rotate")),
 
+                    /* For loop implementation */
                     "for" => {
+                        /* Code block to execute at each iteration */
                         let temporary_tokens = match tokens.pop() {
                             Some((Token::Block(value), _)) => value,
                             Some((other, other_line)) => {
@@ -339,7 +314,9 @@ impl BocchiVM {
                             }
                         };
 
+                        /* Determine what to iterate through */
                         match self.pop() {
+                            /* Iterate through an array */
                             Ok(MaeelType::Array(xs)) => {
                                 xs.iter().for_each(|x| {
                                     self.push(x.clone()).unwrap();
@@ -354,6 +331,7 @@ impl BocchiVM {
                                 });
                             }
 
+                            /* Iterate through a string */
                             Ok(MaeelType::String(string)) => {
                                 string.chars().for_each(|x| {
                                     self.push(MaeelType::String(x.to_string())).unwrap();
@@ -372,7 +350,9 @@ impl BocchiVM {
                         }
                     }
 
+                    /* While loop implementation */
                     "while" => {
+                        /* Code block to execute at each iteration */
                         let temporary_tokens = match tokens.pop() {
                             Some((Token::Block(value), _)) => value,
                             Some((other, other_line)) => {
@@ -383,6 +363,7 @@ impl BocchiVM {
                             }
                         };
 
+                        /* Determine if we continue looping or not */
                         while match self.pop() {
                             Ok(True!()) => true,                             /* Continue looping */
                             Ok(False!()) => false,                           /* Stop looping */
@@ -413,7 +394,7 @@ impl BocchiVM {
                                     struct_fields.push(identifier);
                                 }
 
-                                _ => panic!(),
+                                (other, other_line) => panic!("{other_line}: expected identifier(s) or dot after 'struct {struct_name}'; got {other:?} instead."),
                             }
                         }
 
@@ -888,6 +869,18 @@ impl std::ops::Div for MaeelType {
             (Self::Float(x), Self::Integer(m)) => Self::Float(x / m as f32),
 
             (a, b) => panic!("Cannot divide {a} and {b}"),
+        }
+    }
+}
+
+impl From<Token> for MaeelType {
+    fn from(val: Token) -> Self {
+        match val {
+            Token::String(x) => MaeelType::String(x),
+            Token::Integer(x) => MaeelType::Integer(x),
+            Token::Float(x) => MaeelType::Float(x),
+            Token::Block(x) => MaeelType::Function((x.as_slice().into(), false)),
+            _ => panic!(),
         }
     }
 }
