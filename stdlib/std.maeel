@@ -33,59 +33,114 @@ fun take4 a b c d (
     {a b c d}
 )
 
-fun inline first (0 get)
+fun inline first (
+    0 get
+)
 
-fun inline second (1 get)
+fun inline second (
+    1 get
+)
 
-fun inline third (3 get)
+fun inline third (
+    3 get
+)
 
-fun inline fourth (4 get)
+fun inline fourth (
+    4 get
+)
 
-fun inline and (*)
+fun inline and (
+    *
+)
 
-fun inline or (+ 0= 1 swap -)
+fun inline or (
+    + 0= 1 swap -
+)
 
-fun inline not (1 swap -)
+fun inline not (
+    1 swap -
+)
 
-fun inline xor (+ 2%)
+fun inline xor (
+    + 2%
+)
 
-fun inline puts (print drop)
+fun inline puts (
+    print drop
+)
 
-fun inline puts_digit (int2char print drop)
+fun inline puts_digit (
+    int2char print drop
+)
 
-fun inline putsln (puts "\n" puts)
+fun inline putsln (
+    puts "\n" puts
+)
 
-fun inline println (print "\n" puts)
+fun inline println (
+    print "\n" puts
+)
 
-fun inline sum (0 swap for (+))
+fun inline sum (
+    0 swap for (+)
+)
 
-fun inline product (1 swap for (*))
+fun inline product (
+    1 swap for (*)
+)
 
-fun inline null (0=)
+fun inline null (
+    0=
+)
 
-fun inline inc (1+)
+fun inline inc (
+    1+
+)
 
-fun inline dec (1-)
+fun inline dec (
+    1-
+)
 
-fun inline divides (% 0=)
+fun inline divides (
+    % 0=
+)
 
-fun inline even (2% 0=)
+fun inline even (
+    2 divides
+)
 
-fun inline odd (2% 1=)
+fun inline odd (
+    2 divides not
+)
 
-fun inline pom (dup 1 swap -)
+fun inline pom (
+    dup 1 swap -
+)
 
-fun inline inverse (1 swap/)
+fun inline inverse (
+    1 swap /
+)
 
-fun inline square (dup*)
+fun inline square (
+    dup *
+)
 
-fun inline cube (dup dup*)
+fun inline cube (
+    dup
+    dup *
+)
 
-fun inline lteq (over over< rot= + 0= 1 swap -)
+fun inline lteq (
+    over over< rot= + 0= 1 swap -
+)
 
-fun inline gteq (over over> rot= + 0= 1 swap -)
+fun inline gteq (
+    over over> rot= + 0= 1 swap -
+)
 
 fun map fn ({} swap for (fn! +))
+
+fun inline map ({} rot swap for (over! rot rot+ swap) drop)
 
 fun filter p (
     {} =: xs
@@ -94,7 +149,8 @@ fun filter p (
 )
 
 fun reduce xs fn init (
-    init xs for (swap fn!)
+    init
+    xs for (swap fn!)
 )
 
 fun format (
@@ -259,16 +315,21 @@ fun sqrt x (
 
 fun log base n (
     0 n base gteq while (
-        1 + n base / dup =: n base gteq
+        1+ n base / dup -> n base gteq
     )
 )
 
 fun pow base _exp (
-    {} 0 _exp range for (drop base +) product
+    {}
+    0 _exp range for (drop base +) product
 )
 
 fun range b (
-    {} swap dup b < while (dup rot + swap 1 + dup b <) drop
+    {}
+    swap
+    dup b < while
+        (dup rot + swap 1 + dup b <)
+    drop
 )
 
 fun gcd n1 n2 (
