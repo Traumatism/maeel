@@ -10,4 +10,4 @@ fun inline __logic_xor (+ 2 %)
 
 fun inline __logic_implies (swap __logic_not __logic_or)
 
-:__logic_and :__logic_or :__logic_not :__logic_xor :__logic_implies :__logic_equivalent_to __LogicImpl -> Logic
+:__logic_and :__logic_or :__logic_not :__logic_xor :__logic_implies __LogicImpl -> Logic
