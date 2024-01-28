@@ -13,7 +13,6 @@
 
 [Watching tests.maeel](stdlib/tests.maeel) might help you understand the lang better.
 
-
 ```sh
 $ make test  # run the unit tests
 

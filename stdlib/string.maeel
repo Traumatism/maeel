@@ -1,0 +1,75 @@
+"std" include
+
+fun inline puts (
+    print drop
+)
+
+fun inline puts_digit (
+    int2char print drop
+)
+
+fun inline putsln (
+    puts "\n" puts
+)
+
+fun inline println (
+    print "\n" puts
+)
+
+fun format (
+    "" -> output
+
+    for (
+        dup ->
+            char "%" = => (output swap +)
+            char "%" = not => (output char +)
+
+        -> output
+    )
+
+    output
+)
+
+fun formatb (
+    "" -> output
+
+    for (
+        dup ->
+            char "%" = => (swap print drop)
+            char "%" = not => (print)
+
+        -> output
+    )
+
+    output
+)
+
+fun inline string2array (
+    {} swap for (+)
+)
+
+fun inline int2char (
+    {{0 "0"} {1 "1"} {2 "2"} {3 "3"} {4 "4"}
+    {5 "5"} {6 "6"} {7 "7"} {8 "8"} {9 "9"}}
+    match
+)
+
+fun inline char2int (
+    {{"0" 0} {"1" 1} {"2" 2} {"3" 3} {"4" 4}
+    {"5" 5} {"6" 6} {"7" 7} {"8" 8} {"9" 9}}
+    match
+)
+
+fun inline str2int (
+    0 swap for (
+        swap 10 * swap char2int +
+    )
+)
+
+fun inline array2string (
+    "" swap for (+)
+)
+
+fun inline bool2string (
+    {{1 "true"} {0 "false"}} match
+)

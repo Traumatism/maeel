@@ -5,15 +5,6 @@
 3 2 +                                   5                           "add #1"                    assert_eq
 3 2 *                                   6                           "mul #1"                    assert_eq
 3 2 -                                   1                           "sub #1"                    assert_eq
-0 1 2 3 mdrop take3                     {0 1 2}                     "vmdrop #1"                 assert_eq
-1 2 3 mdup 4 take                       {1 2 3 3}                   "vmdup #1"                  assert_eq
-1 2 3 mswap take3                       {1 3 2}                     "vmswap #1"                 assert_eq
-1 2 3 mswap mswap take3                 {1 2 3}                     "vmswap #2"                 assert_eq
-1 2 3 mover 4 take                      {1 2 3 2}                   "vmover #1"                 assert_eq
-1 2 3 mover mover 5 take                {1 2 3 2 3}                 "vmover #2"                 assert_eq
-1 2 3 mrot take3                        {3 1 2}                     "vmrot #1"                  assert_eq
-1 2 3 mrot mrot take3                   {2 3 1}                     "vmrot #2"                  assert_eq
-1 2 3 mrot mrot mrot take3              {1 2 3}                     "vmrot #3"                  assert_eq
 0 1 2 3 drop take3                      {0 1 2}                     "drop #1"                   assert_eq
 1 2 3 dup 4 take                        {1 2 3 3}                   "dup #1"                    assert_eq
 1 2 3 swap take3                        {1 3 2}                     "swap #1"                   assert_eq

@@ -1,13 +1,51 @@
-struct __LogicImpl or and not xor implies equivalent_to.
+"std" include
 
-fun inline __logic_and (*)
+| a | b  | (a and b)
+| 0 | 0  | 0
+| 0 | 1  | 0
+| 1 | 0  | 0
+| 1 | 1  | 1
+fun inline and
+(
+    *
+)
 
-fun inline __logic_or (+ 0= 1 swap -)
+| a | b  | (a or b)
+| 0 | 0  | 0
+| 0 | 1  | 1
+| 1 | 0  | 1
+| 1 | 1  | 1
+fun inline or
+(
+    + 0= 1 swap -
+)
 
-fun inline __logic_not (1 swap -)
+| a | (not a)
+| 0 | 1
+| 1 | 0
+fun inline not
+(
+    1 swap -
+)
 
-fun inline __logic_xor (+ 2 %)
+| a | b  | (a xor b)
+| 0 | 0  | 0
+| 0 | 1  | 1
+| 1 | 0  | 1
+| 1 | 1  | 0
+fun inline xor
+(
+    + 2 %
+)
 
-fun inline __logic_implies (swap __logic_not __logic_or)
+fun inline pom (
+    dup not
+)
 
-:__logic_and :__logic_or :__logic_not :__logic_xor :__logic_implies __LogicImpl -> Logic
+fun inline lteq (
+    over over < rot= + null not
+)
+
+fun inline gteq (
+    over over > rot= + null not
+)

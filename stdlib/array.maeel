@@ -1,0 +1,91 @@
+"std" include
+
+fun take1 a (
+    {a}
+)
+
+fun take2 a b (
+    {a b}
+)
+
+fun take3 a b c (
+    {a b c}
+)
+
+fun take4 a b c d (
+    {a b c d}
+)
+
+fun inline take (
+    0 swap range {} swap for (drop +) reverse
+)
+
+fun inline first (
+    0 get
+)
+
+fun inline second (
+    1 get
+)
+
+fun inline third (
+    3 get
+)
+
+fun inline fourth (
+    4 get
+)
+
+fun count (
+    -> x 0 swap for (
+        x= pom => 0 => (1 swap) +
+    )
+)
+
+fun contains xs x (
+    xs 0 swap for (drop inc) -> xs_len
+    0 -> i 0 (xs i get x= => (drop 1) i inc -> i) (i xs_len <) while
+)
+
+fun reverse xs (
+    {} -> ys
+
+    xs 0 swap for (drop inc)
+    (dec dup xs swap get ys + -> ys) (dup 1 gteq) while
+
+    drop ys
+)
+
+fun range b (
+    {} swap (dup rot + swap inc) (dup b <) while
+    drop
+)
+
+
+fun inline len (
+    0 swap for (drop inc)
+)
+
+fun inline last (
+    dup 0 swap for (drop inc) dec get
+)
+
+fun inline merge (
+    {} rot rot for (+) swap for (+)
+)
+
+
+fun pop (
+    {} -> ys
+
+    dup 0 swap for (drop inc) -> xs_len
+    dup first take1 -> y -> xs
+
+    1 (xs over get ys+ -> ys inc) (dup xs_len <) while
+
+    ys y+ swap drop
+)
+
+fun inline push (
+    take1 swap for (+)
+)

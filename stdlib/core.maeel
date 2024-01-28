@@ -1,0 +1,33 @@
+fun drop __ ()
+
+fun inline dup
+    __dup_a
+(
+    __dup_a __dup_a
+)
+
+fun inline swap
+    __swap_a
+    __swap_b
+(
+    __swap_b __swap_a
+)
+
+fun inline over
+    __over_a
+    __over_b
+(
+    __over_a __over_b __over_a
+)
+
+fun inline rot
+    __rot_a
+    __rot_b
+    __rot_c
+(
+    __rot_c __rot_a __rot_b
+)
+
+fun inline while __fn __pr (__pr! => (__fn! __fn __pr while))
+
+fun inline swhile (dup! => (over! swhile))
