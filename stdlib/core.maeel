@@ -1,33 +1,54 @@
-fun drop __ ()
+fun inline identity ()
+
+fun inline drop __ ()
 
 fun inline dup
-    __dup_a
+    __a
 (
-    __dup_a __dup_a
+    __a __a
 )
 
 fun inline swap
-    __swap_a
-    __swap_b
+    __a __b
 (
-    __swap_b __swap_a
+    __b __a
 )
 
 fun inline over
-    __over_a
-    __over_b
+    __a __b
 (
-    __over_a __over_b __over_a
+    __a __b __a
 )
 
 fun inline rot
-    __rot_a
-    __rot_b
-    __rot_c
+    __a __b __c
 (
-    __rot_c __rot_a __rot_b
+    __c __a __b
 )
 
-fun inline while __fn __pr (__pr! => (__fn! __fn __pr while))
+fun inline while
+    __while_loop_fn
+    __pr
+(
+    __pr! ? (__while_loop_fn! __while_loop_fn __pr while)
+)
 
-fun inline swhile (dup! => (over! swhile))
+fun inline for
+    __xs
+    __for_loop_fn
+(
+    __xs len ~ _for_loop_xs_len
+
+    0 ~ _for_loop_index
+
+    (
+        __xs _for_loop_index get __for_loop_fn!
+        _for_loop_index 1+ ~ _for_loop_index
+    )
+
+    (_for_loop_index _for_loop_xs_len <) while
+)
+
+fun inline pure_while (
+    dup! ? (over! pure_while)
+)

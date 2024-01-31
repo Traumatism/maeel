@@ -6,8 +6,10 @@
 "string" include
 "unix" include
 
-fun inline panic ("PANIC: %" format putsln 1 0 %)
+fun inline panic (
+    "PANIC: %" format putsln 1 0 %
+)
 
 fun inline assert_eq (
-    rot = dup bool2string rot rot "% (%)" format putsln not => ("" panic)
+    rot = dup bool2string rot rot "% (%)" format putsln not ? ("" panic)
 )

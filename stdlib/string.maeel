@@ -17,35 +17,37 @@ fun inline println (
 )
 
 fun format (
-    "" -> output
+    "" ~ output
 
-    for (
-        dup ->
-            char "%" = => (output swap +)
-            char "%" = not => (output char +)
+    (
+        dup ~ char
 
-        -> output
-    )
+            "%" = ? (output swap +)
+            char "%" = not ? (output char +)
+
+        ~ output
+    ) for
 
     output
 )
 
 fun formatb (
-    "" -> output
+    "" ~ output
 
-    for (
-        dup ->
-            char "%" = => (swap print drop)
-            char "%" = not => (print)
+    (
+        dup ~ char
 
-        -> output
-    )
+            "%" = ? (swap print drop)
+            char "%" = not ? (print)
+
+        ~ output
+    ) for
 
     output
 )
 
 fun inline string2array (
-    {} swap for (+)
+    {} swap (+) for
 )
 
 fun inline int2char (
@@ -61,13 +63,11 @@ fun inline char2int (
 )
 
 fun inline str2int (
-    0 swap for (
-        swap 10 * swap char2int +
-    )
+    0 swap (swap 10* swap char2int+) for
 )
 
 fun inline array2string (
-    "" swap for (+)
+   "" swap (+) for
 )
 
 fun inline bool2string (

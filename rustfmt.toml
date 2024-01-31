@@ -1,0 +1,6 @@
+# fn_params_layout = "Vertical"
+brace_style = "PreferSameLine"
+control_brace_style = "AlwaysSameLine"
+trailing_semicolon = false
+# combine_control_expr = false
+# force_multiline_blocks = true

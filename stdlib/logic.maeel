@@ -17,7 +17,7 @@ fun inline and
 | 1 | 1  | 1
 fun inline or
 (
-    + 0= 1 swap -
+    + 0= 1 swap-
 )
 
 | a | (not a)
@@ -25,7 +25,7 @@ fun inline or
 | 1 | 0
 fun inline not
 (
-    1 swap -
+    1 swap-
 )
 
 | a | b  | (a xor b)
@@ -35,7 +35,7 @@ fun inline not
 | 1 | 1  | 0
 fun inline xor
 (
-    + 2 %
+    + 2%
 )
 
 fun inline pom (
@@ -43,9 +43,9 @@ fun inline pom (
 )
 
 fun inline lteq (
-    over over < rot= + null not
+    over over< rot= + null not
 )
 
 fun inline gteq (
-    over over > rot= + null not
+    over over> rot= + null not
 )

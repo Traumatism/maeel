@@ -5,35 +5,34 @@ fun inline fact (
 )
 
 fun sqrt x (
-    x 2 / {0 1 2 3 4 5} for (
-        swap dup x swap / swap + 2 / swap drop
-    )
+    x 0.5* 0 5 range (
+        swap dup x swap/ swap+ 0.5* swap drop
+    ) for
 )
 
 fun log base n (
-    0 (inc n base / -> n) (n base gteq) while
+    0 (inc n base/ ~n) (n base gteq) while
 )
 
-
 fun pow base exp (
-    {} 0 exp range for (drop base +) product
+    {} 0 exp range (drop base+) for product
 )
 
 fun gcd n1 n2 (
-	n1 n2 > => (n2->smaller)
-	n1 n2 lteq => (n1->smaller)
+	n1 n2> ?(n2 ~smaller)
+	n1 n2 lteq ?(n1 ~smaller)
 
-	1 dup -> hcf
+	1 dup ~hcf
 
-	smaller inc range for (
-        -> i n1 i divides n2 i divides and => (i->hcf)
-    )
+	smaller inc range (
+        ~i n1 i divides n2 i divides and ? (i ~hcf)
+    ) for
 
 	hcf
 )
 
 fun inline inverse (
-    1 swap /
+    1 swap/
 )
 
 fun inline square (
@@ -41,7 +40,7 @@ fun inline square (
 )
 
 fun inline cube (
-    dup dup * *
+    dup dup **
 )
 
 fun inline divides (
@@ -60,21 +59,12 @@ fun inline pom (
     dup not
 )
 
-
-fun inline lteq (
-    over over < rot= + null not
-)
-
-fun inline gteq (
-    over over > rot= + null not
-)
-
 fun inline sum (
-    0 swap for (+)
+    (+) 0 reduce
 )
 
 fun inline product (
-    1 swap for (*)
+    (*) 1 reduce
 )
 
 fun inline null (

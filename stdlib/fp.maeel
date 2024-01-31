@@ -1,17 +1,20 @@
 "std" include
 
 fun match (
-    swap -> v
-    {} swap for (
-        dup first swap second -> f v = => (f+)
-    )
-    dup null => ("Unknown case!" panic)
-    dup 0 swap for (drop inc)
+    swap ~v
+    {} swap (dup first swap second ~f v= ?(f+)) for
+    dup 0= ?("Unknown case!" panic)
+    dup 0 swap (drop 1+) for
     dec get
 )
 
-fun inline map ({} rot swap for (over! rot rot+ swap) drop)
+fun inline map (
+    {} rot swap (over! rot rot+ swap) for drop
+)
 
-fun filter p ({} -> xs for (dup p! => (xs swap + -> xs)) xs)
+fun inline reduce (
+    swap ~_reduce_fn swap (swap _reduce_fn!) for
+)
 
-fun reduce fn init (init swap for (swap fn!))
+fun filter p ({} ~xs (dup p! ?(xs swap+ ~xs)) for xs)
+

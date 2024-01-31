@@ -17,7 +17,7 @@ fun take4 a b c d (
 )
 
 fun inline take (
-    0 swap range {} swap for (drop +) reverse
+    0 swap range {} swap (drop +) for reverse
 )
 
 fun inline first (
@@ -37,55 +37,45 @@ fun inline fourth (
 )
 
 fun count (
-    -> x 0 swap for (
-        x= pom => 0 => (1 swap) +
-    )
+    ~x 0 swap (x= pom ?0 ?(1 swap) +) for
 )
 
 fun contains xs x (
-    xs 0 swap for (drop inc) -> xs_len
-    0 -> i 0 (xs i get x= => (drop 1) i inc -> i) (i xs_len <) while
+    xs len ~xs_len
+    0 ~i 0 (xs i get x= ? (drop 1) i inc ~i) (i xs_len <) while
 )
 
 fun reverse xs (
-    {} -> ys
-
-    xs 0 swap for (drop inc)
-    (dec dup xs swap get ys + -> ys) (dup 1 gteq) while
-
+    {} ~ys
+    xs len
+    (dec dup xs swap get ys + ~ys) (dup 1 gteq) while
     drop ys
 )
 
 fun range b (
-    {} swap (dup rot + swap inc) (dup b <) while
-    drop
-)
-
-
-fun inline len (
-    0 swap for (drop inc)
+    {} swap (dup rot + swap inc) (dup b <) while drop
 )
 
 fun inline last (
-    dup 0 swap for (drop inc) dec get
+    dup len dec get
 )
 
 fun inline merge (
-    {} rot rot for (+) swap for (+)
+    {} rot rot (+) for swap (+) for
 )
 
 
 fun pop (
-    {} -> ys
+    {} ~ys
 
-    dup 0 swap for (drop inc) -> xs_len
-    dup first take1 -> y -> xs
+    dup len ~xs_len
+    dup first take1 ~y ~xs
 
-    1 (xs over get ys+ -> ys inc) (dup xs_len <) while
+    1 (xs over get ys+ ~ys inc) (dup xs_len <) while
 
     ys y+ swap drop
 )
 
 fun inline push (
-    take1 swap for (+)
+    take1 (+) swap reduce
 )
