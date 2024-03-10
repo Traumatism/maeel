@@ -1,7 +1,7 @@
 "std" include
 
-fun inline puts (
-    print drop
+fun inline print (
+    dup puts
 )
 
 fun inline puts_digit (

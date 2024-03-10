@@ -1,9 +1,0 @@
-"std" include
-
-1 1 + int2char "1+1=%" format putsln
-
-2 2 * int2char "2*2=%" format putsln
-
-4 3 - int2char "4-3=%" format putsln
-
-5 2 % int2char "5 mod 2=%" format putsln

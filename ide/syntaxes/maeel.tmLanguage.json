@@ -7,11 +7,11 @@
 	],
 	"patterns": [
 		{
-			"match": "\\|.*\\n",
+			"match": "#.*\\n",
 			"name": "comment.line.maeel"
 		},
 		{
-			"match": "(fun\\s+inline|fun|struct)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\n?\\s*([a-zA-Z_\\s][a-zA-Z0-9_\\s]*)?\\s*\\.?",
+			"match": "(fun\\s+inline|fun)\\s+([α-ωa-zA-Z_][α-ωa-zA-Z0-9_]*)\\s*\\n?\\s*([α-ωa-zA-Z_\\s][α-ωa-zA-Z0-9_\\s]*)?\\s*\\.?",
 			"captures": {
 				"2": {
 					"name": "keyword.control.maeel"
@@ -29,7 +29,7 @@
 			"match": "(\\?|\\bwhile\\b|\\bfor\\b)"
 		},
 		{
-			"match": "(\\~)\\s*([a-zA-Z_][a-zA-Z0-9_]*)",
+			"match": "(\\~)\\s*([α-ωa-zA-Z_][α-ωa-zA-Z0-9_]*)",
 			"captures": {
 				"1": {
 					"name": "keyword.operator.assignment.maeel"
@@ -62,7 +62,7 @@
 		},
 		{
 			"name": "entity.name",
-			"match": "([a-zA-Z_][a-zA-Z0-9_]*)"
+			"match": "([α-ωa-zA-Z_][α-ωa-zA-Z0-9_]*)"
 		},
 		{
 			"name": "string.quoted.double.maeel",

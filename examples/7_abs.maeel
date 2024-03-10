@@ -1,6 +1,0 @@
-"std" include
-
-fun valeur_absolue x (x 0< => (0 x-) x 0= x 0> or => x)
-
-10 valeur_absolue println
-0 10 - valeur_absolue println

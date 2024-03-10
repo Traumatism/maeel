@@ -67,5 +67,8 @@
 2 65536 log                             16                          "log #1"                    assert_eq
 10 100 log                              2                           "log #2"                    assert_eq
 7 fact                                  5040                        "factorial #1"              assert_eq
+3 fact                                  6                           "factorial #2"              assert_eq
+7 fact1                                 5040                        "factorial1 #1"             assert_eq
+3 fact1                                 6                           "factorial1 #2"             assert_eq
 4 sqrt                                  2                           "sqrt #1"                   assert_eq
 12 15 gcd								3							"gcd #1"					assert_eq

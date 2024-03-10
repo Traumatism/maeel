@@ -1,5 +1,3 @@
 "std" include
 
-fun unix_random_numbers n mod (
-    "/dev/random" n read (mod %) map
-)
+fun unix_random_numbers n mod ("/dev/random" n read (mod %) map)

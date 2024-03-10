@@ -1,3 +1,0 @@
-"Hello, world\n" -> hello_string
-
-hello_string print

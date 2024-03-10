@@ -1,0 +1,41 @@
+# Remove stack top element
+fun inline drop __ ()
+
+# Duplicate stack top element
+fun inline dup __a (__a __a)
+
+# Rotate stack top 3 elements
+fun inline rot __a __b __c (__c __a __b)
+
+# Swap stack top 2 elements
+fun inline swap __a __b (__b __a)
+
+# Duplicate the element under stack top
+fun inline over __a __b (__a __b __a)
+
+# While loop implementation
+fun inline while __fn __pr (
+    __pr!  # execute the predicate (should return 0 or 1)
+    ? (  # if predicate returns 1
+        __fn!  # execute loop block
+        __fn __pr while  # recursive call
+    )
+)
+
+# For loop implementation
+fun inline for __xs __for_loop_fn (
+    __xs len ~ _for_loop_xs_len  # max index
+
+    0 ~ _for_loop_index  # current index in list
+
+    (
+        __xs _for_loop_index get # push list current element
+        __for_loop_fn! # execute loop block
+        _for_loop_index 1 +~ _for_loop_index # increment current index
+    )
+
+    # make sure we aren't doing an "index out of range" [1]
+    (_for_loop_index _for_loop_xs_len <)
+
+    while  # continue until: index = len(xs) [1]
+)

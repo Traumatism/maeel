@@ -1,9 +1,0 @@
-"std" include
-
-0 -> m
-
-1 10000 range for (
-    dup 3 divides over 5 divides or => (m + -> m)
-)
-
-m print

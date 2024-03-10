@@ -1,4 +1,4 @@
-ignore/
+ignore*
 /target
 .DS_Store
 .vscode
