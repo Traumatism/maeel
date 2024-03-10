@@ -29,9 +29,9 @@ fun inline for __xs __for_loop_fn (
     0 ~ _for_loop_index  # current index in list
 
     (
-        __xs _for_loop_index get # push list current element
-        __for_loop_fn! # execute loop block
-        _for_loop_index 1 +~ _for_loop_index # increment current index
+        __xs _for_loop_index get  # push list current element
+        __for_loop_fn!  # execute loop block
+        _for_loop_index 1 +~ _for_loop_index  # increment current index
     )
 
     # make sure we aren't doing an "index out of range" [1]
