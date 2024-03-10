@@ -1,8 +1,13 @@
 use std::fs::File;
 use std::io::Read;
 
-type MAEEL_INT_SIZE /* Encode maeel integers on 32 bits */ = i32;
-type MAEEL_FLOAT_SIZE /* Encode maeel floats on 32 bits */ = f32;
+type MAEEL_INT_SIZE
+    /* Encode maeel integers on 32 bits */
+    = i32;
+
+type MAEEL_FLOAT_SIZE
+    /* Encode maeel floats on 32 bits */
+    = f32;
 
 type TokenData
     /* Token and its file name, line */
