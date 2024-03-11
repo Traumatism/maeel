@@ -15,7 +15,7 @@ fun inline over __a __b (__a __b __a)
 
 # While loop implementation
 fun inline while __fn __pr (
-    __pr!  # execute the predicate (should return 0 or 1)
+    __pr!  # execute the predicate function (should return 0 or 1)
     ? (  # if predicate returns 1
         __fn!  # execute loop block
         __fn __pr while  # recursive call

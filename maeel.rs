@@ -60,7 +60,7 @@ macro_rules! expect_stack {
 macro_rules! emit_error {
     ($fl:expr, $line:expr, $message:expr) => {{
         println!("\n{}:{} {}", $fl, $line, $message);
-        std::process::exit(1);
+        std::process::exit(1)
     }};
 }
 
@@ -298,7 +298,7 @@ impl BocchiVM {
                     );
                 }
 
-                Token::Sym(character) => panic!("{}", character),
+                Token::Sym(character) => emit_error!(file, line, format!("unknown symbol: {character}.")),
 
                 Token::Identifier(identifier) => match identifier.as_str() {
                     "puts" => print!("{}", self.pop().unwrap()),
@@ -342,11 +342,7 @@ impl BocchiVM {
                         let output = match self.pop() {
                             Ok(Cord::String(string)) => string.len(),
                             Ok(Cord::Array(xs)) => xs.len(),
-                            Ok(other) => emit_error!(
-                                file,
-                                line,
-                                format!("expected string or array, got {other:?}")
-                            ),
+                            Ok(other) => emit_error!(file, line, format!("expected string or array, got {other:?}")),
                             Err(_) => emit_error!(file, line, "expected string or array, got EOS."),
                         };
 
@@ -484,6 +480,7 @@ impl BocchiVM {
         } else {
             let current_head = unsafe { Box::from_raw(self.head) };
             self.head = current_head.next;
+
             Ok(current_head.value)
         }
     }
@@ -656,18 +653,19 @@ impl From<Token> for Cord {
 fn lex_into_tokens(code: &str, file: &str) -> Vec<TokenData> {
     let mut depth = 0;
     let mut line = 1;
+
     let mut tokens = Vec::default();
     let mut characters = code.chars().peekable();
 
     while let Some(character) = characters.next() {
         match character {
-            '#' => {
-                characters.by_ref().find(|&c| c == '\n');
-            }
-
             '\n' => line += 1,
 
             ' ' | '\t' => continue,
+
+            '#' => {
+                characters.by_ref().find(|&c| c == '\n');
+            }
 
             '(' | ')' /* Code block (will parse later ^^) */ => {
                 tokens.push((Token::Sym(character), file, line));
