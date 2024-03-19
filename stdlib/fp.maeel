@@ -1,10 +1,5 @@
 "std" include
 
-fun match (
-    swap ~ v {} swap (dup first swap second ~f v= ? (f+)) for
-    dup 0= ?("Unknown case!" panic) dup 0 swap (drop 1+) for dec get
-)
-
 fun inline map ({} rot swap (over! rot rot+ swap) for drop)
 
 fun inline reduce (swap ~ _reduce_fn swap (swap _reduce_fn!) for)

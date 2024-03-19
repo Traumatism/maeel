@@ -1,3 +1,5 @@
+*.py
+hack.maeel
 ignore*
 /target
 .DS_Store
@@ -19,3 +21,4 @@ Cargo.lock
 *.ml
 maeel_ocaml/
 ignore/
+

@@ -1,9 +1,14 @@
 "maeel" include
 
-fun inline include_many ((include) for)
+fun inline include_many (
+    (include)
+    for
+)
 
 {"array" "fp" "logic" "math" "string" "unix"} include_many
 
-fun inline panic ("PANIC: %" format putsln 1 0 %)
+fun inline panic (
+    "PANIC: %" format putsln 1 0 %
+)
 
 fun inline assert_eq (rot = dup bool2string rot rot "% (%)" format putsln not ? ("" panic))

@@ -51,14 +51,14 @@ fun inline string2array (
 )
 
 fun inline int2char (
-    {{0 "0"} {1 "1"} {2 "2"} {3 "3"} {4 "4"}
-    {5 "5"} {6 "6"} {7 "7"} {8 "8"} {9 "9"}}
+    {0 "0" 1 "1" 2 "2" 3 "3" 4 "4"
+    5 "5" 6 "6" 7 "7" 8 "8" 9 "9"}
     match
 )
 
 fun inline char2int (
-    {{"0" 0} {"1" 1} {"2" 2} {"3" 3} {"4" 4}
-    {"5" 5} {"6" 6} {"7" 7} {"8" 8} {"9" 9}}
+    {"0" 0 "1" 1 "2" 2 "3" 3 "4" 4
+    "5" 5 "6" 6 "7" 7 "8" 8 "9" 9}
     match
 )
 
@@ -71,5 +71,5 @@ fun inline array2string (
 )
 
 fun inline bool2string (
-    {{1 "true"} {0 "false"}} match
+    {1 "true" 0 "false"} match
 )

@@ -42,3 +42,18 @@ fun inline for __xs __for_loop_fn (
 
     while  # continue until: index = len(xs) [1]
 )
+
+# Kind of switch/case statement implementation
+fun matchp value mapper predicate (
+    mapper len ~ mapper_len
+
+    {} 0 (
+        dup even ? (
+            mapper over get value predicate! ? (mapper over 1+ get rot rot+ swap)
+        ) 1+
+    ) (dup mapper_len <) while
+
+    drop
+)
+
+fun inline match ((=) matchp 0 get)
