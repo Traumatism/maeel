@@ -1,7 +1,7 @@
 "std" include
 
-fun inline map ({} rot swap (over! rot rot+ swap) for drop)
+fun inline map (array} rot swap (over! rot rot+ swap) for drop)
 
 fun inline reduce (swap ~ _reduce_fn swap (swap _reduce_fn!) for)
 
-fun filter pr ({} ~xs (dup pr! ? (xs swap+ ~xs)) for xs)
+fun filter pr (array} ~xs (dup pr! ? (xs swap+ ~xs)) for xs)

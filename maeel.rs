@@ -8,6 +8,7 @@ macro_rules! alias {
 alias!(MAEEL_FUN,           "fun");
 alias!(MAEEL_INLINE,        "inline");
 alias!(MAEEL_INCLUDE,       "include");
+alias!(MAEEL_EARRAY,        "array");
 alias!(MAEEL_PUTS,          "puts");
 alias!(MAEEL_READ,          "read");
 alias!(MAEEL_LEN,           "len");
@@ -26,8 +27,6 @@ alias!(MAEEL_EQ,            '=');
 alias!(MAEEL_GT,            '>');
 alias!(MAEEL_LT,            '<');
 alias!(MAEEL_COMMENT_START, '#');
-alias!(MAEEL_ARRAY_START,   '{');
-alias!(MAEEL_ARRAY_END,     '}');
 alias!(MAEEL_BLOCK_START,   '(');
 alias!(MAEEL_BLOCK_END,     ')');
 
@@ -206,32 +205,6 @@ struct BocchiVM {
 }
 
 impl BocchiVM {
-    fn parse_array(&mut self, tokens: &mut Vec<TokenData>) {
-        let mut xs = Vec::default();
-
-        while let Some(token_data) = tokens.pop() {
-            let (token, file, line) = (token_data.0, token_data.1, token_data.2);
-
-            match token {
-                | Token::String(_)
-                | Token::Integer(_)
-                | Token::Float(_) /* Just a value in the array */ => xs.push(token.into()),
-                | Token::Sym(MAEEL_ARRAY_END!()) /* Array's end */ => break,
-                | Token::Sym(MAEEL_ARRAY_START!()) /* lil bro is dealing with matrices >:c */ => {
-                    self.parse_array(tokens);
-                    xs.push(self.pop().unwrap_or_else(|_| {
-                        emit_error!(file, line, "stack is empty! (array in array)")
-                    }));
-                }
-
-                /* Nah you cannot access variables/functions while defining an array hihi */
-                _ => emit_error!(file, line, "unknown token found while parsing array"),
-            }
-        }
-
-        self.push(Cord::Array(xs))
-    }
-
     fn process_tokens(
         &mut self,
         tokens: &mut Vec<TokenData>,
@@ -240,13 +213,15 @@ impl BocchiVM {
         rev: bool,
     ) {
         if rev
-        /* Sometimes we might act like the token vec was a stack */
-        {
-            tokens.reverse();
-        }
+        /* Sometimes we might act like the tokens vec was a stack */
+        { tokens.reverse(); }
 
         while let Some(token_data) = tokens.pop() {
-            let (token, file, line) = (token_data.0, token_data.1, token_data.2);
+            let (token, file, line) = (
+                token_data.0,
+                token_data.1,
+                token_data.2
+            );
 
             match token {
                 | Token::Sym(MAEEL_ADD!()) => binary_op!(|a, b| b + a, self, &file, line),
@@ -257,7 +232,6 @@ impl BocchiVM {
                 | Token::Sym(MAEEL_EQ!()) => binary_op!(|a, b| Cord::Integer((b == a) as MAEEL_INT_SIZE), self, &file, line),
                 | Token::Sym(MAEEL_LT!()) => binary_op!(|a, b| Cord::Integer((b < a) as MAEEL_INT_SIZE), self, &file, line),
                 | Token::Sym(MAEEL_GT!()) => binary_op!(|a, b| Cord::Integer((b > a) as MAEEL_INT_SIZE), self, &file, line),
-                | Token::Sym(MAEEL_ARRAY_START!()) => self.parse_array(tokens),
                 | Token::String(_) | Token::Float(_) | Token::Integer(_) => self.push(token.into()),
                 | Token::Block(mut block) => {
                     block.reverse(); /* meow */
@@ -325,7 +299,9 @@ impl BocchiVM {
                 | Token::Sym(MAEEL_DEF!()) /* Assign stack top value to next identifier */ => {
                     let name = expect_token!(Identifier, tokens, file, line);
 
-                    if name.starts_with("__") {
+                    if name.starts_with("__")
+                    /* This is used to provide private arguments inside inline functions */
+                    {
                         panic!()
                     }
 
@@ -340,6 +316,8 @@ impl BocchiVM {
 
                 | Token::Identifier(identifier) => match identifier.as_str() {
                     MAEEL_PUTS!() => print!("{}", self.pop().unwrap()),
+
+                    MAEEL_EARRAY!() => self.push(Cord::Array(Vec::new())),
 
                     MAEEL_FUN!() => {
                         let mut fun_name = expect_token!(Identifier, tokens, file, line);
@@ -414,13 +392,17 @@ impl BocchiVM {
 
                     | MAEEL_READ!() => {
                         let buf_size = expect_stack!(Integer, self, file, line);
+
                         let mut buf = vec![0u8; buf_size as usize];
 
+                        /* Copy `buf_size` bytes from file to `buf` */
                         File::open(expect_stack!(String, self, file, line))
                             .unwrap()
                             .read_exact(&mut buf)
                             .unwrap();
 
+                        /*  Convert 8 bytes size integers
+                        to MAEEL_INT_SIZE integers */
                         let content_bytes = buf
                             .iter()
                             .map(|byte| Cord::Integer(*byte as MAEEL_INT_SIZE))
@@ -432,7 +414,11 @@ impl BocchiVM {
                     | MAEEL_INCLUDE!() => {
                         let target = expect_stack!(String, self, file, line);
 
-                        if self.included.contains(&target) {
+                        if self.included.contains(&target)
+                        /* We have to make sure we are not including the
+                        same file twice. NOTA: this is using relative path; might
+                        be better if we used file signature instead. */
+                        {
                             continue
                         }
 
@@ -455,36 +441,41 @@ impl BocchiVM {
                         let temporary_tokens = lex_into_tokens(&content, &target);
                         let temporary_tokens_len = temporary_tokens.len();
 
+                        /* Push tokens from end to start (reverse) */
                         for index in 0..temporary_tokens_len {
-                            tokens.push(temporary_tokens.get(temporary_tokens_len - index - 1).unwrap().clone())
+                            tokens.push(temporary_tokens.get(
+                                temporary_tokens_len - index - 1
+                            ).unwrap().clone())
                         }
                     }
 
                     identifier => {
                         if let Some(value) = vars.get(identifier)
-                        /* Identifier may be a variable */
+                        /* Variable */
                         {
-                            self.push(value.clone());
-                            continue
+                            self.push(value.clone())
                         }
 
-                        if let Some(fun) = funs.get(identifier)
-                        /* Not a variable? Then it must be a function! */
+                        else if let Some(fun) = funs.get(identifier)
+                        /* Function */
                         {
                             if fun.1
                             /* Inline function*/
                             {
                                 fun.0.iter().for_each(|token| tokens.push(token.clone()));
-                                continue
                             }
-
-                            self.process_tokens(&mut fun.0.clone().to_vec(), &mut vars.clone(), funs, false);
-
-                            continue
+                            else
+                            /* Non-inline */
+                            {
+                                self.process_tokens(&mut fun.0.clone().to_vec(), &mut vars.clone(), funs, false);
+                            }
                         }
 
+                        else
                         /* Oops :3 */
-                        emit_error!(file, line, format!("unknown identifier {identifier}"))
+                        {
+                            emit_error!(file, line, format!("unknown identifier {identifier}"))
+                        }
                     }
                 },
             };
@@ -549,6 +540,8 @@ impl std::fmt::Display for Cord {
         }
     }
 }
+
+/* yummy boilerplate :3 */
 
 impl PartialOrd for Cord {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
@@ -760,13 +753,15 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 
     for token in tokens.iter() {
         match token {
-            | (Token::Sym(MAEEL_BLOCK_START!()), _, _) /* Code block inside code block, meh */
+            | (Token::Sym(MAEEL_BLOCK_START!()), _, _)
+            /* Code block inside code block, meh */
             => {
                 stack.push(temporary_tokens);
                 temporary_tokens = Vec::default();
             }
 
-            | (Token::Sym(MAEEL_BLOCK_END!()), _, _) /* Something is done, lets figure out what it is :3 */
+            | (Token::Sym(MAEEL_BLOCK_END!()), _, _)
+            /* Something is done, lets figure out what it is :3 */
             => {
                 /* This operation must be veryyy expensive in time/memory usage */
                 let mut nested_tokens = temporary_tokens.clone();
@@ -779,7 +774,9 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
                         temporary_tokens.push((Token::Block(nested_tokens), file.into(), line));
                     }
 
-                    | None /* Current code block parsing is done */ => {
+                    | None
+                    /* Current code block parsing is done */
+                    => {
                         nested_tokens.reverse();
                         output.push((Token::Block(nested_tokens), file.to_string(), line))
                     },

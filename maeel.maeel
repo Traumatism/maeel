@@ -47,7 +47,7 @@ fun inline for __xs __for_loop_fn (
 fun matchp value mapper predicate (
     mapper len ~ mapper_len
 
-    {} 0 (
+    array 0 (
         dup even ? (
             mapper over get value predicate! ? (mapper over 1+ get rot rot+ swap)
         ) 1+

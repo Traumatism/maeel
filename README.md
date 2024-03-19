@@ -6,7 +6,7 @@ The interpreter is made of ~ 800 LoC (much less without comments) :3 Indeed a lo
 
 ## Compile
 
-`$ make test`
+`$ make test` (c.f. [tests.maeel](./stdlib/tests.maeel))
 
 `$ make bench`
 

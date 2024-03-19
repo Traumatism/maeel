@@ -1,22 +1,22 @@
 "std" include
 
 fun take1 a (
-    {} a+
+    array a+
 )
 
 fun take2 a b (
-    {} a+ b+
+    array a+ b+
 )
 
 fun take3 a b c (
-    {} a+ b+ c+
+    array a+ b+ c+
 )
 
 fun take4 a b c d (
-    {} a+ b+ c+ d+
+    array a+ b+ c+ d+
 )
 
-fun inline take (0 swap range {} swap (drop +) for reverse)
+fun inline take (0 swap range array swap (drop +) for reverse)
 
 fun inline first (0 get)
 
@@ -34,19 +34,19 @@ fun contains xs x (
 )
 
 fun reverse xs (
-    {} ~ys
+    array ~ys
     xs len
     (dec dup xs swap get ys+ ~ys) (dup 1 gteq) while drop ys
 )
 
-fun range b ({} swap (dup rot+ swap inc) (dup b<) while drop)
+fun range b (array swap (dup rot+ swap inc) (dup b<) while drop)
 
 fun inline last (dup len dec get)
 
-fun inline merge ({} rot rot (+) for swap (+) for)
+fun inline merge (array rot rot (+) for swap (+) for)
 
 fun pop (
-    {} ~ ys
+    array ~ ys
     dup len ~ xs_len
     dup first take1 ~ y ~ xs
     1 (xs over get ys+ ~ys inc) (dup xs_len<) while
