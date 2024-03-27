@@ -2,7 +2,7 @@
 
 ### a minimalistic stack based programming language.
 
-The interpreter is made of ~ 800 LoC (much less without comments) :3 Indeed a lot of maeel features are implemented in itself (stack functions, while loop, for loop, functional programming utilities...) (c.f. [maeel.maeel](maeel.maeel))
+The interpreter is made of ~ 800 LoC (much less without comments) :3 Indeed a lot of maeel features are implemented in itself (stack functions, while loop, for loop, arrays, functional programming utilities...) (c.f. [maeel.maeel](maeel.maeel))
 
 ## Compile
 
@@ -20,4 +20,36 @@ The interpreter is made of ~ 800 LoC (much less without comments) :3 Indeed a lo
 
 ```
 "Hello, world" puts
+```
+
+## Variables
+
+```
+<anything on the stack> ~ <variable name>
+```
+
+```
+"hello" ~ hello
+```
+
+## Functions
+
+```
+fun name x y z (x y + z *)
+```
+
+maeel also supports inline functions:
+
+```
+fun inline name (+ *)
+```
+
+## Conditions
+
+```
+<boolean on the stack> ? (<executed if boolean is 1>)
+```
+
+```
+<boolean on the stack> (<executed if true>) (<executed if false>) ifelse
 ```

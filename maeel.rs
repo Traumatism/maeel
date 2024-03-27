@@ -1,9 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 
-macro_rules! alias {
-    ($name:ident, $value:expr) => { macro_rules! $name { () => { $value } } }
-}
+macro_rules! alias { ($name:ident, $value:expr) => { macro_rules! $name { () => { $value } } } }
 
 alias!(MAEEL_FUN,           "fun");
 alias!(MAEEL_INLINE,        "inline");
@@ -13,11 +11,11 @@ alias!(MAEEL_PUTS,          "puts");
 alias!(MAEEL_READ,          "read");
 alias!(MAEEL_LEN,           "len");
 alias!(MAEEL_GET,           "get");
+alias!(MAEEL_FUN_PUSH,      '&');
+alias!(MAEEL_STR,           '"');
 alias!(MAEEL_DEF,           '~');
 alias!(MAEEL_THEN,          '?');
 alias!(MAEEL_EXEC,          '!');
-alias!(MAEEL_PCBNI,         '@');
-alias!(MAEEL_PFICB,         ':');
 alias!(MAEEL_ADD,           '+');
 alias!(MAEEL_MUL,           '*');
 alias!(MAEEL_SUB,           '-');
@@ -30,29 +28,17 @@ alias!(MAEEL_COMMENT_START, '#');
 alias!(MAEEL_BLOCK_START,   '(');
 alias!(MAEEL_BLOCK_END,     ')');
 
-type MAEEL_INT_SIZE
-    /* Encode maeel integers on 32 bits */
-    = i32;
+type MAEEL_INT_SIZE /* Encode maeel integers on 32 bits */ = i32;
 
-type MAEEL_FLOAT_SIZE
-    /* Encode maeel floats on 32 bits */
-    = f32;
+type MAEEL_FLOAT_SIZE /* Encode maeel floats on 32 bits */ = f32;
 
-type Stack<T>
-    /* Specify that a vec is used like a stack */
-    = Vec<T>;
+type Stack<T> /* Specify that a vec is used like a stack */ = Vec<T>;
 
-type TokenData
-    /* Token and its file name, line */
-    = (Token, String, u16);
+type TokenData /* Token and its file name, line */ = (Token, String, u16);
 
-type FunctionData
-    /* Function tokens and inline descriptor */
-    = (std::rc::Rc<[TokenData]>, bool);
+type FunctionData /* Function tokens and inline descriptor */ = (std::rc::Rc<[TokenData]>, bool);
 
-type Mapper<T>
-    /* Map values of type T with their names */
-    = std::collections::HashMap<String, T>;
+type Mapper<T> /* Map values of type T with their names */ = std::collections::HashMap<String, T>;
 
 macro_rules! expect_token {
     ($token:tt, $tokens:expr, $fl:expr, $line:expr) => {{
@@ -126,6 +112,7 @@ macro_rules! binary_op {
             $self.pop().unwrap_or_else(|_| {
                 emit_error!($file, $line, "stack is empty! (binary operation LHS)")
             }),
+
             /* Right handside */
             $self.pop().unwrap_or_else(|_| {
                 emit_error!($file, $line, "stack is empty! (binary operation RHS)")
@@ -180,6 +167,8 @@ enum TokenRepr {
     Integer,
     Float,
     Sym,
+
+    /* Special tokens (used by VM) */
     MaeelAssignment,
 }
 
@@ -217,7 +206,7 @@ impl BocchiVM {
         { tokens.reverse(); }
 
         while let Some(token_data) = tokens.pop() {
-            let (token, file, line) = (
+            let (token, file, line) = /* See `TokenData` */ (
                 token_data.0,
                 token_data.1,
                 token_data.2
@@ -238,13 +227,7 @@ impl BocchiVM {
                     self.push(Cord::Function((block.as_slice().into(), true)))
                 }
 
-                | Token::Sym(MAEEL_PCBNI!()) => {
-                    let mut block = expect_token!(Block, tokens, file, line);
-                    block.reverse(); /* meow */
-                    self.push(Cord::Function((block.as_slice().into(), false)))
-                }
-
-                | Token::Sym(MAEEL_PFICB!()) => {
+                | Token::Sym(MAEEL_FUN_PUSH!()) => {
                     let fun_name /* Function name */ = expect_token!(Identifier, tokens, file, line);
 
                     let fun /* Function object */ = funs.get(&fun_name).unwrap_or_else(|| {
@@ -273,17 +256,15 @@ impl BocchiVM {
 
                     if expect_stack!(Integer, self, file, line) == 1 {
                         match temporary_token {
-                            Some((Token::Block(temporary_tokens), _, _)) => {
+                            | Some((Token::Block(temporary_tokens), _, _)) => {
                                 let temporary_tokens_len = temporary_tokens.len();
 
                                 for index in 0..(temporary_tokens_len) {
                                     tokens.push(temporary_tokens.get(temporary_tokens_len - index - 1).unwrap().clone())
                                 }
                             },
-
-                            Some(temporary_token) => tokens.push(temporary_token),
-
-                            None => emit_error!(file, line, "expected something after '?'"),
+                            | Some(temporary_token) => tokens.push(temporary_token),
+                            | None => emit_error!(file, line, "expected something after '?'"),
                         }
                     }
                 }
@@ -301,14 +282,11 @@ impl BocchiVM {
 
                     if name.starts_with("__")
                     /* This is used to provide private arguments inside inline functions */
-                    {
-                        panic!()
-                    }
+                    { panic!() } /* There for it can't be used inside explicit definitions */
 
                     vars.insert(
                         name,
-                        self.pop()
-                            .unwrap_or_else(|_| emit_error!(file, line, "stack is empty! (~)")),
+                        self.pop().unwrap_or_else(|_| emit_error!(file, line, "stack is empty!")),
                     );
                 }
 
@@ -425,14 +403,7 @@ impl BocchiVM {
                         self.included.push(target.to_string());
 
                         let content = match target.clone().as_str() {
-                            | "std" => include_str!("stdlib/std.maeel").to_string(),
-                            | "logic" => include_str!("stdlib/logic.maeel").to_string(),
                             | "maeel" => include_str!("maeel.maeel").to_string(),
-                            | "array" => include_str!("stdlib/array.maeel").to_string(),
-                            | "fp" => include_str!("stdlib/fp.maeel").to_string(),
-                            | "math" => include_str!("stdlib/math.maeel").to_string(),
-                            | "string" => include_str!("stdlib/string.maeel").to_string(),
-                            | "unix" => include_str!("stdlib/unix.maeel").to_string(),
                             _ => std::fs::read_to_string(&target).unwrap_or_else(|_| {
                                 emit_error!(file, line, "failed to include file")
                             }),
@@ -452,30 +423,23 @@ impl BocchiVM {
                     identifier => {
                         if let Some(value) = vars.get(identifier)
                         /* Variable */
-                        {
-                            self.push(value.clone())
-                        }
+                        { self.push(value.clone()) }
 
                         else if let Some(fun) = funs.get(identifier)
                         /* Function */
                         {
                             if fun.1
                             /* Inline function*/
-                            {
-                                fun.0.iter().for_each(|token| tokens.push(token.clone()));
-                            }
+                            { fun.0.iter().for_each(|token| tokens.push(token.clone())); }
+
                             else
                             /* Non-inline */
-                            {
-                                self.process_tokens(&mut fun.0.clone().to_vec(), &mut vars.clone(), funs, false);
-                            }
+                            { self.process_tokens(&mut fun.0.clone().to_vec(), &mut vars.clone(), funs, false); }
                         }
 
                         else
                         /* Oops :3 */
-                        {
-                            emit_error!(file, line, format!("unknown identifier {identifier}"))
-                        }
+                        { emit_error!(file, line, format!("unknown identifier {identifier}")) }
                     }
                 },
             };
@@ -487,9 +451,8 @@ impl BocchiVM {
         let future_head /* Create a new head with the value */ = Guitar::new(value);
 
         if !self.head.is_null() {
-            unsafe {
-                (*future_head).next /* Set current head to the new one "next" */ = self.head;
-            }
+            unsafe /* Set current head to the new one "next" */
+            { (*future_head).next  = self.head; }
         }
 
         self.head /* Replace current head with the new one */ = future_head;
@@ -678,16 +641,18 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
         match character {
             | '\n' /* Ignore new lines */ => line += 1,
             | ' ' | '\t' => /* Ignore whitespaces */ continue,
-            | MAEEL_COMMENT_START!() /* Comments to make this leet code understandable */ => { characters.by_ref().find(|&c| c == '\n'); }
-            | MAEEL_BLOCK_START!() | MAEEL_BLOCK_END!() /* Code block (will parse later ^^) */ => {
+
+            | MAEEL_COMMENT_START!() => { characters.by_ref().find(|&c| c == '\n'); }
+
+            | MAEEL_BLOCK_START!() | MAEEL_BLOCK_END!() => {
                 tokens.push((Token::Sym(character), file, line));
                 depth += if character == MAEEL_BLOCK_START!() { 1 } else { -1 };
             }
 
-            | '"' /* Dirty strings */ => {
+            | MAEEL_STR!() /* Dirty strings */ => {
                 let content_vector = characters
                     .by_ref()
-                    .take_while(|&character| character != '"')
+                    .take_while(|&character| character != MAEEL_STR!())
                     .collect::<Vec<char>>();
 
                 let mut content = String::with_capacity(content_vector.len());
@@ -707,7 +672,7 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
                                 | 'n' => '\n',
                                 | 't' => '\t',
                                 | '\\' => '\\',
-                                | '"' => '"',
+                                | MAEEL_STR!() => MAEEL_STR!(),
                                 | _ => {
                                     emit_error!(
                                         file, line, format!("invalid escape sequence: \\{next_character}")

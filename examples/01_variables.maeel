@@ -1,0 +1,9 @@
+"maeel" include
+
+"Hello, world" ~ hello_variable
+
+"number 1" "number 2" ~ n2 ~ n1  # chained assignment
+
+hello_variable putsln
+n1 putsln
+n2 putsln

@@ -1,0 +1,49 @@
+"maeel" include
+
+fun proc ("hello from function" putsln)
+
+proc  # will print hello from function
+
+fun f x y (x y +)
+
+3 2 f putsln  # will print 5
+
+fun g x y (x y /)
+
+1 2 g putsln  # will print 0.5
+
+# The parameters are placed in the
+# reverse stack order:
+#
+# fun f a0 a1 ... aN ()
+#
+# a0 a1 ... aN f
+#
+
+# will crash because of stack overflow
+fun calling_itself (calling_itself)
+
+# calling_itself  # (uncomment me)
+
+
+# won't crash because it's an inline function
+fun inline calling_itself (calling_itself)
+
+# calling_itself  # (uncomment me)
+
+# Nota: inline functions are usually faster
+# but you can't define "private variables" in them
+# as the tokens are directly pushed on the token loop
+
+
+
+("hello from code block" putsln) ~ hello_fun
+
+hello_fun  # will push a code block
+drop ()  # ignore me
+!  # use "!" to execute the code block
+
+hello_fun!  # will print "hello from codeblock"
+
+&proc  # will push the code block assiociated with the "hello" function (l3)
+!  # will print "hello from function"

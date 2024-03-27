@@ -26,7 +26,7 @@
 		},
 		{
 			"name": "keyword.control.maeel",
-			"match": "(\\?|\\bwhile\\b|\\bfor\\b)"
+			"match": "(\\?|\\bwhile\\b|\\bfor\\b|\\bloop\\b|\\bmatch\\b|\\bifelse\\b)"
 		},
 		{
 			"match": "(\\~)\\s*([α-ωa-zA-Z_][α-ωa-zA-Z0-9_]*)",
@@ -49,7 +49,7 @@
 		},
 		{
 			"name": "support.function.maeel",
-			"match": "(&|\\bprint\\b|\\binclude\\b)"
+			"match": "(&|\\bprint\\b|\\binclude\\b|\\bArray\\b|\\bMapper\\b|\\bend\\b)"
 		},
 		{
 			"begin": "'",
