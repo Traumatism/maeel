@@ -71,6 +71,54 @@ fun inline match (
     (=) matchp 0 get
 )
 
+fun reverse xs (
+    array ~ ys
+    xs len (1- dup xs swap get ys +~ ys) (dup 1 gteq) while
+    drop ys
+)
+
+fun contains xs x (
+    xs len ~xs_len 0 ~i 0
+    (xs i get x = ? (drop 1) i inc ~i)
+    (i xs_len <) while
+)
+
+"__maeel_array_start"  ~ Array
+"__maeel_yarra_start"  ~ Yarra
+"__maeel_mapper_start" ~ Mapper
+
+fun end (
+    array
+        Array  +
+        Mapper +
+        Yarra  +
+
+    ~ stop_keywords
+
+    array ~ output
+    (output +~ output) (dup stop_keywords swap contains not) while
+
+    array
+        Array+ (output reverse)+
+
+        Yarra+ (output)+
+
+        Mapper+ (
+            0 ~ i
+            output len ~ lst_len
+            array ~ mapper
+            output (
+                i even ?
+                    (array output i 1+ get+ output i get+ mapper +~ mapper)
+                i 1 +~ i
+            ) (i lst_len <) while
+
+            mapper
+        )+
+
+    match!
+)
+
 fun take1 a (
     array a+
 )
@@ -113,11 +161,7 @@ fun count x (
 
 fun range b (
     array swap
-
-    (dup rot+ swap inc)
-    (dup b<)
-    while
-
+    (dup rot+ swap inc) (dup b<) while
     drop
 )
 
@@ -157,11 +201,7 @@ fun inline reduce (
 
 fun filter pr (
     array ~ xs
-
-    (
-        dup pr! ? (xs swap +~ xs)
-    ) for
-
+    (dup pr! ? (xs swap +~ xs)) for
     xs
 )
 
@@ -171,8 +211,11 @@ fun ifelse (
 )
 
 fun inline and (*)
+
 fun inline or (+ 0= 1 swap-)
-fun inline not (1 swap-)
+
+fun inline not (1 swap -)
+
 fun inline xor (+ 2%)
 
 fun inline pom (dup not)
@@ -180,7 +223,6 @@ fun inline mop (pom swap)
 
 fun inline lteq (over over< rot= + null not)
 fun inline gteq (over over> rot= + null not)
-
 
 3.14159265359 dup ~ PI ~ π
 2.71828182846 ~ e
@@ -238,56 +280,11 @@ fun inline dec (1-)
 
 fun approx_sin (PI * 180 / PI % dup 3 pow 6 / swap dup 5 pow 120 / swap dup 7 pow 5040 / swap dup 9 pow 362880 / - + swap - + swap -)
 
-
 fun inline panic (
     "PANIC: %" format putsln 1 0 %
 )
 
 fun inline assert_eq (rot = dup bool2string rot rot "% (%)" format putsln not ? ("" panic))
-
-
-fun reverse xs (
-    array ~ ys
-    xs len (1- dup xs swap get ys +~ ys) (dup 1 gteq) while
-    drop ys
-)
-
-fun contains xs x (
-    xs len ~xs_len 0 ~i 0
-    (xs i get x = ? (drop 1) i inc ~i) (i xs_len <) while
-)
-
-"__maeel_array_start"  ~ Array
-"__maeel_mapper_start" ~ Mapper
-
-fun end (
-    array
-        Array  +
-        Mapper +
-
-    ~ stop_keywords
-
-    array ~ output
-    (output +~ output) (dup stop_keywords swap contains not) while
-
-    array
-        Array+ (output reverse)+
-
-        Mapper+ (
-            0 ~ i
-            output len ~ lst_len
-            array ~ mapper
-            output (
-                i even ?
-                    (array output i 1+ get+ output i get+ mapper + ~ mapper)
-                i 1 +~ i
-            ) (i lst_len <) while
-
-            mapper
-        )+
-
-    match!
-)
 
 
 fun inline print (
@@ -331,25 +328,21 @@ fun inline int2char (
     match
 )
 
-fun inline char2int (
-    Array
-        "0" 0 "1" 1 "2" 2 "3" 3 "4" 4
-        "5" 5 "6" 6 "7" 7 "8" 8 "9" 9
-    end
-
-    match
-)
-
-fun inline str2int (
-    0 swap (swap 10* swap char2int+) for
+fun inline int (
+    0 swap (
+        swap 10 * swap
+        Array
+            "0" 0 "1" 1 "2" 2 "3" 3 "4" 4
+            "5" 5 "6" 6 "7" 7 "8" 8 "9" 9
+        end
+        match+
+    ) for
 )
 
 fun inline array2string (
    "" swap (+) for
 )
 
-fun inline bool2string (
-    1 "true" 0 "false" 4 take match
+fun unix_random_numbers n mod (
+    "/dev/random" n read (mod %) map
 )
-
-fun unix_random_numbers n mod ("/dev/random" n read (mod %) map)

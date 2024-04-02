@@ -1,4 +1,5 @@
 *.py
+selfhosted/
 hack.maeel
 ignore*
 /target

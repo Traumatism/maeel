@@ -5,10 +5,7 @@ fun test value supposed message (
     30 swap len -~ padding
     puts "." padding * puts
 
-    value supposed =
-        (": SUCCESS" putsln)
-        (": FAIL" putsln)
-    ifelse
+    value supposed = (": SUCCESS" putsln) (": FAIL" putsln) ifelse
 )
 
 Array 1 2 3 end ~ lst

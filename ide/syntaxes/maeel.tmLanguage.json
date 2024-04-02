@@ -49,7 +49,7 @@
 		},
 		{
 			"name": "support.function.maeel",
-			"match": "(&|\\bprint\\b|\\binclude\\b|\\bArray\\b|\\bMapper\\b|\\bend\\b)"
+			"match": "(&|\\bsyscall\\b|\\bptr\\b|\\blen\\b|\\binclude\\b|\\bArray\\b|\\bYarra\\b|\\bMapper\\b|\\bend\\b)"
 		},
 		{
 			"begin": "'",
