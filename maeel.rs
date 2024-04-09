@@ -1,7 +1,15 @@
+/*
+This code was made without the help of any language
+server and auto-formatter.
+
+(Qualité Artisale)
+*/
+
 use std::fs::File;
 use std::io::Read;
 
- macro_rules! alias { ($($name:ident, $value:expr),* $(,)?) => { $(macro_rules! $name {() => { $value }} )* } }
+/* Assign names to literals */
+macro_rules! alias { ($($name:ident, $value:expr),* $(,)?) => { $(macro_rules! $name {() => { $value }} )* } }
 
 alias!(
     MAEEL_FUN,           "fun",
@@ -30,18 +38,20 @@ alias!(
     MAEEL_COMMENT_START, '#',
 );
 
-type MAEEL_INT_SIZE /* Encode maeel integers on 32 bits */    = i32;
-type MAEEL_FLOAT_SIZE /* Encode maeel floats on 32 bits */    = f32;
-type Stack<T> /* Specify that a vec is used like a stack */   = Vec<T>;
-type TokenData /* Token and its file name, line */            = (Token, String, u16);
-type FunctionData /* Function tokens and inline descriptor */ = (std::rc::Rc<[TokenData]>, bool);
-type Mapper<T> /* Map values of type T with their names */    = std::collections::HashMap<String, T>;
+type MAEEL_INT_SIZE   /* Encode maeel integers on 32 bits */          = i32;
+type MAEEL_FLOAT_SIZE /* Encode maeel floats on 32 bits */            = f32;
+type Stack<T>         /* Specify that a vec is used like a stack */   = Vec<T>;
+type TokenData        /* Token and its file name, line */             = (Token, String, u16);
+type FunData          /* Fun tokens and inline descriptor */          = (std::rc::Rc<[TokenData]>, bool);
+type Mapper<T>        /* Map values of type T with their names */     = std::collections::HashMap<String, T>;
 
 macro_rules! expect_token {
     ($token:tt, $tokens:expr, $fl:expr, $line:expr) => {{
         match $tokens.pop() {
             | Some((Token::$token(value), _, _)) => value,
-            | Some((other, other_file, other_line)) => emit_error!(other_file, other_line, format!("expected {:?}, got {other:?}", TokenRepr::$token)),
+            | Some((other, other_file, other_line)) => emit_error!(
+                other_file, other_line, format!("expected {:?}, got {other:?}", TokenRepr::$token)
+            ),
             | None => emit_error!($fl, $line, format!("expected {:?}, got EOF", TokenRepr::$token)),
         }
     }};
@@ -74,7 +84,7 @@ macro_rules! take_with_predicate {
     }};
 }
 
-macro_rules! binary_op {
+macro_rules! binop {
     ($app:expr, $self:expr, $file:expr, $line:expr) => {{
         let output = $app(
             $self.pop().unwrap_or_else(|_| { emit_error!($file, $line, "stack is empty! (binary operation LHS)") }),
@@ -88,29 +98,29 @@ macro_rules! binary_op {
 /* Types that are used by the VM */
 #[derive(Debug, Clone)]
 enum Cord {
-    Float(MAEEL_FLOAT_SIZE),
-    Integer(MAEEL_INT_SIZE),
-    Function(FunctionData),
-    String(String),
-    Array(Vec<Self>),
+    Flt(MAEEL_FLOAT_SIZE),
+    Int(MAEEL_INT_SIZE),
+    Fun(FunData),
+    Str(String),
+    Lst(Vec<Self>),
 }
 
 /* Used for error messages */
-#[derive(Debug)] enum CordRepr { Float, Integer, Function, String, Array }
+#[derive(Debug)] enum CordRepr { Flt, Int, Fun, Str, Lst }
 
 /* Tokens used by the lexer */
 #[derive(Clone, Debug)]
 enum Token {
     Block(Vec<TokenData>),
-    String(String),
-    Identifier(String),
-    Integer(MAEEL_INT_SIZE),
-    Float(MAEEL_FLOAT_SIZE),
+    Str(String),
+    Name(String),
+    Int(MAEEL_INT_SIZE),
+    Flt(MAEEL_FLOAT_SIZE),
     Sym(char),
 }
 
 /* Used for error messages */
-#[derive(Debug)] enum TokenRepr { Block, String, Identifier, Integer, Float, Sym }
+#[derive(Debug)] enum TokenRepr { Block, Str, Name, Int, Flt, Sym }
 
 /* A node in Maeel Stack VM */
 struct Guitar {
@@ -134,7 +144,7 @@ impl BocchiVM {
         &mut self,
         tokens: &mut Vec<TokenData>,
         vars: &mut Mapper<Cord>,
-        funs: &mut Mapper<FunctionData>,
+        funs: &mut Mapper<FunData>,
         rev: bool,
     ) {
         if rev /* Sometimes we might act like the tokens vec was a stack */ { tokens.reverse(); }
@@ -145,45 +155,48 @@ impl BocchiVM {
             );
 
             match token {
-                | Token::Sym(MAEEL_ADD!()) => binary_op!(|a, b: Cord| b.add(a), self, &file, line),
-                | Token::Sym(MAEEL_SUB!()) => binary_op!(|a, b: Cord| b.sub(a), self, &file, line),
-                | Token::Sym(MAEEL_MUL!()) => binary_op!(|a, b: Cord| b.mul(a), self, &file, line),
-                | Token::Sym(MAEEL_DIV!()) => binary_op!(|a, b: Cord| b.div(a), self, &file, line),
-                | Token::Sym(MAEEL_MOD!()) => binary_op!(|a, b: Cord| b.rem(a), self, &file, line),
-                | Token::Sym(MAEEL_EQ!()) => binary_op!(|a, b| Cord::Integer((b == a) as MAEEL_INT_SIZE), self, &file, line),
-                | Token::Sym(MAEEL_LT!()) => binary_op!(|a, b| Cord::Integer((b < a) as MAEEL_INT_SIZE), self, &file, line),
-                | Token::Sym(MAEEL_GT!()) => binary_op!(|a, b| Cord::Integer((b > a) as MAEEL_INT_SIZE), self, &file, line),
-                | Token::String(_) | Token::Float(_) | Token::Integer(_) => self.push(token.into()),
+                | Token::Sym(MAEEL_ADD!()) => binop!(|a, b: Cord| b.add(a), self, &file, line),
+                | Token::Sym(MAEEL_SUB!()) => binop!(|a, b: Cord| b.sub(a), self, &file, line),
+                | Token::Sym(MAEEL_MUL!()) => binop!(|a, b: Cord| b.mul(a), self, &file, line),
+                | Token::Sym(MAEEL_DIV!()) => binop!(|a, b: Cord| b.div(a), self, &file, line),
+                | Token::Sym(MAEEL_MOD!()) => binop!(|a, b: Cord| b.rem(a), self, &file, line),
+                | Token::Sym(MAEEL_EQ!()) => binop!(|a, b| Cord::Int((b == a) as MAEEL_INT_SIZE), self, &file, line),
+                | Token::Sym(MAEEL_LT!()) => binop!(|a, b| Cord::Int((b < a) as MAEEL_INT_SIZE), self, &file, line),
+                | Token::Sym(MAEEL_GT!()) => binop!(|a, b| Cord::Int((b > a) as MAEEL_INT_SIZE), self, &file, line),
+                | Token::Str(_) | Token::Flt(_) | Token::Int(_) => self.push(token.into()),
                 | Token::Block(mut block) => {
                     block.reverse(); /* meow */
-                    self.push(Cord::Function((block.as_slice().into(), true)))
+                    self.push(Cord::Fun((block.as_slice().into(), true)))
                 }
                 | Token::Sym(MAEEL_FUN_PUSH!()) => {
-                    let fun_name /* Function name */ = expect_token!(Identifier, tokens, file, line);
-                    let fun /* Function object */ = funs.get(&fun_name).unwrap_or_else(|| {
+                    let fun_name /* Fun name */   = expect_token!(Name, tokens, file, line);
+                    let fun      /* Fun object */ = funs.get(&fun_name).unwrap_or_else(|| {
                         emit_error!(file, line, format!("undefined function: {fun_name:?}"))
                     });
 
-                    self.push(Cord::Function((
-                        fun.0.clone(), /* Function tokens */ fun.1, /* Is the function inline? */
+                    self.push(Cord::Fun((
+                        fun.0.clone(), /* Fun tokens */
+                        fun.1,         /* Is the function inline? */
                     )))
                 }
                 | Token::Sym(MAEEL_EXEC!()) /* Manually call a function */ => {
-                    let fun /* Function object */ = expect_stack!(Function, self, file, line);
+                    let fun /* Fun object */ = expect_stack!(Fun, self, file, line);
 
-                    match fun.1 /* Function inline descriptor */ {
+                    match fun.1 /* Fun inline descriptor */ {
                         | true => /* Push the tokens on the token stack */ fun.0.iter().for_each(|token| tokens.push(token.clone())),
-                        | false => /* Call a new tokens processor */ self.process_tokens(&mut fun.0.to_vec(), &mut vars.clone(), funs, true),
+                        | false => /* Call a new tokens processor */ self.process_tokens(
+                            &mut fun.0.to_vec(), &mut vars.clone(), funs, true
+                        ),
                     }
                 }
                 | Token::Sym(MAEEL_THEN!()) /* Basically "if" statement */ => {
                     let temporary_token /* The boolean (actually an integer, anyways :3) */ = tokens.pop();
 
-                    if expect_stack!(Integer, self, file, line) == 1 {
+                    if expect_stack!(Int, self, file, line) == 1 {
                         match temporary_token {
                             | Some((Token::Block(temporary_tokens), _, _)) => {
                                 let temporary_tokens_len = temporary_tokens.len();
-                                for index in 0..(temporary_tokens_len) {
+                                for index in 0..(temporary_tokens_len) { /* Pushing from end to start */
                                     tokens.push(temporary_tokens.get(temporary_tokens_len - index - 1).unwrap().clone())
                                 }
                             },
@@ -194,29 +207,29 @@ impl BocchiVM {
                 }
                 | Token::Sym('§') /* Can be pushed by interpreter only */ => {
                     vars.insert(
-                        expect_token!(Identifier, tokens, file, line),
+                        expect_token!(Name, tokens, file, line),
                         self.pop().unwrap_or_else(|_| emit_error!(file, line, "stack is empty! (maeel)")),
                     );
                 }
                 | Token::Sym(MAEEL_DEF!()) /* Assign stack top value to next identifier */ => {
-                    let name = expect_token!(Identifier, tokens, file, line);
+                    let name = expect_token!(Name, tokens, file, line);
 
-                    if name.starts_with("__") /* Private */ { panic!() }
+                    if name.starts_with("__") /* Private field */ { panic!(/* TODO: make the error message */) }
 
                     vars.insert(
                         name, self.pop().unwrap_or_else(|_| emit_error!(file, line, "stack is empty!")),
                     );
                 }
                 | Token::Sym(character) => emit_error!(file, line, format!("unknown symbol: {character}.")),
-                | Token::Identifier(identifier) => match identifier.as_str() {
+                | Token::Name(identifier) => match identifier.as_str() {
                     | MAEEL_PUTS!() => print!("{}", self.pop().unwrap()),
-                    | MAEEL_EARRAY!() => self.push(Cord::Array(Vec::new())),
+                    | MAEEL_EARRAY!() => self.push(Cord::Lst(Vec::new())),
                     | MAEEL_FUN!() => {
-                        let mut fun_name = expect_token!(Identifier, tokens, file, line);
+                        let mut fun_name = expect_token!(Name, tokens, file, line);
                         let mut fun_tokens = Vec::default();
 
                         let is_inline /* fun inline name */ = fun_name == MAEEL_INLINE!();
-                        if is_inline { fun_name = expect_token!(Identifier, tokens, file, line) }
+                        if is_inline { fun_name = expect_token!(Name, tokens, file, line) }
 
                         while let Some(temporary_token) = tokens.pop() {
                             match temporary_token.clone() {
@@ -226,12 +239,16 @@ impl BocchiVM {
                                     fun_tokens.reverse(); /* never ask if maeel could be faster */
                                     break;
                                 }
-                                | (Token::Identifier(_), file, line) => {
+                                | (Token::Name(_), file, line) => {
                                     fun_tokens.push(temporary_token);
                                     fun_tokens.push((Token::Sym('§'), file, line));
                                 }
                                 | (other, other_file, other_line) => {
-                                    emit_error!(other_file, other_line, format!("expected identifier(s) or a code block after 'fun {fun_name}'; got {other:?} instead."))
+                                    emit_error!(
+                                        other_file,
+                                        other_line,
+                                        format!("expected identifier(s) or a code block after 'fun {fun_name}'; got {other:?} instead.")
+                                    )
                                 }
                             }
                         }
@@ -240,24 +257,24 @@ impl BocchiVM {
                     }
                     | MAEEL_LEN!() => {
                         let output = match self.pop() {
-                            | Ok(Cord::String(string)) => string.len(),
-                            | Ok(Cord::Array(xs)) => xs.len(),
+                            | Ok(Cord::Str(string)) => string.len(),
+                            | Ok(Cord::Lst(xs)) => xs.len(),
                             | Ok(other) => emit_error!(file, line, format!("expected string or array, got {other:?}")),
                             | Err(_) => emit_error!(file, line, "expected string or array, got EOS."),
                         } as MAEEL_INT_SIZE;
 
-                        self.push(Cord::Integer(output))
+                        self.push(Cord::Int(output))
                     }
                     | MAEEL_GET!() => {
-                        let index = expect_stack!(Integer, self, file, line) as usize;
+                        let index = expect_stack!(Int, self, file, line) as usize;
 
                         match self.pop() {
-                            | Ok(Cord::Array(xs)) => self.push(
+                            | Ok(Cord::Lst(xs)) => self.push(
                                 xs.get(index)
                                     .unwrap_or_else(|| {emit_error!(file, line, format!("unknown index: {index}"))})
                                     .clone(),
                             ),
-                            | Ok(Cord::String(string)) => self.push(Cord::String(
+                            | Ok(Cord::Str(string)) => self.push(Cord::Str(
                                 string
                                     .chars()
                                     .nth(index)
@@ -269,27 +286,27 @@ impl BocchiVM {
                         }
                     }
                     | MAEEL_READ!() => {
-                        let buf_size = expect_stack!(Integer, self, file, line);
+                        let buf_size = expect_stack!(Int, self, file, line);
                         let mut buf = vec![0u8; buf_size as usize];
 
-                        File::open(expect_stack!(String, self, file, line)) /* Copy `buf_size` bytes from file to `buf` */
+                        File::open(expect_stack!(Str, self, file, line)) /* Copy `buf_size` bytes from file to `buf` */
                             .unwrap()
                             .read_exact(&mut buf)
                             .unwrap();
 
                         let content_bytes = buf /*  Convert 8 bytes size integers to MAEEL_INT_SIZE integers */
                             .iter()
-                            .map(|byte| Cord::Integer(*byte as MAEEL_INT_SIZE))
+                            .map(|byte| Cord::Int(*byte as MAEEL_INT_SIZE))
                             .collect();
 
-                        self.push(Cord::Array(content_bytes))
+                        self.push(Cord::Lst(content_bytes))
                     }
-                    | MAEEL_INCLUDE!() => {
-                        let target = expect_stack!(String, self, file, line);
+                    | MAEEL_INCLUDE!() /* This is bad */ => {
+                        let target = expect_stack!(Str, self, file, line);
 
                         let content = match target.clone().as_str() {
                             | "maeel" => include_str!("maeel.maeel").to_string(),
-                            _ => std::fs::read_to_string(&target).unwrap_or_else(|_| {
+                            | _ => std::fs::read_to_string(&target).unwrap_or_else(|_| {
                                 emit_error!(file, line, "failed to include file")
                             }),
                         };
@@ -306,7 +323,7 @@ impl BocchiVM {
                     }
                     identifier => {
                         if let Some(value) = vars.get(identifier) /* Variable */ { self.push(value.clone()) }
-                        else if let Some(fun) = funs.get(identifier) /* Function */ {
+                        else if let Some(fun) = funs.get(identifier) /* Fun */ {
                             if fun.1 /* Inline function*/ { fun.0.iter().for_each(|token| tokens.push(token.clone())); }
                             else /* Non-inline */ { self.process_tokens(&mut fun.0.clone().to_vec(), &mut vars.clone(), funs, false); }
                         }
@@ -338,11 +355,11 @@ impl BocchiVM {
 impl std::fmt::Display for Cord {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::String(x) => write!(f, "{}", x),
-            Self::Function(_) => write!(f, "Function"),
-            Self::Float(x) => write!(f, "{}", x),
-            Self::Integer(x) => write!(f, "{}", x),
-            Self::Array(xs) => {
+            | Self::Str(x) => write!(f, "{}", x),
+            | Self::Fun(_) => write!(f, "Fun"),
+            | Self::Flt(x) => write!(f, "{}", x),
+            | Self::Int(x) => write!(f, "{}", x),
+            | Self::Lst(xs) => {
                 write!(f, "{{")?;
                 xs.iter().enumerate().for_each(|(i, x)| {
                     if i > 0 { write!(f, " ").unwrap() }
@@ -357,13 +374,12 @@ impl std::fmt::Display for Cord {
 impl PartialOrd for Cord {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
-            (Self::Integer(a), Self::Integer(b)) => Some(a.cmp(b)),
-            (Self::Float(a), Self::Float(b)) => Some(a.total_cmp(b)),
-            (Self::Integer(a), Self::Float(b)) | (Self::Float(b), Self::Integer(a)) => {
+            | (Self::Int(a), Self::Int(b)) => Some(a.cmp(b)),
+            | (Self::Flt(a), Self::Flt(b)) => Some(a.total_cmp(b)),
+            | (Self::Int(a), Self::Flt(b)) | (Self::Flt(b), Self::Int(a)) => {
                 Some(b.total_cmp(&(*a as MAEEL_FLOAT_SIZE)))
             }
-
-            (a, b) => panic!("Cannot compare {a} and {b}"),
+            | (a, b) => panic!("Cannot compare {a} and {b}"),
         }
     }
 }
@@ -371,12 +387,12 @@ impl PartialOrd for Cord {
 impl PartialEq for Cord {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::String(a), Self::String(b)) => a == b,
-            (Self::Array(a), Self::Array(b)) => a == b,
-            (Self::Integer(a), Self::Integer(b)) => a == b,
-            (Self::Float(a), Self::Float(b)) => a == b,
-            (Self::Integer(a), Self::Float(b)) | (Self::Float(b), Self::Integer(a)) => (*a as MAEEL_FLOAT_SIZE) == *b,
-            _ => false,
+            | (Self::Str(a), Self::Str(b)) => a == b,
+            | (Self::Lst(a), Self::Lst(b)) => a == b,
+            | (Self::Int(a), Self::Int(b)) => a == b,
+            | (Self::Flt(a), Self::Flt(b)) => a == b,
+            | (Self::Int(a), Self::Flt(b)) | (Self::Flt(b), Self::Int(a)) => (*a as MAEEL_FLOAT_SIZE) == *b,
+            | _ => false,
         }
     }
 }
@@ -384,54 +400,54 @@ impl PartialEq for Cord {
 impl Cord {
     fn sub(self, rhs: Self) -> Self {
         match (self, rhs) {
-            (Self::Integer(m), Self::Integer(n)) => Self::Integer(m - n),
-            (Self::Float(x), Self::Float(y)) => Self::Float(x - y),
-            (Self::Float(x), Self::Integer(m)) | (Self::Integer(m), Self::Float(x)) => Self::Float(m as MAEEL_FLOAT_SIZE - x),
-            (a, b) => panic!("Cannot substract {a} and {b}"),
+            | (Self::Int(m), Self::Int(n)) => Self::Int(m - n),
+            | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x - y),
+            | (Self::Flt(x), Self::Int(m)) | (Self::Int(m), Self::Flt(x)) => Self::Flt(m as MAEEL_FLOAT_SIZE - x),
+            | (a, b) => panic!("Cannot substract {a} and {b}"),
         }
     }
 
     fn mul(self, rhs: Self) -> Self {
         match (self, rhs) {
-            (Self::Integer(m), Self::Integer(n)) => Self::Integer(m * n),
-            (Self::Float(x), Self::Float(y)) => Self::Float(x * y),
-            (Self::Float(x), Self::Integer(m)) | (Self::Integer(m), Self::Float(x)) => Self::Float(x * m as MAEEL_FLOAT_SIZE),
-            (Self::Integer(m), Self::String(s)) | (Self::String(s), Self::Integer(m)) => Self::String(s.repeat(m as usize)),
-            (a, b) => panic!("Cannot multiply {a} and {b}"),
+            | (Self::Int(m), Self::Int(n)) => Self::Int(m * n),
+            | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x * y),
+            | (Self::Flt(x), Self::Int(m)) | (Self::Int(m), Self::Flt(x)) => Self::Flt(x * m as MAEEL_FLOAT_SIZE),
+            | (Self::Int(m), Self::Str(s)) | (Self::Str(s), Self::Int(m)) => Self::Str(s.repeat(m as usize)),
+            | (a, b) => panic!("Cannot multiply {a} and {b}"),
         }
     }
 
     fn add(self, rhs: Self) -> Self {
         match (self, rhs) {
-            (Self::String(a), Self::String(b)) => Self::String(a + &b),
-            (Self::Integer(m), Self::Integer(n)) => Self::Integer(m + n),
-            (Self::Float(x), Self::Float(y)) => Self::Float(x + y),
-            (Self::Integer(m), Self::Float(x)) | (Self::Float(x), Self::Integer(m)) => Self::Float(m as MAEEL_FLOAT_SIZE + x),
-            (other, Self::Array(mut xs)) | (Self::Array(mut xs), other) => {
+            | (Self::Str(a), Self::Str(b)) => Self::Str(a + &b),
+            | (Self::Int(m), Self::Int(n)) => Self::Int(m + n),
+            | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x + y),
+            | (Self::Int(m), Self::Flt(x)) | (Self::Flt(x), Self::Int(m)) => Self::Flt(m as MAEEL_FLOAT_SIZE + x),
+            | (other, Self::Lst(mut xs)) | (Self::Lst(mut xs), other) => {
                 xs.push(other);
-                Self::Array(xs)
+                Self::Lst(xs)
             }
-            (a, b) => panic!("Cannot add {a} and {b}"),
+            | (a, b) => panic!("Cannot add {a} and {b}"),
         }
     }
 
     fn rem(self, rhs: Self) -> Self {
         match (self, rhs) {
-            (Self::Integer(m), Self::Integer(n)) => Self::Integer(m % n),
-            (Self::Float(x), Self::Float(y)) => Self::Float(x % y),
-            (Self::Integer(m), Self::Float(x)) => Self::Float(m as MAEEL_FLOAT_SIZE % x),
-            (Self::Float(x), Self::Integer(m)) => Self::Float(x % m as MAEEL_FLOAT_SIZE),
-            (a, b) => panic!("Cannot divide {a} and {b}"),
+            | (Self::Int(m), Self::Int(n)) => Self::Int(m % n),
+            | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x % y),
+            | (Self::Int(m), Self::Flt(x)) => Self::Flt(m as MAEEL_FLOAT_SIZE % x),
+            | (Self::Flt(x), Self::Int(m)) => Self::Flt(x % m as MAEEL_FLOAT_SIZE),
+            | (a, b) => panic!("Cannot divide {a} and {b}"),
         }
     }
 
     fn div(self, rhs: Self) -> Self {
         match (self, rhs) {
-            (Self::Integer(m), Self::Integer(n)) => Self::Float(m as MAEEL_FLOAT_SIZE / n as MAEEL_FLOAT_SIZE),
-            (Self::Float(x), Self::Float(y)) => Self::Float(x / y),
-            (Self::Integer(m), Self::Float(x)) => Self::Float(m as MAEEL_FLOAT_SIZE / x),
-            (Self::Float(x), Self::Integer(m)) => Self::Float(x / m as MAEEL_FLOAT_SIZE),
-            (a, b) => panic!("Cannot divide {a} and {b}"),
+            | (Self::Int(m), Self::Int(n)) => Self::Flt(m as MAEEL_FLOAT_SIZE / n as MAEEL_FLOAT_SIZE),
+            | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x / y),
+            | (Self::Int(m), Self::Flt(x)) => Self::Flt(m as MAEEL_FLOAT_SIZE / x),
+            | (Self::Flt(x), Self::Int(m)) => Self::Flt(x / m as MAEEL_FLOAT_SIZE),
+            | (a, b) => panic!("Cannot divide {a} and {b}"),
         }
     }
 }
@@ -439,10 +455,10 @@ impl Cord {
 impl From<Token> for Cord {
     fn from(val: Token) -> Self {
         match val {
-            | Token::String(x) => Cord::String(x),
-            | Token::Integer(x) => Cord::Integer(x),
-            | Token::Float(x) => Cord::Float(x),
-            | Token::Block(x) => Cord::Function((x.as_slice().into(), false)),
+            | Token::Str(x) => Cord::Str(x),
+            | Token::Int(x) => Cord::Int(x),
+            | Token::Flt(x) => Cord::Flt(x),
+            | Token::Block(x) => Cord::Fun((x.as_slice().into(), false)),
             | _ => panic!(),
         }
     }
@@ -492,11 +508,11 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
                     });
                 }
 
-                tokens.push((Token::String(content), file, line))
+                tokens.push((Token::Str(content), file, line))
             }
 
             | 'a'..='z' | 'A'..='Z' | '_' | 'α'..='ω' /* Create some variables :3 */ => tokens.push((
-                Token::Identifier(take_with_predicate!(character, characters, |&c| c.is_alphanumeric() || c == '_')),
+                Token::Name(take_with_predicate!(character, characters, |&c| c.is_alphanumeric() || c == '_')),
                 file, line,
             )),
 
@@ -504,8 +520,8 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
                 let content = take_with_predicate!(character, characters, |&c| c.is_ascii_digit() || c == '.' || c == '_');
 
                 tokens.push((
-                    if content.contains('.') { Token::Float(content.parse().unwrap()) }
-                    else { Token::Integer(content.parse().unwrap()) },
+                    if content.contains('.') { Token::Flt(content.parse().unwrap()) }
+                    else { Token::Int(content.parse().unwrap()) },
                     file, line,
                 ));
             }
@@ -555,7 +571,7 @@ fn main() {
     .process_tokens(
         &mut lex_into_tokens(&std::fs::read_to_string(&file).unwrap(), &file),
         &mut std::collections::HashMap::default(), /* Variables Hashmap */
-        &mut std::collections::HashMap::default(), /* Functions Hashmap */
+        &mut std::collections::HashMap::default(), /* Funs Hashmap */
         true,
     )
 }
