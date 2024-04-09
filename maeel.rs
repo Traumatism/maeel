@@ -12,34 +12,34 @@ use std::io::Read;
 macro_rules! alias { ($($name:ident, $value:expr),* $(,)?) => { $(macro_rules! $name {() => { $value }} )* } }
 
 alias!(
-    MAEEL_FUN,           "fun",
-    MAEEL_INLINE,        "inline",
-    MAEEL_INCLUDE,       "include",
-    MAEEL_EARRAY,        "array",
-    MAEEL_PUTS,          "puts",
-    MAEEL_READ,          "read",
-    MAEEL_LEN,           "len",
-    MAEEL_GET,           "get",
-    MAEEL_FUN_PUSH,      '&',
-    MAEEL_STR,           '"',
-    MAEEL_DEF,           '~',
-    MAEEL_THEN,          '?',
-    MAEEL_EXEC,          '!',
-    MAEEL_ADD,           '+',
-    MAEEL_MUL,           '*',
-    MAEEL_SUB,           '-',
-    MAEEL_DIV,           '/',
-    MAEEL_MOD,           '%',
-    MAEEL_EQ,            '=',
-    MAEEL_GT,            '>',
-    MAEEL_LT,            '<',
-    MAEEL_BLOCK_START,   '(',
-    MAEEL_BLOCK_END,     ')',
-    MAEEL_COMMENT_START, '#',
+    M_FUN,           "fun",
+    M_INLINE,        "inline",
+    M_INCLUDE,       "include",
+    M_EARRAY,        "array",
+    M_PUTS,          "puts",
+    M_READ,          "read",
+    M_LEN,           "len",
+    M_GET,           "get",
+    M_FUN_PUSH,      '&',
+    M_STR,           '"',
+    M_DEF,           '~',
+    M_THEN,          '?',
+    M_EXEC,          '!',
+    M_ADD,           '+',
+    M_MUL,           '*',
+    M_SUB,           '-',
+    M_DIV,           '/',
+    M_MOD,           '%',
+    M_EQ,            '=',
+    M_GT,            '>',
+    M_LT,            '<',
+    M_BLOCK_START,   '(',
+    M_BLOCK_END,     ')',
+    M_COMMENT_START, '#',
 );
 
-type MAEEL_INT_SIZE   /* Encode maeel integers on 32 bits */          = i32;
-type MAEEL_FLOAT_SIZE /* Encode maeel floats on 32 bits */            = f32;
+type M_INT_SIZE       /* Encode maeel integers on 32 bits */          = i32;
+type M_FLOAT_SIZE     /* Encode maeel floats on 32 bits */            = f32;
 type Stack<T>         /* Specify that a vec is used like a stack */   = Vec<T>;
 type TokenData        /* Token and its file name, line */             = (Token, String, u16);
 type FunData          /* Fun tokens and inline descriptor */          = (std::rc::Rc<[TokenData]>, bool);
@@ -49,8 +49,8 @@ macro_rules! expect_token {
     ($token:tt, $tokens:expr, $fl:expr, $line:expr) => {{
         match $tokens.pop() {
             | Some((Token::$token(value), _, _)) => value,
-            | Some((other, other_file, other_line)) => emit_error!(
-                other_file, other_line, format!("expected {:?}, got {other:?}", TokenRepr::$token)
+            | Some((other, file, line)) => emit_error!(
+                file, line, format!("expected {:?}, got {other:?}", TokenRepr::$token)
             ),
             | None => emit_error!($fl, $line, format!("expected {:?}, got EOF", TokenRepr::$token)),
         }
@@ -75,31 +75,31 @@ macro_rules! emit_error {
 }
 
 macro_rules! take_with_predicate {
-    ($character:expr, $characters:expr, $p:expr) => {{
-        let content = std::iter::once($character)
-            .chain($characters.clone().take_while($p))
+    ($char:expr, $chars:expr, $p:expr) => {{
+        let content = std::iter::once($char)
+            .chain($chars.clone().take_while($p))
             .collect::<String>();
-        for _ in (1..content.len()) { $characters.next(); }
+        for _ in (1..content.len()) { $chars.next(); }
         content
     }};
 }
 
 macro_rules! binop {
     ($app:expr, $self:expr, $file:expr, $line:expr) => {{
-        let output = $app(
+        let out = $app(
             $self.pop().unwrap_or_else(|_| { emit_error!($file, $line, "stack is empty! (binary operation LHS)") }),
             $self.pop().unwrap_or_else(|_| { emit_error!($file, $line, "stack is empty! (binary operation RHS)") }),
         );
 
-        $self.push(output)
+        $self.push(out)
     }};
 }
 
 /* Types that are used by the VM */
 #[derive(Debug, Clone)]
 enum Cord {
-    Flt(MAEEL_FLOAT_SIZE),
-    Int(MAEEL_INT_SIZE),
+    Flt(M_FLOAT_SIZE),
+    Int(M_INT_SIZE),
     Fun(FunData),
     Str(String),
     Lst(Vec<Self>),
@@ -114,8 +114,8 @@ enum Token {
     Block(Vec<TokenData>),
     Str(String),
     Name(String),
-    Int(MAEEL_INT_SIZE),
-    Flt(MAEEL_FLOAT_SIZE),
+    Int(M_INT_SIZE),
+    Flt(M_FLOAT_SIZE),
     Sym(char),
 }
 
@@ -155,20 +155,20 @@ impl BocchiVM {
             );
 
             match token {
-                | Token::Sym(MAEEL_ADD!()) => binop!(|a, b: Cord| b.add(a), self, &file, line),
-                | Token::Sym(MAEEL_SUB!()) => binop!(|a, b: Cord| b.sub(a), self, &file, line),
-                | Token::Sym(MAEEL_MUL!()) => binop!(|a, b: Cord| b.mul(a), self, &file, line),
-                | Token::Sym(MAEEL_DIV!()) => binop!(|a, b: Cord| b.div(a), self, &file, line),
-                | Token::Sym(MAEEL_MOD!()) => binop!(|a, b: Cord| b.rem(a), self, &file, line),
-                | Token::Sym(MAEEL_EQ!()) => binop!(|a, b| Cord::Int((b == a) as MAEEL_INT_SIZE), self, &file, line),
-                | Token::Sym(MAEEL_LT!()) => binop!(|a, b| Cord::Int((b < a) as MAEEL_INT_SIZE), self, &file, line),
-                | Token::Sym(MAEEL_GT!()) => binop!(|a, b| Cord::Int((b > a) as MAEEL_INT_SIZE), self, &file, line),
+                | Token::Sym(M_ADD!()) => binop!(|a, b: Cord| b.add(a), self, &file, line),
+                | Token::Sym(M_SUB!()) => binop!(|a, b: Cord| b.sub(a), self, &file, line),
+                | Token::Sym(M_MUL!()) => binop!(|a, b: Cord| b.mul(a), self, &file, line),
+                | Token::Sym(M_DIV!()) => binop!(|a, b: Cord| b.div(a), self, &file, line),
+                | Token::Sym(M_MOD!()) => binop!(|a, b: Cord| b.rem(a), self, &file, line),
+                | Token::Sym(M_EQ!()) => binop!(|a, b| Cord::Int((b == a) as M_INT_SIZE), self, &file, line),
+                | Token::Sym(M_LT!()) => binop!(|a, b| Cord::Int((b < a) as M_INT_SIZE), self, &file, line),
+                | Token::Sym(M_GT!()) => binop!(|a, b| Cord::Int((b > a) as M_INT_SIZE), self, &file, line),
                 | Token::Str(_) | Token::Flt(_) | Token::Int(_) => self.push(token.into()),
                 | Token::Block(mut block) => {
                     block.reverse(); /* meow */
                     self.push(Cord::Fun((block.as_slice().into(), true)))
                 }
-                | Token::Sym(MAEEL_FUN_PUSH!()) => {
+                | Token::Sym(M_FUN_PUSH!()) => {
                     let fun_name /* Fun name */   = expect_token!(Name, tokens, file, line);
                     let fun      /* Fun object */ = funs.get(&fun_name).unwrap_or_else(|| {
                         emit_error!(file, line, format!("undefined function: {fun_name:?}"))
@@ -179,7 +179,7 @@ impl BocchiVM {
                         fun.1,         /* Is the function inline? */
                     )))
                 }
-                | Token::Sym(MAEEL_EXEC!()) /* Manually call a function */ => {
+                | Token::Sym(M_EXEC!()) /* Manually call a function */ => {
                     let fun /* Fun object */ = expect_stack!(Fun, self, file, line);
 
                     match fun.1 /* Fun inline descriptor */ {
@@ -189,18 +189,18 @@ impl BocchiVM {
                         ),
                     }
                 }
-                | Token::Sym(MAEEL_THEN!()) /* Basically "if" statement */ => {
-                    let temporary_token /* The boolean (actually an integer, anyways :3) */ = tokens.pop();
+                | Token::Sym(M_THEN!()) /* Basically "if" statement */ => {
+                    let tmp_token = tokens.pop();
 
-                    if expect_stack!(Int, self, file, line) == 1 {
-                        match temporary_token {
-                            | Some((Token::Block(temporary_tokens), _, _)) => {
-                                let temporary_tokens_len = temporary_tokens.len();
-                                for index in 0..(temporary_tokens_len) { /* Pushing from end to start */
-                                    tokens.push(temporary_tokens.get(temporary_tokens_len - index - 1).unwrap().clone())
+                    if expect_stack!(Int, self, file, line) /* The boolean (actually an integer, anyways :3) */ == 1 {
+                        match tmp_token {
+                            | Some((Token::Block(tmp_tokens), _, _)) => {
+                                let tmp_tokens_len = tmp_tokens.len();
+                                for idx in 0..(tmp_tokens_len) { /* Pushing from end to start */
+                                    tokens.push(tmp_tokens.get(tmp_tokens_len - idx - 1).unwrap().clone())
                                 }
                             },
-                            | Some(temporary_token) => tokens.push(temporary_token),
+                            | Some(tmp_token) => tokens.push(tmp_token),
                             | None => emit_error!(file, line, "expected something after '?'"),
                         }
                     }
@@ -211,43 +211,39 @@ impl BocchiVM {
                         self.pop().unwrap_or_else(|_| emit_error!(file, line, "stack is empty! (maeel)")),
                     );
                 }
-                | Token::Sym(MAEEL_DEF!()) /* Assign stack top value to next identifier */ => {
+                | Token::Sym(M_DEF!()) /* Assign stack top value to next name */ => {
                     let name = expect_token!(Name, tokens, file, line);
-
                     if name.starts_with("__") /* Private field */ { panic!(/* TODO: make the error message */) }
-
-                    vars.insert(
-                        name, self.pop().unwrap_or_else(|_| emit_error!(file, line, "stack is empty!")),
-                    );
+                    vars.insert(name, self.pop().unwrap_or_else(|_| emit_error!(file, line, "stack is empty!")));
                 }
-                | Token::Sym(character) => emit_error!(file, line, format!("unknown symbol: {character}.")),
-                | Token::Name(identifier) => match identifier.as_str() {
-                    | MAEEL_PUTS!() => print!("{}", self.pop().unwrap()),
-                    | MAEEL_EARRAY!() => self.push(Cord::Lst(Vec::new())),
-                    | MAEEL_FUN!() => {
-                        let mut fun_name = expect_token!(Name, tokens, file, line);
+                | Token::Sym(char) => emit_error!(file, line, format!("unknown symbol: {char}.")),
+                | Token::Name(name) => match name.as_str() {
+                    | M_PUTS!() => print!("{}", self.pop().unwrap() /* TODO: make an error message when stack is empty */),
+                    | M_EARRAY!() => self.push(Cord::Lst(Vec::new())),
+                    | M_FUN!() => {
+                        let mut fun_name   = expect_token!(Name, tokens, file, line);
                         let mut fun_tokens = Vec::default();
 
-                        let is_inline /* fun inline name */ = fun_name == MAEEL_INLINE!();
+                        let is_inline /* fun inline name */ = fun_name == M_INLINE!();
                         if is_inline { fun_name = expect_token!(Name, tokens, file, line) }
 
-                        while let Some(temporary_token) = tokens.pop() {
-                            match temporary_token.clone() {
-                                | (Token::Block(temporary_tokens), _, _) => {
+                        while let Some(tmp_token) = tokens.pop() {
+                            match tmp_token.clone() {
+                                | (Token::Block(tmp_tokens), _, _) => {
                                     fun_tokens.reverse(); /* uhm */
-                                    fun_tokens.extend(temporary_tokens);
+                                    fun_tokens.extend(tmp_tokens);
                                     fun_tokens.reverse(); /* never ask if maeel could be faster */
                                     break;
                                 }
                                 | (Token::Name(_), file, line) => {
-                                    fun_tokens.push(temporary_token);
+                                    fun_tokens.push(tmp_token);
                                     fun_tokens.push((Token::Sym('§'), file, line));
                                 }
-                                | (other, other_file, other_line) => {
+                                | (other, file, line) => {
                                     emit_error!(
-                                        other_file,
-                                        other_line,
-                                        format!("expected identifier(s) or a code block after 'fun {fun_name}'; got {other:?} instead.")
+                                        file,
+                                        line,
+                                        format!("expected name(s) or a code block after 'fun {fun_name}'; got {other:?} instead.")
                                     )
                                 }
                             }
@@ -255,53 +251,53 @@ impl BocchiVM {
 
                         funs.insert(fun_name.clone(), (fun_tokens.as_slice().into(), is_inline));
                     }
-                    | MAEEL_LEN!() => {
-                        let output = match self.pop() {
+                    | M_LEN!() => {
+                        let out = match self.pop() {
                             | Ok(Cord::Str(string)) => string.len(),
                             | Ok(Cord::Lst(xs)) => xs.len(),
                             | Ok(other) => emit_error!(file, line, format!("expected string or array, got {other:?}")),
                             | Err(_) => emit_error!(file, line, "expected string or array, got EOS."),
-                        } as MAEEL_INT_SIZE;
+                        } as M_INT_SIZE;
 
-                        self.push(Cord::Int(output))
+                        self.push(Cord::Int(out))
                     }
-                    | MAEEL_GET!() => {
-                        let index = expect_stack!(Int, self, file, line) as usize;
+                    | M_GET!() => {
+                        let idx = expect_stack!(Int, self, file, line) as usize;
 
                         match self.pop() {
                             | Ok(Cord::Lst(xs)) => self.push(
-                                xs.get(index)
-                                    .unwrap_or_else(|| {emit_error!(file, line, format!("unknown index: {index}"))})
+                                xs.get(idx)
+                                    .unwrap_or_else(|| {emit_error!(file, line, format!("unknown idx: {idx}"))})
                                     .clone(),
                             ),
                             | Ok(Cord::Str(string)) => self.push(Cord::Str(
                                 string
                                     .chars()
-                                    .nth(index)
-                                    .unwrap_or_else(|| {emit_error!(file, line, format!("unknown index: {index}"))})
+                                    .nth(idx)
+                                    .unwrap_or_else(|| {emit_error!(file, line, format!("unknown idx: {idx}"))})
                                     .to_string(),
                             )),
                             | Ok(other) => emit_error!(file, line, format!("unindexable: {other:?}")),
                             | _ => emit_error!(file, line, format!("unindexable: EOF")),
                         }
                     }
-                    | MAEEL_READ!() => {
+                    | M_READ!() => {
                         let buf_size = expect_stack!(Int, self, file, line);
-                        let mut buf = vec![0u8; buf_size as usize];
+                        let mut buf  = vec![0u8; buf_size as usize];
 
                         File::open(expect_stack!(Str, self, file, line)) /* Copy `buf_size` bytes from file to `buf` */
                             .unwrap()
                             .read_exact(&mut buf)
                             .unwrap();
 
-                        let content_bytes = buf /*  Convert 8 bytes size integers to MAEEL_INT_SIZE integers */
+                        let content_bytes = buf /*  Convert 8 bytes size integers to M_INT_SIZE integers */
                             .iter()
-                            .map(|byte| Cord::Int(*byte as MAEEL_INT_SIZE))
+                            .map(|byte| Cord::Int(*byte as M_INT_SIZE))
                             .collect();
 
                         self.push(Cord::Lst(content_bytes))
                     }
-                    | MAEEL_INCLUDE!() /* This is bad */ => {
+                    | M_INCLUDE!() /* This is bad */ => {
                         let target = expect_stack!(Str, self, file, line);
 
                         let content = match target.clone().as_str() {
@@ -311,23 +307,21 @@ impl BocchiVM {
                             }),
                         };
 
-                        let temporary_tokens = lex_into_tokens(&content, &target);
-                        let temporary_tokens_len = temporary_tokens.len();
+                        let tmp_tokens     = lex_into_tokens(&content, &target);
+                        let tmp_tokens_len = tmp_tokens.len();
 
                         /* Push tokens from end to start (reverse) */
-                        for index in 0..temporary_tokens_len {
-                            tokens.push(temporary_tokens.get(
-                                temporary_tokens_len - index - 1
-                            ).unwrap().clone())
+                        for idx in 0..tmp_tokens_len {
+                            tokens.push(tmp_tokens.get(tmp_tokens_len - idx - 1).unwrap().clone())
                         }
                     }
-                    identifier => {
-                        if let Some(value) = vars.get(identifier) /* Variable */ { self.push(value.clone()) }
-                        else if let Some(fun) = funs.get(identifier) /* Fun */ {
+                    name => {
+                        if let Some(value) = vars.get(name) /* Variable */ { self.push(value.clone()) }
+                        else if let Some(fun) = funs.get(name) /* Fun */ {
                             if fun.1 /* Inline function*/ { fun.0.iter().for_each(|token| tokens.push(token.clone())); }
                             else /* Non-inline */ { self.process_tokens(&mut fun.0.clone().to_vec(), &mut vars.clone(), funs, false); }
                         }
-                        else /* Oops :3 */ { emit_error!(file, line, format!("unknown identifier {identifier}")) }
+                        else /* Oops :3 */ { emit_error!(file, line, format!("unknown name {name}")) }
                     }
                 },
             };
@@ -377,7 +371,7 @@ impl PartialOrd for Cord {
             | (Self::Int(a), Self::Int(b)) => Some(a.cmp(b)),
             | (Self::Flt(a), Self::Flt(b)) => Some(a.total_cmp(b)),
             | (Self::Int(a), Self::Flt(b)) | (Self::Flt(b), Self::Int(a)) => {
-                Some(b.total_cmp(&(*a as MAEEL_FLOAT_SIZE)))
+                Some(b.total_cmp(&(*a as M_FLOAT_SIZE)))
             }
             | (a, b) => panic!("Cannot compare {a} and {b}"),
         }
@@ -391,7 +385,7 @@ impl PartialEq for Cord {
             | (Self::Lst(a), Self::Lst(b)) => a == b,
             | (Self::Int(a), Self::Int(b)) => a == b,
             | (Self::Flt(a), Self::Flt(b)) => a == b,
-            | (Self::Int(a), Self::Flt(b)) | (Self::Flt(b), Self::Int(a)) => (*a as MAEEL_FLOAT_SIZE) == *b,
+            | (Self::Int(a), Self::Flt(b)) | (Self::Flt(b), Self::Int(a)) => (*a as M_FLOAT_SIZE) == *b,
             | _ => false,
         }
     }
@@ -402,7 +396,7 @@ impl Cord {
         match (self, rhs) {
             | (Self::Int(m), Self::Int(n)) => Self::Int(m - n),
             | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x - y),
-            | (Self::Flt(x), Self::Int(m)) | (Self::Int(m), Self::Flt(x)) => Self::Flt(m as MAEEL_FLOAT_SIZE - x),
+            | (Self::Flt(x), Self::Int(m)) | (Self::Int(m), Self::Flt(x)) => Self::Flt(m as M_FLOAT_SIZE - x),
             | (a, b) => panic!("Cannot substract {a} and {b}"),
         }
     }
@@ -411,7 +405,7 @@ impl Cord {
         match (self, rhs) {
             | (Self::Int(m), Self::Int(n)) => Self::Int(m * n),
             | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x * y),
-            | (Self::Flt(x), Self::Int(m)) | (Self::Int(m), Self::Flt(x)) => Self::Flt(x * m as MAEEL_FLOAT_SIZE),
+            | (Self::Flt(x), Self::Int(m)) | (Self::Int(m), Self::Flt(x)) => Self::Flt(x * m as M_FLOAT_SIZE),
             | (Self::Int(m), Self::Str(s)) | (Self::Str(s), Self::Int(m)) => Self::Str(s.repeat(m as usize)),
             | (a, b) => panic!("Cannot multiply {a} and {b}"),
         }
@@ -422,7 +416,7 @@ impl Cord {
             | (Self::Str(a), Self::Str(b)) => Self::Str(a + &b),
             | (Self::Int(m), Self::Int(n)) => Self::Int(m + n),
             | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x + y),
-            | (Self::Int(m), Self::Flt(x)) | (Self::Flt(x), Self::Int(m)) => Self::Flt(m as MAEEL_FLOAT_SIZE + x),
+            | (Self::Int(m), Self::Flt(x)) | (Self::Flt(x), Self::Int(m)) => Self::Flt(m as M_FLOAT_SIZE + x),
             | (other, Self::Lst(mut xs)) | (Self::Lst(mut xs), other) => {
                 xs.push(other);
                 Self::Lst(xs)
@@ -435,18 +429,18 @@ impl Cord {
         match (self, rhs) {
             | (Self::Int(m), Self::Int(n)) => Self::Int(m % n),
             | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x % y),
-            | (Self::Int(m), Self::Flt(x)) => Self::Flt(m as MAEEL_FLOAT_SIZE % x),
-            | (Self::Flt(x), Self::Int(m)) => Self::Flt(x % m as MAEEL_FLOAT_SIZE),
+            | (Self::Int(m), Self::Flt(x)) => Self::Flt(m as M_FLOAT_SIZE % x),
+            | (Self::Flt(x), Self::Int(m)) => Self::Flt(x % m as M_FLOAT_SIZE),
             | (a, b) => panic!("Cannot divide {a} and {b}"),
         }
     }
 
     fn div(self, rhs: Self) -> Self {
         match (self, rhs) {
-            | (Self::Int(m), Self::Int(n)) => Self::Flt(m as MAEEL_FLOAT_SIZE / n as MAEEL_FLOAT_SIZE),
+            | (Self::Int(m), Self::Int(n)) => Self::Flt(m as M_FLOAT_SIZE / n as M_FLOAT_SIZE),
             | (Self::Flt(x), Self::Flt(y)) => Self::Flt(x / y),
-            | (Self::Int(m), Self::Flt(x)) => Self::Flt(m as MAEEL_FLOAT_SIZE / x),
-            | (Self::Flt(x), Self::Int(m)) => Self::Flt(x / m as MAEEL_FLOAT_SIZE),
+            | (Self::Int(m), Self::Flt(x)) => Self::Flt(m as M_FLOAT_SIZE / x),
+            | (Self::Flt(x), Self::Int(m)) => Self::Flt(x / m as M_FLOAT_SIZE),
             | (a, b) => panic!("Cannot divide {a} and {b}"),
         }
     }
@@ -465,46 +459,45 @@ impl From<Token> for Cord {
 }
 
 fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
-    let mut depth      = 0;
-    let mut line       = 1;
-    let mut tokens     = Vec::default();
-    let mut characters = code.chars().peekable();
+    let mut depth  = 0;
+    let mut line   = 1;
+    let mut tokens = Vec::default();
+    let mut chars  = code.chars().peekable();
 
-    while let Some(character) = characters.next() {
-        match character {
+    while let Some(char) = chars.next() {
+        match char {
             | '\n' /* Ignore new lines */ => line += 1,
             | ' ' | '\t' => /* Ignore whitespaces */ continue,
-            | MAEEL_COMMENT_START!() => { characters.by_ref().find(|&c| c == '\n'); }
-            | MAEEL_BLOCK_START!() | MAEEL_BLOCK_END!() => {
-                tokens.push((Token::Sym(character), file, line));
-                depth += if character == MAEEL_BLOCK_START!() { 1 } else { -1 };
+            | M_COMMENT_START!() => { chars.by_ref().find(|&c| c == '\n'); }
+            | M_BLOCK_START!() | M_BLOCK_END!() => {
+                tokens.push((Token::Sym(char), file, line));
+                depth += if char == M_BLOCK_START!() { 1 } else { -1 };
             }
 
-            | MAEEL_STR!() /* Dirty strings */ => {
-                let content_vector = characters.by_ref().take_while(|&character| character != MAEEL_STR!()).collect::<Vec<char>>();
-                let mut index = 0;
-                let mut content = String::with_capacity(content_vector.len());
+            | M_STR!() /* Dirty strings */ => {
+                let content_vector = chars.by_ref().take_while(|&char| char != M_STR!()).collect::<Vec<char>>();
+                let mut idx      = 0;
+                let mut content    = String::with_capacity(content_vector.len());
 
-                while index < content_vector.len() {
-                    let character = content_vector[index];
-                    index += 1;
+                while idx < content_vector.len() {
+                    let char = content_vector[idx];
+                    idx += 1;
 
-                    content.push(match (character, content_vector.get(index)) {
-                        ('\\', Some(next_character)) => {
-                            index += 1;
+                    content.push(match (char, content_vector.get(idx)) {
+                        | ('\\', Some(next_char)) => {
+                            idx += 1;
 
-                            match next_character {
+                            match next_char {
                                 | 'n' => '\n',
                                 | 't' => '\t',
                                 | '\\' => '\\',
-                                | MAEEL_STR!() => MAEEL_STR!(),
-                                | _ => emit_error!(file, line, format!("invalid escape sequence: \\{next_character}"))
+                                | M_STR!() => M_STR!(),
+                                | _ => emit_error!(file, line, format!("invalid escape sequence: \\{next_char}"))
                             }
                         }
 
-                        ('\\', None) => emit_error!(file, line, "incomplete escape sequence"),
-
-                        _ => character,
+                        | ('\\', None) => emit_error!(file, line, "incomplete escape sequence"),
+                        | _ => char,
                     });
                 }
 
@@ -512,12 +505,12 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
             }
 
             | 'a'..='z' | 'A'..='Z' | '_' | 'α'..='ω' /* Create some variables :3 */ => tokens.push((
-                Token::Name(take_with_predicate!(character, characters, |&c| c.is_alphanumeric() || c == '_')),
+                Token::Name(take_with_predicate!(char, chars, |&c| c.is_alphanumeric() || c == '_')),
                 file, line,
             )),
 
             | '0'..='9' /* Do some maths :3 */ => {
-                let content = take_with_predicate!(character, characters, |&c| c.is_ascii_digit() || c == '.' || c == '_');
+                let content = take_with_predicate!(char, chars, |&c| c.is_ascii_digit() || c == '.' || c == '_');
 
                 tokens.push((
                     if content.contains('.') { Token::Flt(content.parse().unwrap()) }
@@ -526,42 +519,42 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
                 ));
             }
 
-            _ => tokens.push((Token::Sym(character), file, line)),
+            | _ => tokens.push((Token::Sym(char), file, line)),
         }
     }
 
     assert_eq!(depth, 0);
 
     /* We need to parse differents code blocks now */
-    let mut stack = Vec::default();
-    let mut output = Vec::default();
-    let mut temporary_tokens = Vec::default();
+    let mut stack      = Vec::default();
+    let mut out        = Vec::default();
+    let mut tmp_tokens = Vec::default();
 
     for token in tokens.iter() {
         match token {
-            | (Token::Sym(MAEEL_BLOCK_START!()), _, _) /* Code block inside code block, meh */ => {
-                stack.push(temporary_tokens);
-                temporary_tokens = Vec::default();
+            | (Token::Sym(M_BLOCK_START!()), _, _) /* Code block inside code block, meh */ => {
+                stack.push(tmp_tokens);
+                tmp_tokens = Vec::default();
             }
-            | (Token::Sym(MAEEL_BLOCK_END!()), _, _) /* Something is done, lets figure out what it is :3 */ => {
-                let mut nested_tokens = temporary_tokens.clone(); /* This operation must be veryyy expensive in time/memory usage */
+            | (Token::Sym(M_BLOCK_END!()), _, _) /* Something is done, lets figure out what it is :3 */ => {
+                let mut nested_tokens = tmp_tokens.clone(); /* This operation must be veryyy expensive in time/memory usage */
                 match stack.pop() {
                     | Some(previous_tokens) /* Finished to parse the code block inside current code block */ => {
-                        temporary_tokens = previous_tokens;
-                        temporary_tokens.push((Token::Block(nested_tokens), file.into(), line));
+                        tmp_tokens = previous_tokens;
+                        tmp_tokens.push((Token::Block(nested_tokens), file.into(), line));
                     }
                     | None /* Current code block parsing is done */ => {
                         nested_tokens.reverse();
-                        output.push((Token::Block(nested_tokens), file.to_string(), line))
+                        out.push((Token::Block(nested_tokens), file.to_string(), line))
                     },
                 }
             }
-            | (other_token, other_file, other_line) => temporary_tokens.push((other_token.clone(), other_file.to_string(), *other_line)),
+            | (token, file, line) => tmp_tokens.push((token.clone(), file.to_string(), *line)),
         }
     }
 
-    output.append(&mut temporary_tokens);
-    output
+    out.append(&mut tmp_tokens);
+    out
 }
 
 fn main() {
