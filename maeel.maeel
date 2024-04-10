@@ -2,24 +2,16 @@
 fun inline drop __ ()
 
 # Duplicate stack top element
-fun inline dup __a (
-    __a __a
-)
+fun inline dup __a (__a __a)
 
 # Rotate stack top 3 elements
-fun inline rot __a __b __c (
-    __c __a __b
-)
+fun inline rot __a __b __c (__c __a __b)
 
 # Swap stack top 2 elements
-fun inline swap __a __b (
-    __b __a
-)
+fun inline swap __a __b (__b __a)
 
 # Duplicate the element under stack top
-fun inline over __a __b (
-    __a __b __a
-)
+fun inline over __a __b (__a __b __a)
 
 # While loop implementation
 fun inline while __fn __pr (
@@ -39,14 +31,11 @@ fun inline for __xs __for_loop_fn (
     (
         __xs _maeel_for_loop_index get  # push list current element
         __for_loop_fn!                  # execute loop block
-
         _maeel_for_loop_index 1 +~ _maeel_for_loop_index  # increment current index
     )
 
     # make sure we aren't doing an "index out of range" [1]
-    (
-        _maeel_for_loop_index _maeel_for_loop_xs_len <
-    )
+    (_maeel_for_loop_index _maeel_for_loop_xs_len <)
 
     while  # continue until: index = len(xs) [1]
 )
@@ -55,62 +44,52 @@ fun inline for __xs __for_loop_fn (
 fun matchp value mapper predicate (
     mapper len ~ mapper_len
 
-    array 0 (
-        dup even ? (
+    list 0 (
+        dup 2% 0= ? (
             mapper over get value predicate!
-            ? (
-                mapper over 1+ get rot rot+ swap
-            )
+            ? (mapper over 1+ get rot rot+ swap)
         ) 1+
     ) (dup mapper_len <) while
 
     drop
 )
 
-fun inline match (
-    (=) matchp 0 get
-)
+fun inline match ((=) matchp 0 get)
 
 fun reverse xs (
-    array ~ ys
-    xs len (1- dup xs swap get ys +~ ys) (dup 1 gteq) while
-    drop ys
+    list ~ ys xs len (1- dup xs swap get ys +~ ys) (dup 1 < not) while drop ys
 )
 
 fun contains xs x (
-    xs len ~xs_len 0 ~i 0
-    (xs i get x = ? (drop 1) i inc ~i)
-    (i xs_len <) while
+    xs len ~xs_len 0 ~i 0 (xs i get x = ? (drop 1) i 1+ ~i) (i xs_len <) while
 )
 
-"__maeel_array_start"  ~ Array
+"__maeel_list_start"  ~ List
 "__maeel_yarra_start"  ~ Yarra
 "__maeel_mapper_start" ~ Mapper
 
 fun end (
-    array
-        Array  +
+    list
+        List  +
         Mapper +
         Yarra  +
 
     ~ stop_keywords
 
-    array ~ output
+    list ~ output
     (output +~ output) (dup stop_keywords swap contains not) while
 
-    array
-        Array+ (output reverse)+
+    list
+        List+ (output reverse)+
 
         Yarra+ (output)+
 
         Mapper+ (
             0 ~ i
             output len ~ lst_len
-            array ~ mapper
+            list ~ mapper
             output (
-                i even ?
-                    (array output i 1+ get+ output i get+ mapper +~ mapper)
-                i 1 +~ i
+                i even ? (list output i 1+ get+ output i get+ mapper +~ mapper) i 1 +~ i
             ) (i lst_len <) while
 
             mapper
@@ -119,219 +98,72 @@ fun end (
     match!
 )
 
-fun take1 a (
-    array a+
-)
+fun take1 a (List a end)
 
-fun take2 a b (
-    array a+ b+
-)
+fun take2 a b (List a b end)
 
-fun take3 a b c (
-    array a+ b+ c+
-)
+fun take3 a b c (List a b c end)
 
-fun take4 a b c d (
-    array a+ b+ c+ d+
-)
+fun take4 a b c d (List a b c d end)
 
-fun inline take (
-    0 swap range array swap (drop +) for reverse
-)
+fun inline take (0 swap range list swap (drop +) for reverse)
 
-fun inline first (
-    0 get
-)
+fun count x (0 swap (x = pom ? 0 ? (1 swap) +) for)
 
-fun inline second (
-    1 get
-)
+fun range b (list swap (dup rot+ swap 1+) (dup b<) while drop)
 
-fun inline third (
-    3 get
-)
+fun inline last (dup len 1- get)
 
-fun inline fourth (
-    4 get
-)
+fun inline merge (list rot rot (+) for swap (+) for)
 
-fun count x (
-    0 swap (x = pom ? 0 ? (1 swap) +) for
-)
+fun inline map (list rot swap (over! rot rot+ swap) for drop)
 
-fun range b (
-    array swap
-    (dup rot+ swap inc) (dup b<) while
-    drop
-)
+fun inline reduce (swap ~ _reduce_fn swap (swap _reduce_fn!) for)
 
-fun inline last (
-    dup len dec get
-)
+fun filter pr (list ~ xs (dup pr! ? (xs swap +~ xs)) for xs)
 
-fun inline merge (
-    array rot rot (+) for swap (+) for
-)
-
-fun pop (
-    array ~ ys
-    dup len ~ xs_len
-    dup first take1 ~ y ~ xs
-    1 (xs over get ys+ ~ys inc) (dup xs_len<) while
-    ys y+ swap drop
-)
-
-fun inline push (
-    take1 (+) swap reduce
-)
-
-fun inline map (
-    array rot swap
-
-    (over! rot rot+ swap) for
-
-    drop
-)
-
-fun inline reduce (
-    swap ~ _reduce_fn swap
-
-    (swap _reduce_fn!) for
-)
-
-fun filter pr (
-    array ~ xs
-    (dup pr! ? (xs swap +~ xs)) for
-    xs
-)
-
-
-fun ifelse (
-    1 rot 0 swap take4 match!
-)
+fun ifelse (1 rot 0 swap take4 match!)
 
 fun inline and (*)
 
 fun inline or (+ 0= 1 swap-)
 
-fun inline not (1 swap -)
+fun inline not (1 swap-)
 
 fun inline xor (+ 2%)
 
 fun inline pom (dup not)
+
 fun inline mop (pom swap)
 
-fun inline lteq (over over< rot= + null not)
-fun inline gteq (over over> rot= + null not)
+fun fact (dup (1- dup rot * swap) (dup 1 >) while drop)
 
-3.14159265359 dup ~ PI ~ π
-2.71828182846 ~ e
-
-fun fact (dup (dec dup rot * swap) (dup 1 >) while drop)
-
-fun fact1 (1+ 1 swap range product)
+fun fact1 (1+ 1 swap range (*) 1 reduce)
 
 fun sqrt x (x 0.5* 0 5 range (swap dup x swap/ swap+ 0.5* swap drop) for)
 
-fun log base x (
-	0 (inc x base /~ x) (x base gteq) while
-)
+fun log base x (0 (1+ x base /~ x) (x base < not) while)
 
-fun pow base exp (
-	array 0 exp range (drop base+) for product
-)
+fun pow base exp (list 0 exp range (drop base+) for (*) 1 reduce )
 
-fun exp x (e x pow)
+fun inline print (dup puts)
 
-fun gcd n1 n2 (
-	n1 n2> ? (n2 ~smaller)
-	n1 n2 lteq ? (n1 ~smaller)
+fun inline puts_digit (int2char print drop)
 
-	1 dup ~hcf
+fun inline putsln (puts "\n" puts)
 
-	smaller inc range (~i n1 i divides n2 i divides and ? (i ~hcf)) for
-
-	hcf
-)
-
-fun inline inverse (1 swap/)
-
-fun inline square (dup *)
-
-fun inline cube (dup dup **)
-
-fun inline divides (% null)
-
-fun inline even (2 divides)
-
-fun inline odd (2 divides not)
-
-fun inline pom (dup not)
-
-fun inline sum ((+) 0 reduce)
-
-fun inline product ((*) 1 reduce)
-
-fun inline null (0=)
-
-fun inline inc (1+)
-
-fun inline dec (1-)
-
-fun approx_sin (PI * 180 / PI % dup 3 pow 6 / swap dup 5 pow 120 / swap dup 7 pow 5040 / swap dup 9 pow 362880 / - + swap - + swap -)
-
-fun inline panic (
-    "PANIC: %" format putsln 1 0 %
-)
-
-fun inline assert_eq (rot = dup bool2string rot rot "% (%)" format putsln not ? ("" panic))
-
-
-fun inline print (
-    dup puts
-)
-
-fun inline puts_digit (
-    int2char print drop
-)
-
-fun inline putsln (
-    puts "\n" puts
-)
-
-fun inline println (
-    print "\n" puts
-)
+fun inline println (print "\n" puts)
 
 fun format (
     "" ~ output
-
-    (
-        dup ~ char
-        "%" = (output swap) (output char) ifelse +~ output
-    ) for
-
+    (dup ~ char "%" = (output swap) (output char) ifelse +~ output) for
     output
-)
-
-
-fun inline string2array (
-    array swap (+) for
-)
-
-fun inline int2char (
-    Array
-        0 "0" 1 "1" 2 "2" 3 "3" 4 "4"
-        5 "5" 6 "6" 7 "7" 8 "8" 9 "9"
-    end
-
-    match
 )
 
 fun inline int (
     0 swap (
         swap 10 * swap
-        Array
+        List
             "0" 0 "1" 1 "2" 2 "3" 3 "4" 4
             "5" 5 "6" 6 "7" 7 "8" 8 "9" 9
         end
@@ -339,10 +171,4 @@ fun inline int (
     ) for
 )
 
-fun inline array2string (
-   "" swap (+) for
-)
-
-fun unix_random_numbers n mod (
-    "/dev/random" n read (mod %) map
-)
+fun unix_random_numbers n mod ("/dev/random" n read (mod %) map)

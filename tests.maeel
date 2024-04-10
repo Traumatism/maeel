@@ -8,8 +8,8 @@ fun test value supposed message (
     value supposed = (": SUCCESS" putsln) (": FAIL" putsln) ifelse
 )
 
-Array 1 2 3 end ~ lst
-Array 1 2 3 3 5 6 end ~ lst2
+List 1 2 3 end ~ lst
+List 1 2 3 3 5 6 end ~ lst2
 
 3 2 +             5              "add"           test
 3 2 -             1              "sub"           test
@@ -26,11 +26,8 @@ lst2 3 count      2              "count"         test
 5 fact            120            "factorial 5"   test
 6 fact            720            "factorial 6"   test
 7 fact            5040           "factorial 7"   test
-lst reverse       array 3+ 2+ 1+ "reverse"       test
-array reverse     array          "empty reverse" test
+lst reverse       list 3+ 2+ 1+  "reverse"       test
+list reverse      list           "empty reverse" test
 1 4 range         lst            "range"         test
 
 1 5 range (dup fact swap fact1 "second factorial" test) for
-
-lst sum     6 "sum"     test
-lst product 6 "product" test

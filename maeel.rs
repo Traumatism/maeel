@@ -9,13 +9,15 @@ use std::fs::File;
 use std::io::Read;
 
 /* Assign names to literals */
-macro_rules! alias { ($($name:ident, $value:expr),* $(,)?) => { $(macro_rules! $name {() => { $value }} )* } }
+macro_rules! alias {
+    ($($name:ident, $value:expr),* $(,)?) => { $(macro_rules! $name {() => { $value }} )* }
+}
 
 alias!(
     M_FUN,           "fun",
     M_INLINE,        "inline",
     M_INCLUDE,       "include",
-    M_EARRAY,        "array",
+    M_ELIST,         "list",
     M_PUTS,          "puts",
     M_READ,          "read",
     M_LEN,           "len",
@@ -49,10 +51,8 @@ macro_rules! expect_token {
     ($token:tt, $tokens:expr, $fl:expr, $line:expr) => {{
         match $tokens.pop() {
             | Some((Token::$token(value), _, _)) => value,
-            | Some((other, file, line)) => emit_error!(
-                file, line, format!("expected {:?}, got {other:?}", TokenRepr::$token)
-            ),
-            | None => emit_error!($fl, $line, format!("expected {:?}, got EOF", TokenRepr::$token)),
+            | Some((other, file, line))          => emit_error!(file, line, format!("expected {:?}, got {other:?}", TokenRepr::$token)),
+            | None                               => emit_error!($fl, $line, format!("expected {:?}, got EOF", TokenRepr::$token)),
         }
     }};
 }
@@ -61,8 +61,8 @@ macro_rules! expect_stack {
     ($tpe:tt, $stack:expr, $fl:expr, $line:expr) => {{
         match $stack.pop() {
             | Ok(Cord::$tpe(value)) => value,
-            | Ok(other) => emit_error!($fl, $line, format!("expected {:?} on the stack, got {other:?}", CordRepr::$tpe)),
-            | Err(_) => emit_error!($fl, $line, format!("expected {:?}, got EOF", CordRepr::$tpe)),
+            | Ok(other)             => emit_error!($fl, $line, format!("expected {:?} on the stack, got {other:?}", CordRepr::$tpe)),
+            | Err(_)                => emit_error!($fl, $line, format!("expected {:?}, got EOF", CordRepr::$tpe)),
         }
     }};
 }
@@ -123,10 +123,7 @@ enum Token {
 #[derive(Debug)] enum TokenRepr { Block, Str, Name, Int, Flt, Sym }
 
 /* A node in Maeel Stack VM */
-struct Guitar {
-    value: Cord,
-    next: *mut Guitar,
-}
+struct Guitar { value: Cord, next: *mut Guitar }
 
 impl Guitar {
     fn new(value: Cord) -> *mut Self {
@@ -135,9 +132,7 @@ impl Guitar {
 }
 
 /* Maeel Stack VM */
-struct BocchiVM {
-    head: *mut Guitar,
-}
+struct BocchiVM { head: *mut Guitar }
 
 impl BocchiVM {
     fn process_tokens(
@@ -196,6 +191,7 @@ impl BocchiVM {
                         match tmp_token {
                             | Some((Token::Block(tmp_tokens), _, _)) => {
                                 let tmp_tokens_len = tmp_tokens.len();
+
                                 for idx in 0..(tmp_tokens_len) { /* Pushing from end to start */
                                     tokens.push(tmp_tokens.get(tmp_tokens_len - idx - 1).unwrap().clone())
                                 }
@@ -210,7 +206,7 @@ impl BocchiVM {
                         expect_token!(Name, tokens, file, line),
                         self.pop().unwrap_or_else(|_| emit_error!(file, line, "stack is empty! (maeel)")),
                     );
-                }
+            }
                 | Token::Sym(M_DEF!()) /* Assign stack top value to next name */ => {
                     let name = expect_token!(Name, tokens, file, line);
                     if name.starts_with("__") /* Private field */ { panic!(/* TODO: make the error message */) }
@@ -219,7 +215,7 @@ impl BocchiVM {
                 | Token::Sym(char) => emit_error!(file, line, format!("unknown symbol: {char}.")),
                 | Token::Name(name) => match name.as_str() {
                     | M_PUTS!() => print!("{}", self.pop().unwrap() /* TODO: make an error message when stack is empty */),
-                    | M_EARRAY!() => self.push(Cord::Lst(Vec::new())),
+                    | M_ELIST!() => self.push(Cord::Lst(Vec::new())),
                     | M_FUN!() => {
                         let mut fun_name   = expect_token!(Name, tokens, file, line);
                         let mut fun_tokens = Vec::default();
@@ -254,9 +250,9 @@ impl BocchiVM {
                     | M_LEN!() => {
                         let out = match self.pop() {
                             | Ok(Cord::Str(string)) => string.len(),
-                            | Ok(Cord::Lst(xs)) => xs.len(),
-                            | Ok(other) => emit_error!(file, line, format!("expected string or array, got {other:?}")),
-                            | Err(_) => emit_error!(file, line, "expected string or array, got EOS."),
+                            | Ok(Cord::Lst(xs))     => xs.len(),
+                            | Ok(other)             => emit_error!(file, line, format!("expected string or list, got {other:?}")),
+                            | Err(_)                => emit_error!(file, line, "expected string or list, got EOS."),
                         } as M_INT_SIZE;
 
                         self.push(Cord::Int(out))
@@ -302,7 +298,7 @@ impl BocchiVM {
 
                         let content = match target.clone().as_str() {
                             | "maeel" => include_str!("maeel.maeel").to_string(),
-                            | _ => std::fs::read_to_string(&target).unwrap_or_else(|_| {
+                            | _       => std::fs::read_to_string(&target).unwrap_or_else(|_| {
                                 emit_error!(file, line, "failed to include file")
                             }),
                         };
@@ -315,13 +311,18 @@ impl BocchiVM {
                             tokens.push(tmp_tokens.get(tmp_tokens_len - idx - 1).unwrap().clone())
                         }
                     }
-                    name => {
-                        if let Some(value) = vars.get(name) /* Variable */ { self.push(value.clone()) }
-                        else if let Some(fun) = funs.get(name) /* Fun */ {
-                            if fun.1 /* Inline function*/ { fun.0.iter().for_each(|token| tokens.push(token.clone())); }
-                            else /* Non-inline */ { self.process_tokens(&mut fun.0.clone().to_vec(), &mut vars.clone(), funs, false); }
+                    | name => {
+                        if let Some(value) = vars.get(name) /* Variable */ {
+                            self.push(value.clone())
+                        } else if let Some(fun) = funs.get(name) /* Fun */ {
+                            if fun.1 /* Inline function*/ {
+                                fun.0.iter().for_each(|token| tokens.push(token.clone()));
+                            } else /* Non-inline */ {
+                                self.process_tokens(&mut fun.0.clone().to_vec(), &mut vars.clone(), funs, false);
+                            }
+                        } else /* Oops :3 */ {
+                            emit_error!(file, line, format!("unknown name {name}"))
                         }
-                        else /* Oops :3 */ { emit_error!(file, line, format!("unknown name {name}")) }
                     }
                 },
             };
@@ -349,10 +350,10 @@ impl BocchiVM {
 impl std::fmt::Display for Cord {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            | Self::Str(x) => write!(f, "{}", x),
-            | Self::Fun(_) => write!(f, "Fun"),
-            | Self::Flt(x) => write!(f, "{}", x),
-            | Self::Int(x) => write!(f, "{}", x),
+            | Self::Str(x)  => write!(f, "{}", x),
+            | Self::Fun(_)  => write!(f, "Fun"),
+            | Self::Flt(x)  => write!(f, "{}", x),
+            | Self::Int(x)  => write!(f, "{}", x),
             | Self::Lst(xs) => {
                 write!(f, "{{")?;
                 xs.iter().enumerate().for_each(|(i, x)| {
@@ -449,11 +450,11 @@ impl Cord {
 impl From<Token> for Cord {
     fn from(val: Token) -> Self {
         match val {
-            | Token::Str(x) => Cord::Str(x),
-            | Token::Int(x) => Cord::Int(x),
-            | Token::Flt(x) => Cord::Flt(x),
+            | Token::Str(x)   => Cord::Str(x),
+            | Token::Int(x)   => Cord::Int(x),
+            | Token::Flt(x)   => Cord::Flt(x),
             | Token::Block(x) => Cord::Fun((x.as_slice().into(), false)),
-            | _ => panic!(),
+            | _               => panic!(),
         }
     }
 }
@@ -476,7 +477,7 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 
             | M_STR!() /* Dirty strings */ => {
                 let content_vector = chars.by_ref().take_while(|&char| char != M_STR!()).collect::<Vec<char>>();
-                let mut idx      = 0;
+                let mut idx        = 0;
                 let mut content    = String::with_capacity(content_vector.len());
 
                 while idx < content_vector.len() {
@@ -488,14 +489,13 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
                             idx += 1;
 
                             match next_char {
-                                | 'n' => '\n',
-                                | 't' => '\t',
-                                | '\\' => '\\',
+                                | 'n'      => '\n',
+                                | 't'      => '\t',
+                                | '\\'     => '\\',
                                 | M_STR!() => M_STR!(),
-                                | _ => emit_error!(file, line, format!("invalid escape sequence: \\{next_char}"))
+                                | _        => emit_error!(file, line, format!("invalid escape sequence: \\{next_char}"))
                             }
                         }
-
                         | ('\\', None) => emit_error!(file, line, "incomplete escape sequence"),
                         | _ => char,
                     });
