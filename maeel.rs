@@ -178,26 +178,20 @@ impl BocchiVM {
                     let fun /* Fun object */ = expect_stack!(Fun, self, file, line);
 
                     match fun.1 /* Fun inline descriptor */ {
-                        | true => /* Push the tokens on the token stack */ fun.0.iter().for_each(|token| tokens.push(token.clone())),
+                        | true  => /* Push the tokens on the token stack */ fun.0.iter().for_each(|token| tokens.push(token.clone())),
                         | false => /* Call a new tokens processor */ self.process_tokens(
                             &mut fun.0.to_vec(), &mut vars.clone(), funs, true
                         ),
                     }
                 }
                 | Token::Sym(M_THEN!()) /* Basically "if" statement */ => {
-                    let tmp_token = tokens.pop();
+                    let tmp_tokens = expect_token!(Block, tokens, file, line);
 
                     if expect_stack!(Int, self, file, line) /* The boolean (actually an integer, anyways :3) */ == 1 {
-                        match tmp_token {
-                            | Some((Token::Block(tmp_tokens), _, _)) => {
-                                let tmp_tokens_len = tmp_tokens.len();
+                        let tmp_tokens_len = tmp_tokens.len();
 
-                                for idx in 0..(tmp_tokens_len) { /* Pushing from end to start */
-                                    tokens.push(tmp_tokens.get(tmp_tokens_len - idx - 1).unwrap().clone())
-                                }
-                            },
-                            | Some(tmp_token) => tokens.push(tmp_token),
-                            | None => emit_error!(file, line, "expected something after '?'"),
+                        for idx in 0..(tmp_tokens_len) { /* Pushing from end to start */
+                            tokens.push(tmp_tokens.get(tmp_tokens_len - idx - 1).unwrap().clone())
                         }
                     }
                 }
@@ -219,8 +213,8 @@ impl BocchiVM {
                     | M_FUN!() => {
                         let mut fun_name   = expect_token!(Name, tokens, file, line);
                         let mut fun_tokens = Vec::default();
+                        let is_inline      = fun_name == M_INLINE!();
 
-                        let is_inline /* fun inline name */ = fun_name == M_INLINE!();
                         if is_inline { fun_name = expect_token!(Name, tokens, file, line) }
 
                         while let Some(tmp_token) = tokens.pop() {
@@ -312,15 +306,14 @@ impl BocchiVM {
                         }
                     }
                     | name => {
-                        if let Some(value) = vars.get(name) /* Variable */ {
+                        if let Some(value) = vars.get(name) {
                             self.push(value.clone())
-                        } else if let Some(fun) = funs.get(name) /* Fun */ {
-                            if fun.1 /* Inline function*/ {
-                                fun.0.iter().for_each(|token| tokens.push(token.clone()));
-                            } else /* Non-inline */ {
-                                self.process_tokens(&mut fun.0.clone().to_vec(), &mut vars.clone(), funs, false);
+                        } else if let Some(fun) = funs.get(name) {
+                            match fun.1 {
+                                | true  => fun.0.iter().for_each(|t| tokens.push(t.clone())),
+                                | false => self.process_tokens(&mut fun.0.to_vec(), &mut vars.clone(), funs, false),
                             }
-                        } else /* Oops :3 */ {
+                        } else {
                             emit_error!(file, line, format!("unknown name {name}"))
                         }
                     }
@@ -338,11 +331,13 @@ impl BocchiVM {
 
     /* Drop-and-return the stack head */
     fn pop(&mut self) -> Result<Cord, Box<dyn std::error::Error>> {
-        if self.head.is_null() { Err("Stack is empty".into()) }
-        else {
-            let current_head = unsafe { Box::from_raw(self.head) };
-            self.head = current_head.next;
-            Ok(current_head.value)
+        match self.head.is_null() {
+            | true => Err("Stack is empty".into()),
+            | false => {
+                let current_h = unsafe { Box::from_raw(self.head) };
+                self.head = current_h.next;
+                Ok(current_h.value)
+            }
         }
     }
 }
@@ -467,14 +462,17 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 
     while let Some(char) = chars.next() {
         match char {
-            | '\n' /* Ignore new lines */ => line += 1,
-            | ' ' | '\t' => /* Ignore whitespaces */ continue,
+            | '\n' => line += 1,
+            | ' ' | '\t' => continue,
             | M_COMMENT_START!() => { chars.by_ref().find(|&c| c == '\n'); }
             | M_BLOCK_START!() | M_BLOCK_END!() => {
                 tokens.push((Token::Sym(char), file, line));
-                depth += if char == M_BLOCK_START!() { 1 } else { -1 };
-            }
 
+                depth += match char == M_BLOCK_START!() {
+                    | true => 1,
+                    | false => -1
+                }
+            }
             | M_STR!() /* Dirty strings */ => {
                 let content_vector = chars.by_ref().take_while(|&char| char != M_STR!()).collect::<Vec<char>>();
                 let mut idx        = 0;
@@ -503,22 +501,21 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 
                 tokens.push((Token::Str(content), file, line))
             }
-
             | 'a'..='z' | 'A'..='Z' | '_' | 'α'..='ω' /* Create some variables :3 */ => tokens.push((
                 Token::Name(take_with_predicate!(char, chars, |&c| c.is_alphanumeric() || c == '_')),
                 file, line,
             )),
-
             | '0'..='9' /* Do some maths :3 */ => {
-                let content = take_with_predicate!(char, chars, |&c| c.is_ascii_digit() || c == '.' || c == '_');
+                let content = take_with_predicate!(char, chars, |&c| c.is_ascii_digit() || c == '.');
 
                 tokens.push((
-                    if content.contains('.') { Token::Flt(content.parse().unwrap()) }
-                    else { Token::Int(content.parse().unwrap()) },
+                    match content.contains('.') {
+                        | true => Token::Flt(content.parse().unwrap()),
+                        | false => Token::Int(content.parse().unwrap())
+                    },
                     file, line,
                 ));
             }
-
             | _ => tokens.push((Token::Sym(char), file, line)),
         }
     }
@@ -526,6 +523,7 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
     assert_eq!(depth, 0);
 
     /* We need to parse differents code blocks now */
+    /* TODO: rework on this algorithm */
     let mut stack      = Vec::default();
     let mut out        = Vec::default();
     let mut tmp_tokens = Vec::default();
