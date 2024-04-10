@@ -64,15 +64,13 @@ fun contains xs x (
     xs len ~xs_len 0 ~i 0 (xs i get x = ? (drop 1) i 1+ ~i) (i xs_len <) while
 )
 
-"__maeel_list_start"  ~ List
-"__maeel_yarra_start"  ~ Yarra
+"__maeel_list_start"   ~ List
 "__maeel_mapper_start" ~ Mapper
 
 fun end (
     list
         List  +
         Mapper +
-        Yarra  +
 
     ~ stop_keywords
 
@@ -81,8 +79,6 @@ fun end (
 
     list
         List+ (output reverse)+
-
-        Yarra+ (output)+
 
         Mapper+ (
             0 ~ i
@@ -108,7 +104,7 @@ fun take4 a b c d (List a b c d end)
 
 fun inline take (0 swap range list swap (drop +) for reverse)
 
-fun count x (0 swap (x = pom ? 0 ? (1 swap) +) for)
+fun count x (0 swap (x = pom ? (0) ? (1 swap) +) for)
 
 fun range b (list swap (dup rot+ swap 1+) (dup b<) while drop)
 
@@ -172,3 +168,4 @@ fun inline int (
 )
 
 fun unix_random_numbers n mod ("/dev/random" n read (mod %) map)
+
