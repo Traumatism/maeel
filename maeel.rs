@@ -144,11 +144,7 @@ impl BocchiVM {
     ) {
         if rev /* Sometimes we might act like the tokens vec was a stack */ { tokens.reverse(); }
 
-        while let Some(token_data) = tokens.pop() {
-            let (token, file, line) = /* See `TokenData` */ (
-                token_data.0, token_data.1, token_data.2
-            );
-
+        while let Some((token, file, line)) = tokens.pop() {
             match token {
                 | Token::Sym(M_ADD!()) => binop!(|a, b: Cord| b.add(a), self, &file, line),
                 | Token::Sym(M_SUB!()) => binop!(|a, b: Cord| b.sub(a), self, &file, line),
@@ -169,18 +165,15 @@ impl BocchiVM {
                         emit_error!(file, line, format!("undefined function: {fun_name:?}"))
                     });
 
-                    self.push(Cord::Fun((
-                        fun.0.clone(), /* Fun tokens */
-                        fun.1,         /* Is the function inline? */
-                    )))
+                    self.push(Cord::Fun(fun.clone()))
                 }
                 | Token::Sym(M_EXEC!()) /* Manually call a function */ => {
-                    let fun /* Fun object */ = expect_stack!(Fun, self, file, line);
+                    let (fun_tokens, inline) = expect_stack!(Fun, self, file, line);
 
-                    match fun.1 /* Fun inline descriptor */ {
-                        | true  => /* Push the tokens on the token stack */ fun.0.iter().for_each(|token| tokens.push(token.clone())),
-                        | false => /* Call a new tokens processor */ self.process_tokens(
-                            &mut fun.0.to_vec(), &mut vars.clone(), funs, true
+                    match inline {
+                        | true  => fun_tokens.iter().for_each(|t| tokens.push(t.clone())),
+                        | false => self.process_tokens(
+                            &mut fun_tokens.to_vec(), &mut vars.clone(), funs, true
                         ),
                     }
                 }
@@ -200,7 +193,7 @@ impl BocchiVM {
                         expect_token!(Name, tokens, file, line),
                         self.pop().unwrap_or_else(|_| emit_error!(file, line, "stack is empty! (maeel)")),
                     );
-            }
+                }
                 | Token::Sym(M_DEF!()) /* Assign stack top value to next name */ => {
                     let name = expect_token!(Name, tokens, file, line);
                     if name.starts_with("__") /* Private field */ { panic!(/* TODO: make the error message */) }
@@ -223,7 +216,7 @@ impl BocchiVM {
                                     fun_tokens.reverse(); /* uhm */
                                     fun_tokens.extend(tmp_tokens);
                                     fun_tokens.reverse(); /* never ask if maeel could be faster */
-                                    break;
+                                    break; /* TODO: remove this break, f*ck breaks */
                                 }
                                 | (Token::Name(_), file, line) => {
                                     fun_tokens.push(tmp_token);
@@ -308,10 +301,10 @@ impl BocchiVM {
                     | name => {
                         if let Some(value) = vars.get(name) {
                             self.push(value.clone())
-                        } else if let Some(fun) = funs.get(name) {
-                            match fun.1 {
-                                | true  => fun.0.iter().for_each(|t| tokens.push(t.clone())),
-                                | false => self.process_tokens(&mut fun.0.to_vec(), &mut vars.clone(), funs, false),
+                        } else if let Some((fun_tokens, inline)) = funs.get(name) {
+                            match inline {
+                                | true  => fun_tokens.iter().for_each(|t| tokens.push(t.clone())),
+                                | false => self.process_tokens(&mut fun_tokens.to_vec(), &mut vars.clone(), funs, false),
                             }
                         } else {
                             emit_error!(file, line, format!("unknown name {name}"))
@@ -324,15 +317,19 @@ impl BocchiVM {
 
     /* Push an object to the stack */
     fn push(&mut self, value: Cord) {
-        let future_head /* Create a new head with the value */ = Guitar::new(value);
-        if !self.head.is_null() { unsafe /* Set current head to the new one "next" */ { (*future_head).next  = self.head; }}
-        self.head /* Replace current head with the new one */ = future_head;
+        let future_h = Guitar::new(value);
+
+        if !self.head.is_null() {
+            unsafe { (*future_h).next = self.head; }
+        }
+
+        self.head = future_h;
     }
 
     /* Drop-and-return the stack head */
     fn pop(&mut self) -> Result<Cord, Box<dyn std::error::Error>> {
         match self.head.is_null() {
-            | true => Err("Stack is empty".into()),
+            | true  => Err("Stack is empty".into()),
             | false => {
                 let current_h = unsafe { Box::from_raw(self.head) };
                 self.head = current_h.next;
@@ -469,7 +466,7 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
                 tokens.push((Token::Sym(char), file, line));
 
                 depth += match char == M_BLOCK_START!() {
-                    | true => 1,
+                    | true  => 1,
                     | false => -1
                 }
             }
@@ -485,7 +482,6 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
                     content.push(match (char, content_vector.get(idx)) {
                         | ('\\', Some(next_char)) => {
                             idx += 1;
-
                             match next_char {
                                 | 'n'      => '\n',
                                 | 't'      => '\t',
@@ -510,7 +506,7 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 
                 tokens.push((
                     match content.contains('.') {
-                        | true => Token::Flt(content.parse().unwrap()),
+                        | true  => Token::Flt(content.parse().unwrap()),
                         | false => Token::Int(content.parse().unwrap())
                     },
                     file, line,
