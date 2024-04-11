@@ -1,5 +1,10 @@
+all: build buildc
+
 build:
 	rustc maeel.rs -Copt-level=3 -o maeel
+
+buildc:
+	rustc maeelc.rs -o maeelc
 
 nvim:
 	rm ~/.config/nvim/syntax/maeel.vim && cp maeel.vim ~/.config/nvim/syntax

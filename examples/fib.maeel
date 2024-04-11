@@ -1,0 +1,11 @@
+"maeel" include
+
+fun fib n (
+	n 1 <
+		(1)
+		(n 1- fib n 2- fib +)
+	ifelse
+)
+
+1 10 range (fib) map putsln
+
