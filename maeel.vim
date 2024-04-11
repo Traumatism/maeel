@@ -1,16 +1,16 @@
 " Vim syn file
 " Language: maeel
+" Repo: https://github.com/traumatism/maeel 
 
 if exists("b:current_syn")
   finish
 endif
 
-
 let s:keepcpo = &cpo
 set cpo&vim
 syn case match
 
-syn keyword maeelTodo     TODO FIXME NOTE
+syn keyword maeelTodo TODO FIXME NOTE
 syn keyword maeelKeywords List Mapper end drop swap dup rot over
 syn region  maeelComment start="#" end="$"
 syn region  maeelString start=/\v"/ skip=/\v\\./ end=/\v"/ contains=maeelEscapes

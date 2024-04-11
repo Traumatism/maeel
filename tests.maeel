@@ -1,7 +1,7 @@
 "maeel" include
 
 fun test value supposed message (
-    message " " + dup dup
+	message " " + dup dup
     30 swap len -~ padding
     puts "." padding * puts
 
