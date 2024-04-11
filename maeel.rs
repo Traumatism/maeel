@@ -40,12 +40,12 @@ alias!(
     M_COMMENT_START, '#',
 );
 
-type M_INT_SIZE       /* Encode maeel integers on 32 bits */          = i32;
-type M_FLOAT_SIZE     /* Encode maeel floats on 32 bits */            = f32;
+type M_INT_SIZE       /* Encode maeel integers on 32 bits        */   = i32;
+type M_FLOAT_SIZE     /* Encode maeel floats on 32 bits          */   = f32;
 type Stack<T>         /* Specify that a vec is used like a stack */   = Vec<T>;
-type TokenData        /* Token and its file name, line */             = (Token, String, u16);
-type FunData          /* Fun tokens and inline descriptor */          = (std::rc::Rc<[TokenData]>, bool);
-type Mapper<T>        /* Map values of type T with their names */     = std::collections::HashMap<String, T>;
+type TokenData        /* Token and its file name, line           */   = (Token, String, u16);
+type FunData          /* Fun tokens and inline descriptor        */   = (std::rc::Rc<[TokenData]>, bool);
+type Mapper<T>        /* Map values of type T with their names   */   = std::collections::HashMap<String, T>;
 
 macro_rules! expect_token {
     ($token:tt, $tokens:expr, $fl:expr, $line:expr) => {{

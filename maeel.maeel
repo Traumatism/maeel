@@ -1,3 +1,6 @@
+0 ~ false
+1 ~ true
+
 # Remove stack top element
 fun inline drop __ ()
 
@@ -57,7 +60,8 @@ fun matchp value mapper predicate (
 fun inline match ((=) matchp 0 get)
 
 fun reverse xs (
-    list ~ ys xs len (1- dup xs swap get ys +~ ys) (dup 1 < not) while drop ys
+    list ~ ys
+	xs len (1- dup xs swap get ys +~ ys) (dup 1 < not) while drop ys
 )
 
 fun contains xs x (
@@ -126,7 +130,7 @@ fun inline or (+ 0= 1 swap-)
 
 fun inline not (1 swap-)
 
-fun inline xor (+ 2%)
+fun inline xor (+ 2 %)
 
 fun inline pom (dup not)
 
@@ -150,12 +154,18 @@ fun inline putsln (puts "\n" puts)
 
 fun inline println (print "\n" puts)
 
+#
+# Usage:  name age "My name is %. I'm %" format putsln
+#
 fun format (
     "" ~ output
     (dup ~ char "%" = (output swap) (output char) ifelse +~ output) for
     output
 )
 
+#
+# Usage:  "123" int 4 + putsln
+#
 fun inline int (
     0 swap (
         swap 10 * swap
@@ -167,5 +177,7 @@ fun inline int (
     ) for
 )
 
-fun unix_random_numbers n mod ("/dev/random" n read (mod %) map)
+fun unix_random_numbers n mod (
+	"/dev/random" n read (mod %) map
+)
 
