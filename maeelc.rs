@@ -57,7 +57,7 @@ enum Instruction {
     VarCall(String),
 }
 
-fn process_tokens(
+fn parse_tokens(
     tokens: &mut Vec<TokenData>,
     rev: bool,
 ) -> Vec<Instruction> {
@@ -94,7 +94,7 @@ fn process_tokens(
             }
             | Token::Sym(M_THEN!()) /* Basically "if" statement */ => {
                 let mut tmp_tokens = expect_token!(Block, tokens, file, line);
-                instructions.push(Instruction::CallIf(process_tokens(&mut tmp_tokens, false)))
+                instructions.push(Instruction::CallIf(parse_tokens(&mut tmp_tokens, false)))
             }
             | Token::Sym('§') /* Can be pushed by interpreter only */ => {
                 instructions.push(Instruction::VarPush(expect_token!(Name, tokens, file, line)))
@@ -136,7 +136,7 @@ fn process_tokens(
                             }
                         }
                     }
-                    instructions.push(Instruction::FunPush((fun_name.clone(), process_tokens((&mut fun_tokens).into(), false), is_inline)));
+                    instructions.push(Instruction::FunPush((fun_name.clone(), parse_tokens((&mut fun_tokens).into(), false), is_inline)));
                 }
                 | M_LEN!() => instructions.push(Instruction::BuiltInCall(BuiltIn::Len)),
                 | M_GET!() => instructions.push(Instruction::BuiltInCall(BuiltIn::Get)),
@@ -185,16 +185,105 @@ impl From<Token> for Cord {
     }
 }
 
+fn generate_asm(instructions: Vec<Instruction>) {
+    let mut output = String::new();
+
+    output.push_str("BITS 64\n");
+    output.push_str("segment .text\n");
+    output.push_str("print:\n");
+    output.push_str("    mov     r9, -3689348814741910323\n");
+    output.push_str("    sub     rsp, 40\n");
+    output.push_str("    mov     BYTE [rsp+31], 10\n");
+    output.push_str("    lea     rcx, [rsp+30]\n");
+    output.push_str(".L2:                                   ;; iterate through each digit\n");
+    output.push_str("    mov     rax, rdi                   ;; rax <- rdi\n");
+    output.push_str("    lea     r8, [rsp+32]               ;; r8 <- rsp+32\n");
+    output.push_str("    mul     r9                         ;; rax <- rax * r9\n");
+    output.push_str("    mov     rax, rdi                   ;; rax <- rdi\n");
+    output.push_str("    sub     r8, rcx                    ;; r8 <- r8 - rcx\n");
+    output.push_str("    shr     rdx, 3                     ;; right shift (3 bits)\n");
+    output.push_str("    lea     rsi, [rdx*5]               ;; rsi <- 5*rdx\n");
+    output.push_str("    add     rsi, rsi\n");
+    output.push_str("    sub     rax, rsi\n");
+    output.push_str("    add     eax, 48\n");
+    output.push_str("    mov     BYTE [rcx], al\n");
+    output.push_str("    mov     rax, rdi\n");
+    output.push_str("    mov     rdi, rdx\n");
+    output.push_str("    mov     rdx, rcx\n");
+    output.push_str("    dec     rcx\n");
+    output.push_str("    cmp     rax, 9                     ;; if rax < 9\n");
+    output.push_str("    ja      .L2                        ;;    recursive call\n");
+    output.push_str("    lea     rax, [rsp+32]\n");
+    output.push_str("    mov     edi, 1\n");
+    output.push_str("    sub     rdx, rax\n");
+    output.push_str("    xor     eax, eax                   ;; clear eax\n");
+    output.push_str("    mov     rax, 1                     ;; write(\n");
+    output.push_str("    lea     rsi, [rsp+32+rdx]          ;;  integer as a string,\n");
+    output.push_str("    mov     rdx, r8                    ;;  char count\n");
+    output.push_str("    syscall                            ;; );\n");
+    output.push_str("    add     rsp, 40\n");
+    output.push_str("    ret\n");
+    output.push_str("global _start\n");
+    output.push_str("_start:\n");
+
+    let mut idx = 0;
+
+    for instruction in &instructions {
+
+        output.push_str(&format!("a_{idx}:\n"));
+
+        match instruction {
+            | Instruction::Push(data) => match data {
+                | Cord::Int(value) => {
+                    output.push_str(&format!("   ;; push(int) {value}\n"));
+                    output.push_str(&format!("   mov rax, {value}\n"));
+                    output.push_str("   push rax\n");
+                }
+                | _ => panic!("oops (data)"),
+            }
+            | Instruction::BuiltInCall(fun) => match fun {
+                | BuiltIn::Puts => {
+                    output.push_str("   ;; print\n");
+                    output.push_str("   pop rdi\n");
+                    output.push_str("   call print\n");
+                }
+                | _ => panic!("oops (btin)"),
+            }
+            | Instruction::BinOp(op) => match op {
+                | BinOp::Add => {
+                    output.push_str("   ;; add \n");
+                    output.push_str("   pop rax\n");
+                    output.push_str("   pop rbx\n");
+                    output.push_str("   add rax, rbx\n");
+                    output.push_str("   push rax\n");
+                }
+                | _ => panic!("oops (op)"),
+            }
+            | _ => panic!("oops"),
+        }
+
+        idx += 1;
+    }
+
+    output.push_str(&format!("a_{}:\n", &instructions.len()));
+    output.push_str("   mov rax, 60 ;; exit(\n");
+    output.push_str("   mov rdi, 0  ;;  0\n");
+    output.push_str("   syscall     ;; );\n");
+
+    output.push_str("segment .data\n");
+    output.push_str("segment .bss\n");
+
+    println!("{}", output);
+}
+
 
 fn main() {
     let file = std::env::args().nth(1).unwrap();
 
-    let is = process_tokens(
+    let is = parse_tokens(
         &mut lex_into_tokens(&std::fs::read_to_string(&file).unwrap(), &file),
         true,
     );
 
-    for i in is {
-        println!("{:?}", i);
-    }
+    generate_asm(is);
 }
