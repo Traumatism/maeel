@@ -1,4 +1,4 @@
-all: build buildc
+all: build buildc buildlex
 
 build:
 	rustc maeel.rs -Copt-level=3 -o maeel
@@ -6,11 +6,14 @@ build:
 buildc:
 	rustc maeelc.rs -o maeelc
 
+buildlex:
+	rustc maeellex.rs -o maeellex
+
 nvim:
-	rm ~/.config/nvim/syntax/maeel.vim && cp maeel.vim ~/.config/nvim/syntax
+	rm ~/.config/nvim/syntax/maeel.vim && cp editor/vim/maeel.vim ~/.config/nvim/syntax
 
 vscode:
-	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && cp -r ide ~/.vscode/extensions/maeel-syntax-highlighting
+	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && cp -r editor/vscode ~/.vscode/extensions/maeel-syntax-highlighting
 
 test:
 	rustc maeel.rs -o maeel && ./maeel tests.maeel
