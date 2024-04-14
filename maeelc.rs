@@ -103,6 +103,7 @@ fn generate_asm(instructions: Vec<Instruction>) {
     for instruction in &instructions {
         match instruction {
             | Instruction::PushAsm(line) => {
+                output.push_str("   ;; custom assembly\n");
                 output.push_str(line);
             }
             | Instruction::Push(value) => {
@@ -121,22 +122,22 @@ fn generate_asm(instructions: Vec<Instruction>) {
             | Instruction::BinOp(op) => match op {
                  | BinOp::Add => {
                     output.push_str("   ;; add \n");
-                    output.push_str("   pop rax\n");
-                    output.push_str("   pop rbx\n");
+                    output.push_str("   pop rax ;; rax <- RHS\n");
+                    output.push_str("   pop rbx ;; rbx <- LHS\n");
                     output.push_str("   add rax, rbx\n");
                     output.push_str("   push rax\n");
                 }
                 | BinOp::Mul => {
                     output.push_str("   ;; mul \n");
-                    output.push_str("   pop rax\n");
-                    output.push_str("   pop rbx\n");
+                    output.push_str("   pop rax ;; rax <- RHS\n");
+                    output.push_str("   pop rbx ;; rbx <- LHS\n");
                     output.push_str("   mul rbx\n");
                     output.push_str("   push rax\n");
                 }
                 | BinOp::Sub => {
                     output.push_str("   ;; sub \n");
-                    output.push_str("   pop rax\n");
-                    output.push_str("   pop rbx\n");
+                    output.push_str("   pop rax ;; rax <- RHS\n");
+                    output.push_str("   pop rbx ;; rbx <- LHS\n");
                     output.push_str("   sub rbx, rax\n");
                     output.push_str("   push rbx\n");
                 }
