@@ -58,11 +58,15 @@ enum Cord {
 #[derive(Debug)] enum CordRepr { Flt, Int, Fun, Str, Lst }
 
 /* A node in Maeel Stack VM */
-struct Guitar { value: Cord, next: *mut Guitar }
+struct Guitar { value: Cord, next: *mut Guitar /* Might be null ptr */ }
 
 impl Guitar {
     fn new(value: Cord) -> *mut Self {
-        Box::into_raw(Box::new(Guitar { value, next: std::ptr::null_mut() }))
+        let guitar_pointer = Box::new(
+            Guitar { value, next: std::ptr::null_mut() }
+        );
+
+        Box::into_raw(guitar_pointer)
     }
 }
 
