@@ -20,21 +20,8 @@ macro_rules! expect_token {
     }};
 }
 
-/* Types that are used by the VM */
-#[derive(Debug, Clone)]
-enum Cord {
-    Flt(M_FLOAT_SIZE),
-    Int(M_INT_SIZE),
-    Fun(FunData),
-    Str(String),
-    Lst(Vec<Self>),
-}
-
-/* Used for error messages */
-#[derive(Debug)] enum CordRepr { Flt, Int, Fun, Str, Lst }
-
 #[derive(Debug)]
-enum BinOp { Add, Sub, Mul, Div, Mod, Eq, Lt, Gt }
+enum BinOp { Add, Sub, Mul }
 
 #[derive(Debug)]
 enum BuiltIn { Puts }
@@ -42,7 +29,7 @@ enum BuiltIn { Puts }
 #[derive(Debug)]
 enum Instruction {
     BinOp(BinOp),
-    Push(Cord),
+    Push(M_INT_SIZE),
     BuiltInCall(BuiltIn),
     PushAsm(String),
 }
@@ -60,59 +47,20 @@ fn parse_tokens(
             | Token::Sym(M_ADD!()) => instructions.push(Instruction::BinOp(BinOp::Add)),
             | Token::Sym(M_SUB!()) => instructions.push(Instruction::BinOp(BinOp::Sub)),
             | Token::Sym(M_MUL!()) => instructions.push(Instruction::BinOp(BinOp::Mul)),
-            | Token::Sym(M_DIV!()) => instructions.push(Instruction::BinOp(BinOp::Div)),
-            | Token::Sym(M_MOD!()) => instructions.push(Instruction::BinOp(BinOp::Mod)),
-            | Token::Sym(M_EQ!()) => instructions.push(Instruction::BinOp(BinOp::Eq)),
-            | Token::Sym(M_LT!()) => instructions.push(Instruction::BinOp(BinOp::Lt)),
-            | Token::Sym(M_GT!()) => instructions.push(Instruction::BinOp(BinOp::Gt)),
-            | Token::Str(_) | Token::Flt(_) | Token::Int(_) => instructions.push(Instruction::Push(token.into())),
-    
+            | Token::Int(value) => instructions.push(Instruction::Push(value)),
             | Token::Sym('$') => {
                 let data = expect_token!(Str, tokens, file, line);
                 instructions.push(Instruction::PushAsm(data));
             }
-
-            | Token::Sym(char) => emit_error!(file, line, format!("unknown symbol: {char}.")),
             | Token::Name(name) => match name.as_str() {
                 | M_PUTS!() => instructions.push(Instruction::BuiltInCall(BuiltIn::Puts)), 
-                | name => {}
+                | _ => unreachable!()
             }
             | _ => unreachable!()
         };
     }
 
     instructions
-}
-
-impl std::fmt::Display for Cord {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            | Self::Str(x)  => write!(f, "{}", x),
-            | Self::Fun(_)  => write!(f, "Fun"),
-            | Self::Flt(x)  => write!(f, "{}", x),
-            | Self::Int(x)  => write!(f, "{}", x),
-            | Self::Lst(xs) => {
-                write!(f, "{{")?;
-                xs.iter().enumerate().for_each(|(i, x)| {
-                    if i > 0 { write!(f, " ").unwrap() }
-                    write!(f, "{}", x).unwrap()
-                });
-                write!(f, "}}")
-            }
-        }
-    }
-}
-
-impl From<Token> for Cord {
-    fn from(val: Token) -> Self {
-        match val {
-            | Token::Str(x)   => Cord::Str(x),
-            | Token::Int(x)   => Cord::Int(x),
-            | Token::Flt(x)   => Cord::Flt(x),
-            | Token::Block(x) => Cord::Fun((x.as_slice().into(), false)),
-            | _               => panic!(),
-        }
-    }
 }
 
 fn generate_asm(instructions: Vec<Instruction>) {
@@ -157,7 +105,6 @@ fn generate_asm(instructions: Vec<Instruction>) {
     output.push_str("_start:\n");
 
     let mut idx = 0;
-    let mut strings: Vec<String> = Vec::new();
 
     for instruction in &instructions {
 
@@ -167,20 +114,10 @@ fn generate_asm(instructions: Vec<Instruction>) {
             | Instruction::PushAsm(line) => {
                 output.push_str(line);
             }
-            | Instruction::Push(data) => match data {
-                | Cord::Int(value) => {
-                    output.push_str(&format!("   ;; push(int) {value}\n"));
-                    output.push_str(&format!("   mov rax, {value}\n"));
-                    output.push_str("   push rax\n");
-                }
-                | Cord::Str(value) => {
-                    output.push_str(&format!("   ;; push(str) {value}\n"));
-                    output.push_str(&format!("   mov rax, {}\n", value.len()));
-                    output.push_str("   push rax\n");
-                    output.push_str(&format!("   push string_{}\n", strings.len()));
-                    strings.push(value.clone());
-                }
-                | _ => panic!("oops (data)"),
+            | Instruction::Push(value) => {
+                output.push_str(&format!("   ;; push(int) {value}\n"));
+                output.push_str(&format!("   mov rax, {value}\n"));
+                output.push_str("   push rax\n");
             }
             | Instruction::BuiltInCall(fun) => match fun {
                 | BuiltIn::Puts => {
@@ -226,17 +163,6 @@ fn generate_asm(instructions: Vec<Instruction>) {
     output.push_str("   syscall     ;; );\n");
 
     output.push_str("segment .data\n");
-
-    for (idx, string) in strings.iter().enumerate() {
-        output.push_str(
-            &format!(
-                "string_{}: db {}\n",
-                idx,
-                string.chars().map(|c| format!("0x{:x}", c as u8)).collect::<Vec<_>>().join(",")
-            )
-        )
-    }
-
     output.push_str("segment .bss\n");
 
     println!("{}", output);
