@@ -20,13 +20,10 @@ macro_rules! expect_token {
     }};
 }
 
-#[derive(Debug)]
 enum BinOp { Add, Sub, Mul }
 
-#[derive(Debug)]
 enum BuiltIn { Puts }
 
-#[derive(Debug)]
 enum Instruction {
     BinOp(BinOp),
     Push(M_INT_SIZE),
@@ -57,7 +54,7 @@ fn parse_tokens(
                 | _ => unreachable!()
             }
             | _ => unreachable!()
-        };
+        }
     }
 
     instructions
@@ -66,7 +63,6 @@ fn parse_tokens(
 fn generate_asm(instructions: Vec<Instruction>) {
     let mut output = String::new();
 
-    output.push_str("BITS 64\n");
     output.push_str("segment .text\n");
     output.push_str("print_integer:\n");
     output.push_str("    mov     r9, -3689348814741910323\n");
@@ -120,7 +116,7 @@ fn generate_asm(instructions: Vec<Instruction>) {
                     output.push_str("   pop rdi\n");
                     output.push_str("   call print_integer\n");
                 }
-                | _ => panic!("oops (btin)"),
+                | _ => unreachable!(),
             }
             | Instruction::BinOp(op) => match op {
                  | BinOp::Add => {
@@ -144,18 +140,15 @@ fn generate_asm(instructions: Vec<Instruction>) {
                     output.push_str("   sub rbx, rax\n");
                     output.push_str("   push rbx\n");
                 }
-                | _ => panic!("oops (op)"),
+                | _ => unreachable!()
             }
-            | _ => panic!("oops {:?}", instruction),
+            | _ => unreachable!()
         }
     }
 
     output.push_str("   mov rax, 60 ;; exit(\n");
     output.push_str("   mov rdi, 0  ;;  0\n");
     output.push_str("   syscall     ;; );\n");
-
-    output.push_str("segment .data\n");
-    output.push_str("segment .bss\n");
 
     println!("{}", output);
 }
