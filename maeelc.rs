@@ -1,10 +1,5 @@
 /*
 This is STILL in development phase !! (partially works)
-
-This code was made without the help of any language
-server and auto-formatter.
-
-(Qualité Artisale)
 */
 
 use std::fs::File;
@@ -42,19 +37,14 @@ enum Cord {
 enum BinOp { Add, Sub, Mul, Div, Mod, Eq, Lt, Gt }
 
 #[derive(Debug)]
-enum BuiltIn { Puts, Get, Len }
+enum BuiltIn { Puts }
 
 #[derive(Debug)]
 enum Instruction {
     BinOp(BinOp),
     Push(Cord),
-    CallStack,
-    CallIf(Vec<Instruction>),
-    VarPush(String),
     BuiltInCall(BuiltIn),
-    FunPush((String, Vec<Instruction>, bool)),
-    FunCall(String),
-    VarCall(String),
+    PushAsm(String),
 }
 
 fn parse_tokens(
@@ -76,78 +66,18 @@ fn parse_tokens(
             | Token::Sym(M_LT!()) => instructions.push(Instruction::BinOp(BinOp::Lt)),
             | Token::Sym(M_GT!()) => instructions.push(Instruction::BinOp(BinOp::Gt)),
             | Token::Str(_) | Token::Flt(_) | Token::Int(_) => instructions.push(Instruction::Push(token.into())),
-            | Token::Block(mut block) => {
-                block.reverse(); /* meow */
-                instructions.push(Instruction::Push(Cord::Fun((block.as_slice().into(), true))))
+    
+            | Token::Sym('$') => {
+                let data = expect_token!(Str, tokens, file, line);
+                instructions.push(Instruction::PushAsm(data));
             }
-            | Token::Sym(M_FUN_PUSH!()) => {
-                /* let fun_name /* Fun name */   = expect_token!(Name, tokens, file, line);
-                 let fun      /* Fun object */ = funs.get(&fun_name).unwrap_or_else(|| {
-                    emit_error!(file, line, format!("undefined function: {fun_name:?}"))
-                });
 
-                instructions.push(Instruction::Push(Cord::Fun(fun.clone())))
-                */
-            }
-            | Token::Sym(M_EXEC!()) /* Manually call a function */ => {
-                instructions.push(Instruction::CallStack)
-            }
-            | Token::Sym(M_THEN!()) /* Basically "if" statement */ => {
-                let mut tmp_tokens = expect_token!(Block, tokens, file, line);
-                instructions.push(Instruction::CallIf(parse_tokens(&mut tmp_tokens, false)))
-            }
-            | Token::Sym('§') /* Can be pushed by interpreter only */ => {
-                instructions.push(Instruction::VarPush(expect_token!(Name, tokens, file, line)))
-            }
-            | Token::Sym(M_DEF!()) /* Assign stack top value to next name */ => {
-                let name = expect_token!(Name, tokens, file, line);
-                if name.starts_with("__") /* Private field */ { panic!(/* TODO: make the error message */) }
-                instructions.push(Instruction::VarPush(name))
-            }
             | Token::Sym(char) => emit_error!(file, line, format!("unknown symbol: {char}.")),
             | Token::Name(name) => match name.as_str() {
                 | M_PUTS!() => instructions.push(Instruction::BuiltInCall(BuiltIn::Puts)), 
-                | M_ELIST!() => instructions.push(Instruction::Push(Cord::Lst(Vec::new()))),
-                | M_FUN!() => {
-                    let mut fun_name   = expect_token!(Name, tokens, file, line);
-                    let mut fun_tokens = Vec::default();
-                    let is_inline      = fun_name == M_INLINE!();
-
-                    if is_inline { fun_name = expect_token!(Name, tokens, file, line) }
-
-                    while let Some(tmp_token) = tokens.pop() {
-                        match tmp_token.clone() {
-                            | (Token::Block(tmp_tokens), _, _) => {
-                                fun_tokens.reverse(); /* uhm */
-                                fun_tokens.extend(tmp_tokens);
-                                fun_tokens.reverse(); /* never ask if maeel could be faster */
-                                break; /* TODO: remove this break, f*ck breaks */
-                            }
-                            | (Token::Name(_), file, line) => {
-                                fun_tokens.push(tmp_token);
-                                fun_tokens.push((Token::Sym('§'), file, line));
-                            }
-                            | (other, file, line) => {
-                                emit_error!(
-                                    file,
-                                    line,
-                                    format!("expected name(s) or a code block after 'fun {fun_name}'; got {other:?} instead.")
-                                    )
-                            }
-                        }
-                    }
-                    instructions.push(Instruction::FunPush((fun_name.clone(), parse_tokens((&mut fun_tokens).into(), false), is_inline)));
-                }
-                | M_LEN!() => instructions.push(Instruction::BuiltInCall(BuiltIn::Len)),
-                | M_GET!() => instructions.push(Instruction::BuiltInCall(BuiltIn::Get)),
-                | name => {
-                    if (&name).starts_with("f") {
-                        instructions.push(Instruction::FunCall(name.to_string()))
-                    } else {
-                        instructions.push(Instruction::VarCall(name.to_string()))
-                    }
-                }
-            },
+                | name => {}
+            }
+            | _ => unreachable!()
         };
     }
 
@@ -190,12 +120,12 @@ fn generate_asm(instructions: Vec<Instruction>) {
 
     output.push_str("BITS 64\n");
     output.push_str("segment .text\n");
-    output.push_str("print:\n");
+    output.push_str("print_integer:\n");
     output.push_str("    mov     r9, -3689348814741910323\n");
     output.push_str("    sub     rsp, 40\n");
     output.push_str("    mov     BYTE [rsp+31], 10\n");
     output.push_str("    lea     rcx, [rsp+30]\n");
-    output.push_str(".L2:                                   ;; iterate through each digit\n");
+    output.push_str("    .L2:                               ;; iterate through each digit\n");
     output.push_str("    mov     rax, rdi                   ;; rax <- rdi\n");
     output.push_str("    lea     r8, [rsp+32]               ;; r8 <- rsp+32\n");
     output.push_str("    mul     r9                         ;; rax <- rax * r9\n");
@@ -203,19 +133,19 @@ fn generate_asm(instructions: Vec<Instruction>) {
     output.push_str("    sub     r8, rcx                    ;; r8 <- r8 - rcx\n");
     output.push_str("    shr     rdx, 3                     ;; right shift (3 bits)\n");
     output.push_str("    lea     rsi, [rdx*5]               ;; rsi <- 5*rdx\n");
-    output.push_str("    add     rsi, rsi\n");
-    output.push_str("    sub     rax, rsi\n");
-    output.push_str("    add     eax, 48\n");
-    output.push_str("    mov     BYTE [rcx], al\n");
-    output.push_str("    mov     rax, rdi\n");
-    output.push_str("    mov     rdi, rdx\n");
-    output.push_str("    mov     rdx, rcx\n");
-    output.push_str("    dec     rcx\n");
+    output.push_str("    add     rsi, rsi                   ;; rsi <- 2*rsi\n");
+    output.push_str("    sub     rax, rsi                   ;; rax <- rsi\n");
+    output.push_str("    add     eax, 48                    ;; eax <- eax + 48\n");
+    output.push_str("    mov     BYTE [rcx], al             ;;\n");
+    output.push_str("    mov     rax, rdi                   ;; rax <- rdi\n");
+    output.push_str("    mov     rdi, rdx                   ;; rdi <- rdx\n");
+    output.push_str("    mov     rdx, rcx                   ;; rdx <- rcx\n");
+    output.push_str("    dec     rcx                        ;; rcx <- rcx - 1\n");
     output.push_str("    cmp     rax, 9                     ;; if rax < 9\n");
     output.push_str("    ja      .L2                        ;;    recursive call\n");
-    output.push_str("    lea     rax, [rsp+32]\n");
-    output.push_str("    mov     edi, 1\n");
-    output.push_str("    sub     rdx, rax\n");
+    output.push_str("    lea     rax, [rsp+32]              ;; rax <- [rsp+32]\n");
+    output.push_str("    mov     edi, 1                     ;; edi <- 1\n");
+    output.push_str("    sub     rdx, rax                   ;; rdx <- rdx - rax (>= 9)\n");
     output.push_str("    xor     eax, eax                   ;; clear eax\n");
     output.push_str("    mov     rax, 1                     ;; write(\n");
     output.push_str("    lea     rsi, [rsp+32+rdx]          ;;  integer as a string,\n");
@@ -227,39 +157,64 @@ fn generate_asm(instructions: Vec<Instruction>) {
     output.push_str("_start:\n");
 
     let mut idx = 0;
+    let mut strings: Vec<String> = Vec::new();
 
     for instruction in &instructions {
 
         output.push_str(&format!("a_{idx}:\n"));
 
         match instruction {
+            | Instruction::PushAsm(line) => {
+                output.push_str(line);
+            }
             | Instruction::Push(data) => match data {
                 | Cord::Int(value) => {
                     output.push_str(&format!("   ;; push(int) {value}\n"));
                     output.push_str(&format!("   mov rax, {value}\n"));
                     output.push_str("   push rax\n");
                 }
+                | Cord::Str(value) => {
+                    output.push_str(&format!("   ;; push(str) {value}\n"));
+                    output.push_str(&format!("   mov rax, {}\n", value.len()));
+                    output.push_str("   push rax\n");
+                    output.push_str(&format!("   push string_{}\n", strings.len()));
+                    strings.push(value.clone());
+                }
                 | _ => panic!("oops (data)"),
             }
             | Instruction::BuiltInCall(fun) => match fun {
                 | BuiltIn::Puts => {
-                    output.push_str("   ;; print\n");
+                    output.push_str("   ;; puts integer\n");
                     output.push_str("   pop rdi\n");
-                    output.push_str("   call print\n");
+                    output.push_str("   call print_integer\n");
                 }
                 | _ => panic!("oops (btin)"),
             }
             | Instruction::BinOp(op) => match op {
-                | BinOp::Add => {
+                 | BinOp::Add => {
                     output.push_str("   ;; add \n");
                     output.push_str("   pop rax\n");
                     output.push_str("   pop rbx\n");
                     output.push_str("   add rax, rbx\n");
                     output.push_str("   push rax\n");
                 }
+                | BinOp::Mul => {
+                    output.push_str("   ;; mul \n");
+                    output.push_str("   pop rax\n");
+                    output.push_str("   pop rbx\n");
+                    output.push_str("   mul rbx\n");
+                    output.push_str("   push rax\n");
+                }
+                | BinOp::Sub => {
+                    output.push_str("   ;; sub \n");
+                    output.push_str("   pop rax\n");
+                    output.push_str("   pop rbx\n");
+                    output.push_str("   sub rbx, rax\n");
+                    output.push_str("   push rbx\n");
+                }
                 | _ => panic!("oops (op)"),
             }
-            | _ => panic!("oops"),
+            | _ => panic!("oops {:?}", instruction),
         }
 
         idx += 1;
@@ -271,6 +226,17 @@ fn generate_asm(instructions: Vec<Instruction>) {
     output.push_str("   syscall     ;; );\n");
 
     output.push_str("segment .data\n");
+
+    for (idx, string) in strings.iter().enumerate() {
+        output.push_str(
+            &format!(
+                "string_{}: db {}\n",
+                idx,
+                string.chars().map(|c| format!("0x{:x}", c as u8)).collect::<Vec<_>>().join(",")
+            )
+        )
+    }
+
     output.push_str("segment .bss\n");
 
     println!("{}", output);
