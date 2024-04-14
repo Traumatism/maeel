@@ -104,12 +104,7 @@ fn generate_asm(instructions: Vec<Instruction>) {
     output.push_str("global _start\n");
     output.push_str("_start:\n");
 
-    let mut idx = 0;
-
     for instruction in &instructions {
-
-        output.push_str(&format!("a_{idx}:\n"));
-
         match instruction {
             | Instruction::PushAsm(line) => {
                 output.push_str(line);
@@ -153,11 +148,8 @@ fn generate_asm(instructions: Vec<Instruction>) {
             }
             | _ => panic!("oops {:?}", instruction),
         }
-
-        idx += 1;
     }
 
-    output.push_str(&format!("a_{}:\n", &instructions.len()));
     output.push_str("   mov rax, 60 ;; exit(\n");
     output.push_str("   mov rdi, 0  ;;  0\n");
     output.push_str("   syscall     ;; );\n");
