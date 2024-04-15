@@ -23,11 +23,13 @@ macro_rules! expect_token {
 
 enum BinOp { Add, Sub, Mul }
 
-enum BuiltIn { Puts }
+enum BuiltIn { Puts, PutsI }
+
+enum PushT { Int(M_INT_SIZE), Str(String) }
 
 enum Instruction {
     BinOp(BinOp),
-    Push(M_INT_SIZE),
+    Push(PushT),
     BuiltInCall(BuiltIn),
     PushAsm(String),
     Store(String),
@@ -41,14 +43,20 @@ fn parse_tokens(
     if rev /* Sometimes we might act like the tokens vec was a stack */ { tokens.reverse(); }
 
     let mut instructions = Vec::new();
-    let mut symbol_table: HashMap<String, i32> = HashMap::new();
-    let mut stack_pointer = 0; // Initialize stack pointer
+    let mut symbol_table: HashMap<String, i64> = HashMap::new();
+    let mut stack_pointer = 0_i64; // Initialize stack pointer
     while let Some((token, file, line)) = tokens.pop() {
         match token {
             | Token::Sym(M_ADD!()) => instructions.push(Instruction::BinOp(BinOp::Add)),
             | Token::Sym(M_SUB!()) => instructions.push(Instruction::BinOp(BinOp::Sub)),
             | Token::Sym(M_MUL!()) => instructions.push(Instruction::BinOp(BinOp::Mul)),
-            | Token::Int(value) => instructions.push(Instruction::Push(value)),
+            | Token::Int(value) => instructions.push(Instruction::Push(PushT::Int(value))),
+            | Token::Str(value) => {
+                let len_with_null = value.len() + 1; // Include null terminator
+                instructions.push(Instruction::Push(PushT::Str(value.clone())));
+                symbol_table.insert(value, stack_pointer);
+                stack_pointer += len_with_null as i64; // Update stack pointer
+            }
             | Token::Sym('~') => {
                 let name = expect_token!(Name, tokens, file, line);
                 instructions.push(Instruction::Store(name.clone()));
@@ -65,6 +73,7 @@ fn parse_tokens(
                 } else {
                     match name.as_str() {
                         | M_PUTS!() => instructions.push(Instruction::BuiltInCall(BuiltIn::Puts)),
+                        | "putsi" => instructions.push(Instruction::BuiltInCall(BuiltIn::PutsI)),
                         | _ => unreachable!()
                     }
                 }
@@ -74,9 +83,11 @@ fn parse_tokens(
     }
 
     println!("section .text");
-    println!("extern printf");
+    println!("  extern printf");
     println!("global _start");
     println!("_start:");
+
+    let mut strs = Vec::new();
 
     for instruction in &instructions {
         match instruction {
@@ -84,15 +95,32 @@ fn parse_tokens(
                 println!("   ;; custom assembly");
                 println!("{line}");
             }
-            | Instruction::Push(value) => {
-                println!("   ;; push(int) {value}");
-                println!("   mov rax, {value}");
-                println!("   push rax");
+            | Instruction::Push(pusht) => match pusht {
+                | PushT::Int(value) => {
+                    println!("   ;; push(int) {value}");
+                    println!("   mov rax, {value}");
+                    println!("   push rax");
+                }
+                | PushT::Str(value) => {
+                    println!("   ;; push(str) {value}");
+                    println!("   mov rax, {}", value.len() + 1);
+                    println!("   push rax");
+                    println!("   push str_{}", strs.len());
+                    println!("   xor rax, rax");
+                    strs.push(value.clone());
+                }
             }
             | Instruction::BuiltInCall(fun) => match fun {
-                | BuiltIn::Puts => {
+                | BuiltIn::PutsI => {
                     println!("   ;; puts integer");
                     println!("   mov rdi, print_int_fmt");
+                    println!("   pop rsi");
+                    println!("   xor rax, rax");
+                    println!("   call printf");
+                }
+                | BuiltIn::Puts => {
+                    println!("   ;; puts string");
+                    println!("   mov rdi, print_str_fmt");
                     println!("   pop rsi");
                     println!("   xor rax, rax");
                     println!("   call printf");
@@ -142,7 +170,15 @@ fn parse_tokens(
     println!("   syscall       ;; );");
 
     println!("section .data");
-    println!("  print_int_fmt db \"%d\", 10")
+    println!("   print_int_fmt: db \"%d\", 0");
+    println!("   print_str_fmt: db \"%s\", 0");
+    for (idx, string) in strs.iter().enumerate() {
+        println!(
+            "   str_{}: db {}, 0\n",
+            idx,
+            string.chars().map(|c| format!("0x{:x}", c as u8)).collect::<Vec<_>>().join(",")
+        )
+    }
 }
 
 
