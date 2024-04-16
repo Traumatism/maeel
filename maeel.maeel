@@ -89,7 +89,7 @@ fun end (
             output len ~ lst_len
             list ~ mapper
             output (
-                i even ? (list output i 1+ get+ output i get+ mapper +~ mapper) i 1 +~ i
+                i 2% 0= ? (list output i 1+ get+ output i get+ mapper +~ mapper) i 1 +~ i
             ) (i lst_len <) while
 
             mapper

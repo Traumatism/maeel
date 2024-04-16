@@ -23,7 +23,7 @@ macro_rules! expect_token {
 
 enum BinOp { Add, Sub, Mul }
 
-enum BuiltIn { Puts, PutsI }
+enum BuiltIn { Puts, PutsI, Syscall(M_INT_SIZE) }
 
 enum PushT { Int(M_INT_SIZE), Str(String) }
 
@@ -31,7 +31,6 @@ enum Instruction {
     BinOp(BinOp),
     Push(PushT),
     BuiltInCall(BuiltIn),
-    PushAsm(String),
     Store(String),
     Load(String)
 }
@@ -45,6 +44,7 @@ fn parse_tokens(
     let mut instructions = Vec::new();
     let mut symbol_table: HashMap<String, i64> = HashMap::new();
     let mut stack_pointer = 0_i64; // Initialize stack pointer
+
     while let Some((token, file, line)) = tokens.pop() {
         match token {
             | Token::Sym(M_ADD!()) => instructions.push(Instruction::BinOp(BinOp::Add)),
@@ -52,20 +52,15 @@ fn parse_tokens(
             | Token::Sym(M_MUL!()) => instructions.push(Instruction::BinOp(BinOp::Mul)),
             | Token::Int(value) => instructions.push(Instruction::Push(PushT::Int(value))),
             | Token::Str(value) => {
-                let len_with_null = value.len() + 1; // Include null terminator
                 instructions.push(Instruction::Push(PushT::Str(value.clone())));
-                symbol_table.insert(value, stack_pointer);
-                stack_pointer += len_with_null as i64; // Update stack pointer
+                symbol_table.insert(value.clone(), stack_pointer);
+                stack_pointer += value.len() as i64 + 1;
             }
             | Token::Sym('~') => {
                 let name = expect_token!(Name, tokens, file, line);
                 instructions.push(Instruction::Store(name.clone()));
                 symbol_table.insert(name, stack_pointer);
-                stack_pointer += 64;
-            }
-            | Token::Sym('$') => {
-                let data = expect_token!(Str, tokens, file, line);
-                instructions.push(Instruction::PushAsm(data));
+                stack_pointer += 1;
             }
             | Token::Name(name) => {
                 if let Some(&pos) = symbol_table.get(&name) {
@@ -74,6 +69,10 @@ fn parse_tokens(
                     match name.as_str() {
                         | M_PUTS!() => instructions.push(Instruction::BuiltInCall(BuiltIn::Puts)),
                         | "putsi" => instructions.push(Instruction::BuiltInCall(BuiltIn::PutsI)),
+                        | "syscall" => {
+                            let n = expect_token!(Int, tokens, file, line);
+                            instructions.push(Instruction::BuiltInCall(BuiltIn::Syscall(n)));
+                        }
                         | _ => unreachable!()
                     }
                 }
@@ -83,7 +82,7 @@ fn parse_tokens(
     }
 
     println!("section .text");
-    println!("  extern printf");
+    println!("extern printf");
     println!("global _start");
     println!("_start:");
 
@@ -91,22 +90,14 @@ fn parse_tokens(
 
     for instruction in &instructions {
         match instruction {
-            | Instruction::PushAsm(line) => {
-                println!("   ;; custom assembly");
-                println!("{line}");
-            }
             | Instruction::Push(pusht) => match pusht {
                 | PushT::Int(value) => {
                     println!("   ;; push(int) {value}");
-                    println!("   mov rax, {value}");
-                    println!("   push rax");
+                    println!("   push {value}");
                 }
                 | PushT::Str(value) => {
-                    println!("   ;; push(str) {value}");
-                    println!("   mov rax, {}", value.len() + 1);
-                    println!("   push rax");
+                    println!("   ;; push(str)");
                     println!("   push str_{}", strs.len());
-                    println!("   xor rax, rax");
                     strs.push(value.clone());
                 }
             }
@@ -125,16 +116,38 @@ fn parse_tokens(
                     println!("   xor rax, rax");
                     println!("   call printf");
                 }
+                | BuiltIn::Syscall(n) => {
+                    println!("   ;; syscall");
+                    for i in 1..n+1 {
+                        print!("   pop ");
+
+                        let reg = match i {
+                            | 1 => "rax",
+                            | 2 => "rdi",
+                            | 3 => "rsi",
+                            | 4 => "rdx",
+                            | 5 => "r10",
+                            | 6 => "r8",
+                            | 7 => "r9",
+                            | _ => unreachable!()
+                        };
+
+                        println!("{reg}");
+                    }
+
+                    println!("   syscall");
+                    println!("   push rax");
+                }
                 | _ => unreachable!(),
             }
             Instruction::Store(name) => {
                 println!("   ;; store variable {}", name);
                 println!("   pop rax");
-                println!("   mov [rsp - {}], rax", symbol_table[name]);
+                println!("   mov [rsp - {}], rax", symbol_table[name] + 8);
             }
             Instruction::Load(name) => {
                 println!("   ;; load variable {}", name);
-                println!("   mov rax, [rsp - {}]", symbol_table[name]);
+                println!("   mov rax, [rsp - {}]", symbol_table[name] + 8);
                 println!("   push rax");
             }
             | Instruction::BinOp(op) => match op {
@@ -170,12 +183,13 @@ fn parse_tokens(
     println!("   syscall       ;; );");
 
     println!("section .data");
-    println!("   print_int_fmt: db \"%d\", 0");
+    println!("   print_int_fmt: db \"%d\", 10, 0");
     println!("   print_str_fmt: db \"%s\", 0");
     for (idx, string) in strs.iter().enumerate() {
         println!(
-            "   str_{}: db {}, 0\n",
+            "   str_{}: db {}, 0",
             idx,
+            /* Prevent escape/injection issues */
             string.chars().map(|c| format!("0x{:x}", c as u8)).collect::<Vec<_>>().join(",")
         )
     }
