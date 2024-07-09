@@ -251,9 +251,7 @@ impl BocchiVM {
     fn push(&mut self, value: Cord) {
         let future_head = Guitar::new(value);
 
-        if !self.head.is_null() {
-            unsafe { (*future_head).next = self.head; }
-        }
+        if !self.head.is_null() { unsafe { (*future_head).next = self.head; } }
 
         self.head = future_head;
     }
