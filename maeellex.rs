@@ -69,6 +69,7 @@ macro_rules! take_with_predicate {
         let content = std::iter::once($char)
             .chain($chars.clone().take_while($p))
             .collect::<String>();
+
         for _ in (1..content.len()) { $chars.next(); }
         content
     }};
@@ -175,12 +176,25 @@ pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
     out
 }
 
+fn print_tokens(tokens: Vec<(Token, String, u16)>, indents: usize) {
+    for (token, file, line) in tokens {
+        match token {
+            Token::Block(new_tokens) => {
+                print_tokens(new_tokens, indents + 1)
+            }
+
+            other => {
+                let space = "  ".repeat(indents);
+                println!("{space}{file}:{line}:{other:?}")
+            }
+        }
+    }
+}
+
 fn main() {
     let file = std::env::args().nth(1).unwrap();
 
-    for token in lex_into_tokens(
+    print_tokens(lex_into_tokens(
         &std::fs::read_to_string(&file).unwrap(), &file
-    ) {
-        println!("{:?}", token)
-    }
+    ), 0);
 }
