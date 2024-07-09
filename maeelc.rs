@@ -43,7 +43,7 @@ fn parse_tokens(
 
     let mut instructions = Vec::new();
     let mut symbol_table: HashMap<String, i64> = HashMap::new();
-    let mut stack_pointer = 0_i64; // Initialize stack pointer
+    let mut stack_pointer = 0_i64; /* Initialize stack pointer */
 
     while let Some((token, file, line)) = tokens.pop() {
         match token {
