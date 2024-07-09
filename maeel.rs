@@ -91,7 +91,7 @@ impl BocchiVM {
                     block.reverse(); /* meow */
                     self.push(Cord::Fun((block.as_slice().into(), true)))
                 }
-                | Token::Sym(M_FUN  _PUSH!()) => {
+                | Token::Sym(M_FUN_PUSH!()) => {
                     let function_name /* function name */   = expect_token!(Name, tokens, file, line);
                     let function      /* function object */ = functions.get(&function_name).unwrap_or_else(|| {
                         emit_error!(file, line, format!("undefined function: {function_name:?}"))
@@ -152,7 +152,7 @@ impl BocchiVM {
                                 }
                                 | (Token::Name(_), file, line) => {
                                     function_tokens.push(temp_token);
-                                    function_tokens.push((Token::Sym(MAEEL_FORCE_DEF!()), file, line));
+                                    function_tokens.push((Token::Sym(M_FORCE_DEF!()), file, line));
                                 }
                                 | (other, file, line) => {
                                     emit_error!(
@@ -216,7 +216,7 @@ impl BocchiVM {
                         let target = expect_stack!(Str, self, file, line);
 
                         let content = match target.clone().as_str() {
-                            | "maeel" => include_str!("maeel.maeel").to_string(),
+                            | "maeel" => include_str!(M_STD_LIB!()).to_string(),
                             | _       => std::fs::read_to_string(&target).unwrap_or_else(|_| {
                                 emit_error!(file, line, "failed to include file")
                             }),

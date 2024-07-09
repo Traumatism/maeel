@@ -6,6 +6,7 @@ macro_rules! alias {
 }
 
 alias!(
+    M_STD_LIB,       "maeel.maeel",  /* Relative to repository root */
     M_FUN,           "fun",
     M_INLINE,        "inline",
     M_INCLUDE,       "include",
