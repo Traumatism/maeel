@@ -17,6 +17,7 @@ alias!(
     M_FUN_PUSH,      '&',
     M_STR,           '"',
     M_DEF,           '~',
+    M_FORCE_DEF,     '§',
     M_THEN,          '?',
     M_EXEC,          '!',
     M_ADD,           '+',
