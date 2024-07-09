@@ -31,3 +31,9 @@ list reverse      list           "empty reverse" test
 1 4 range         lst            "range"         test
 
 1 5 range (dup fact swap fact1 "second factorial" test) for
+
+3 2 +   5      "add"               test
+3 2 *   6      "mul"               test
+3 2 +   2 3 +  "add commutativity" test
+3 2 *   2 3 *  "mul commutativity" test
+
