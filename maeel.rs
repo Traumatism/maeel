@@ -91,7 +91,7 @@ impl BocchiVM {
                     block.reverse(); /* meow */
                     self.push(Cord::Fun((block.as_slice().into(), true)))
                 }
-                | Token::Sym(M_FUN_PUSH!()) => {
+                | Token::Sym(M_FUN  _PUSH!()) => {
                     let function_name /* function name */   = expect_token!(Name, tokens, file, line);
                     let function      /* function object */ = functions.get(&function_name).unwrap_or_else(|| {
                         emit_error!(file, line, format!("undefined function: {function_name:?}"))
@@ -152,7 +152,7 @@ impl BocchiVM {
                                 }
                                 | (Token::Name(_), file, line) => {
                                     function_tokens.push(temp_token);
-                                    function_tokens.push((Token::Sym('§'), file, line));
+                                    function_tokens.push((Token::Sym(MAEEL_FORCE_DEF!()), file, line));
                                 }
                                 | (other, file, line) => {
                                     emit_error!(
