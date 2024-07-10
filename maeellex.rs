@@ -63,7 +63,7 @@ pub enum Token {
 macro_rules! emit_error {
     ($fl:expr, $line:expr, $message:expr) => {{
         println!("\n{}:{} {}", $fl, $line, $message);
-        std::process::exit(1)
+        panic!();
     }};
 }
 

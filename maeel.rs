@@ -144,6 +144,7 @@ impl BocchiVM {
 
                         while let Some(temp_token) = tokens.pop() {
                             match temp_token.clone() {
+                                (Token::Annotation(_), _, _) => {},
                                 (Token::Block(temp_tokens), _, _) => {
                                     function_tokens.reverse(); /* uhm */
                                     function_tokens.extend(temp_tokens);
@@ -250,9 +251,7 @@ impl BocchiVM {
     /* Push an object to the stack */
     fn push(&mut self, value: Cord) {
         let future_head = Guitar::new(value);
-
         if !self.head.is_null() { unsafe { (*future_head).next = self.head; } }
-
         self.head = future_head;
     }
 

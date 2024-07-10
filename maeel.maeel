@@ -236,8 +236,9 @@ fun inline map (list rot swap (over! rot rot+ swap) for drop)
 # Reduces a list using a provided function.
 #
 # Example:
-# - ``` {1 2 3 4} (+) reduce ``` will return 10
+# - ``` {1 2 3 4} (+) 0 reduce ``` will return 10
 fun inline reduce (swap ~ _reduce_fn swap (swap _reduce_fn!) for)
+fun inline reduceR (swap ~ _reduce_fn swap reverse (swap _reduce_fn!) for)
 
 # Filter function
 # Usage: xs pr filter

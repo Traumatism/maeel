@@ -1,6 +1,6 @@
 # maeel
 
-
+![](./preview.png)
 
 ### a minimalistic stack based programming language.
 
