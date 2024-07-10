@@ -32,6 +32,8 @@ alias!(
     M_BLOCK_START,   '(',
     M_BLOCK_END,     ')',
     M_COMMENT_START, '#',
+    M_TYPE_AN_START, '[',
+    M_TYPE_AN_END,   ']',
 );
 
 pub type M_INT_SIZE       /* Encode maeel integers on 32 bits        */   = i32;
@@ -51,10 +53,11 @@ pub enum Token {
     Flt(M_FLOAT_SIZE),
     Sym(char),
     Comment(String),
+    Annotation(String),
 }
 
 /* Used for error messages */
-#[derive(Debug)] pub enum TokenRepr { Block, Str, Name, Int, Flt, Sym, Comment }
+#[derive(Debug)] pub enum TokenRepr { Block, Str, Name, Int, Flt, Sym, Comment, Annotation }
 
 #[macro_export]
 macro_rules! emit_error {
@@ -88,17 +91,16 @@ pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
             | '\n' => line += 1,
             | ' ' | '\t' => continue,
             | M_COMMENT_START!() => {
-                let comment = take_with_predicate!(char, chars, |&c| c != '\n');
-
-                tokens.push((Token::Comment(comment), file, line));
+                tokens.push((Token::Comment(take_with_predicate!(char, chars, |&c| c != '\n')), file, line));
+                line += 1;
             }
             | M_BLOCK_START!() | M_BLOCK_END!() => {
                 tokens.push((Token::Sym(char), file, line));
-
-                depth += match char == M_BLOCK_START!() {
-                    | true  => 1,
-                    | false => -1
-                }
+                depth += if char == M_BLOCK_START!() { 1 } else { -1 };
+            }
+            | M_TYPE_AN_START!() => {
+                let annotation = chars.by_ref().take_while(|&char| char != M_TYPE_AN_END!()).collect();
+                tokens.push((Token::Annotation(annotation), file, line));
             }
             | M_STR!() /* Dirty strings */ => {
                 let content_vector = chars.by_ref().take_while(|&char| char != M_STR!()).collect::<Vec<char>>();
@@ -184,14 +186,8 @@ pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 fn print_tokens(tokens: Vec<(Token, String, u16)>, indents: usize) {
     for (token, file, line) in tokens {
         match token {
-            Token::Block(new_tokens) => {
-                print_tokens(new_tokens, indents + 1)
-            }
-
-            other => {
-                let space = "  ".repeat(indents);
-                println!("{space}{file}:{line}:{other:?}")
-            }
+            | Token::Block(new_tokens) => print_tokens(new_tokens, indents + 1),
+            | _ => println!("{}{file}:{line}:{token:?}", "  ".repeat(indents))
         }
     }
 }

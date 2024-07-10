@@ -1,0 +1,23 @@
+"maeel" include
+
+List 1 2 3 4 end (putsln) for
+"This is a sentence" (puts) for
+"Char by char" (putsln) for
+
+"---" putsln
+
+0 ~ n
+
+(
+    n puts
+    n 1 +~ n
+) (n 10 <) while
+
+"---" putsln
+
+1 ~ n
+
+(
+    n putsln
+    n 2 *~ n
+) (n 65536 <) while

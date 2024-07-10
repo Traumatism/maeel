@@ -1,0 +1,17 @@
+"maeel" include
+
+List 1 2 3 4 5 end         ~ this_is_a_list
+this_is_a_list (1+) map    ~ added_one
+added_one (2*) map         ~ mul_by_two
+mul_by_two (+) 0 reduce    ~ this_is_the_sum
+
+1 20 range                 ~ from_1_to_19
+from_1_to_19 (2%0=) filter ~ only_evens
+
+
+"This is a list: " puts                    this_is_a_list  putsln
+"Added one two every element: " puts       added_one       putsln
+"Multiplied every element by two: " puts   mul_by_two      putsln
+"This is the sum of the new list: " puts   this_is_the_sum putsln
+"Here are the numbers from 1 to 19: " puts from_1_to_19    putsln
+"Here are the even numbers only: " puts    only_evens      putsln
