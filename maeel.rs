@@ -78,6 +78,7 @@ impl BocchiVM {
 
         while let Some((token, file, line)) = tokens.pop() {
             match token {
+                | Token::Comment(_) => {},
                 | Token::Sym(M_ADD!()) => binop!(|a, b: Cord| b.add(a), self, &file, line),
                 | Token::Sym(M_SUB!()) => binop!(|a, b: Cord| b.sub(a), self, &file, line),
                 | Token::Sym(M_MUL!()) => binop!(|a, b: Cord| b.mul(a), self, &file, line),

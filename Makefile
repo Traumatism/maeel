@@ -1,10 +1,13 @@
-all: build buildc buildlex
+all: build buildc buildlex buildls
 
 build:
 	rustc maeel.rs -Copt-level=3 -o maeel
 
 buildc:
 	rustc maeelc.rs -o maeelc
+
+buildls:
+	rustc maeells.rs -o maeells
 
 buildlex:
 	rustc maeellex.rs -o maeellex

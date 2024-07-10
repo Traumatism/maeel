@@ -50,10 +50,11 @@ pub enum Token {
     Int(M_INT_SIZE),
     Flt(M_FLOAT_SIZE),
     Sym(char),
+    Comment(String),
 }
 
 /* Used for error messages */
-#[derive(Debug)] pub enum TokenRepr { Block, Str, Name, Int, Flt, Sym }
+#[derive(Debug)] pub enum TokenRepr { Block, Str, Name, Int, Flt, Sym, Comment }
 
 #[macro_export]
 macro_rules! emit_error {
@@ -86,7 +87,11 @@ pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
         match char {
             | '\n' => line += 1,
             | ' ' | '\t' => continue,
-            | M_COMMENT_START!() => { chars.by_ref().find(|&c| c == '\n'); }
+            | M_COMMENT_START!() => {
+                let comment = take_with_predicate!(char, chars, |&c| c != '\n');
+
+                tokens.push((Token::Comment(comment), file, line));
+            }
             | M_BLOCK_START!() | M_BLOCK_END!() => {
                 tokens.push((Token::Sym(char), file, line));
 

@@ -48,7 +48,7 @@ fun matchp value mapper predicate (
     mapper len ~ mapper_len
 
     list 0 (
-        dup 2% 0= ? (
+        dup 2 % 0= ? (
             mapper over get value predicate!
             ? (mapper over 1+ get rot rot+ swap)
         ) 1+
@@ -108,14 +108,55 @@ fun take4 a b c d (List a b c d end)
 
 fun inline take (0 swap range list swap (drop +) for reverse)
 
+# Count function
+# Usage: xs x count
+#
+# Pushes the number of occurence of x in xs.
+#
+# Examples:
+# - ``` {1 2 3 3 4} 3 count ``` will return 2
+# - ``` {1 2 3 3 4} 4 count ``` will return 1
+# - ``` {1 2 3 3 4} 42 count ``` will return 0
 fun count x (0 swap (x = pom ? (0) ? (1 swap) +) for)
 
+# Range function
+# Usage: a b range
+#
+# Pushes an array with all the numbers N such that a-1 < N < b
+#
+# Example:
+# - ``` 1 10 range ``` will return {1 2 3 4 5 6 7 8 9}
 fun range b (list swap (dup rot+ swap 1+) (dup b<) while drop)
 
+# Last function
+# Usage: xs last
+#
+# Pushes the last element of an array (drops the array)
+#
+# Examples:
+# - ``` {3 2 1} last ``` will return 1
+# - ``` {1 2 3} last ``` will return 3
+# - ``` {2} last ``` will return 2
 fun inline last (dup len 1- get)
 
+# Merge function
+# Usage: xs ys range
+#
+# Merges two arrays togather
+#
+# Examples:
+# - ``` {1 2 3} {4 5 6} merge ``` will return {1 2 3 4 5 6}
+# - ``` {1} {1} merge ``` will return {1 1}
 fun inline merge (list rot rot (+) for swap (+) for)
 
+# Map function
+# Usage xs f map
+#
+# Applies f(x) for each element x of xs
+#
+# Examples:
+# - ``` {1 2 3} (1+) map ``` will return {2 3 4}
+# - ``` {1 2 3} (4*) map ``` will return {4 8 12}
 fun inline map (list rot swap (over! rot rot+ swap) for drop)
 
 fun inline reduce (swap ~ _reduce_fn swap (swap _reduce_fn!) for)
