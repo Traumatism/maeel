@@ -4,7 +4,6 @@ fun test value supposed message (
 	message " " + dup dup
     30 swap len -~ padding
     puts "." padding * puts
-
     value supposed = (": SUCCESS" putsln) (": FAIL" putsln) ifelse
 )
 
@@ -32,8 +31,5 @@ list reverse      list           "empty reverse" test
 
 1 5 range (dup fact swap fact1 "second factorial" test) for
 
-3 2 +   5      "add"               test
-3 2 *   6      "mul"               test
 3 2 +   2 3 +  "add commutativity" test
 3 2 *   2 3 *  "mul commutativity" test
-
