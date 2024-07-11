@@ -8,6 +8,10 @@ use maeellex::*;
 
 type FunDataB = (std::rc::Rc<[TokenData]>, bool, Vec<String>, Vec<String>);
 
+macro_rules! default_fun {
+    () => { (Vec::new().as_slice().into(), true, Vec::new(), Vec::new()) };
+}
+
 macro_rules! expect_token {
     ($token:tt, $tokens:expr, $fl:expr, $line:expr) => {{
         match $tokens.pop() {
@@ -66,26 +70,16 @@ enum Cord {
     Int,
     Str,
     Lst,
-    Unk,
+    Any,
     Nil,
-    Fun(FunDataB),
+    Fun(FunDataB)
 }
 
-#[derive(Debug, Clone)]
-enum CordRepr {
-    Flt,
-    Int,
-    Str,
-    Lst,
-    Unk,
-    Nil,
-    Fun,
-}
+#[derive(Debug)] enum TCType { Input, Output }
+#[derive(Debug, Clone)] enum CordRepr { Flt, Int, Str, Lst, Any, Nil, Fun }
 
 /* Maeel Stack VM */
-struct BocchiVM {
-    stack: Vec<Cord>,
-}
+struct BocchiVM { stack: Vec<Cord> }
 
 impl BocchiVM {
     fn process_tokens(
@@ -133,56 +127,16 @@ impl BocchiVM {
                 Token::Sym(M_EXEC!()) /* Manually call a function */ => {
                     let (function_tokens, inline, input, output) = match self.pop() {
                         Ok(Cord::Fun(value)) => value,
-                        Ok(Cord::Unk)        => (Vec::new().as_slice().into(), true, Vec::new(), Vec::new()),
+                        Ok(Cord::Any  )        => default_fun!(),
                         Ok(other)            => emit_error!(file, line, format!("expected {:?} on the stack, got {other:?}", CordRepr::Fun)),
                         Err(_)               => emit_error!(file, line, format!("expected {:?}, got EOF", CordRepr::Fun)),
                     };
-
-                    if !input.is_empty() {
-                        let stack_len = self.stack.len();
-                        let input_len = input.len();
-
-                        if stack_len < input_len {
-                            println!("{file}:{line}: Typing error: stack size is lower than expected")
-                        }
-
-                        let part = self.stack[stack_len - input_len..]
-                            .into_iter()
-                            .map(|c| c.to_string())
-                            .collect::<Vec<String>>();
-
-                        if part != input {
-                            println!("{file}:{line}: Typing error: expected {input:?}, got {part:?}")
-                        }
-
-                        drop(part);
-                    }
 
                     match inline {
                         true  => function_tokens.iter().for_each(|t| tokens.push(t.clone())),
                         false => self.process_tokens(
                             &mut function_tokens.to_vec(), &mut variables.clone(), functions, true
                         ),
-                    }
-
-                    if !output.is_empty() {
-                        let stack_len = self.stack.len();
-                        let output_len = output.len();
-
-                        if stack_len < output_len {
-                            println!("{file}:{line}: Typing error: stack size is lower than expected")
-                        }
-
-                        let part = self.stack[stack_len - output_len..]
-                            .into_iter()
-                            .map(|c| c.to_string())
-                            .collect::<Vec<String>>();
-
-                        if part != output {
-                            println!("{file}:{line}: Typing error: expected {output:?}, got {part:?}")
-                        }
-
-                        drop(part);
                     }
                 }
 
@@ -222,9 +176,9 @@ impl BocchiVM {
                                 (Token::Annotation(annotation), _, _) => {
                                     let mut iter = annotation.split(" -> ")
                                         .map(|p| p.split(" ").map(|s| s.to_string()).collect::<Vec<String>>());
-                                    
-                                    input = iter.next().unwrap_or_else(|| Vec::default());
-                                    output = iter.next().unwrap_or_else(|| Vec::default());
+
+                                    input = iter.next().unwrap_or_else(|| vec![String::from("Any")]);
+                                    output = iter.next().unwrap_or_else(|| vec![String::from("Any")]);
                                 },
 
                                 (Token::Block(temp_tokens), _, _) => {
@@ -252,13 +206,13 @@ impl BocchiVM {
                     M_LEN!() => {
                         match self.pop() {
                             Ok(Cord::Str) | Ok(Cord::Lst) => Cord::Int,
-                            Ok(other)                     => Cord::Unk,
+                            Ok(other)                     => Cord::Any  ,
                             Err(_)                        => emit_error!(file, line, "expected string or list, got EOS."),
                         };
 
                         self.push(Cord::Int)
                     }
-                    M_GET!() => self.push(Cord::Unk),
+                    M_GET!() => self.push(Cord::Any  ),
                     M_READ!() => self.push(Cord::Lst),
                     M_INCLUDE!() /* This is bad */ => {
                         let target = expect_token!(Str, tokens, file, line);
@@ -282,25 +236,7 @@ impl BocchiVM {
                         if let Some(value) = variables.get(name) {
                             self.push(value.clone())
                         } else if let Some((function_tokens, inline, input, output)) = functions.get(name) {
-                            if !input.is_empty() {
-                                let stack_len = self.stack.len();
-                                let input_len = input.len();
-
-                                if stack_len < input_len {
-                                    println!("{file}:{line}: Typing error: stack size is lower than expected")
-                                }
-
-                                let part = self.stack[stack_len - input_len..]
-                                    .into_iter()
-                                    .map(|c| c.to_string())
-                                    .collect::<Vec<String>>();
-
-                                if &part != input {
-                                    println!("{file}:{line}: Typing error: expected {input:?}, got {part:?}")
-                                }
-
-                                drop(part);
-                            }
+                            self.check_types(input, &file, &line, TCType::Input);
 
                             match inline {
                                 true  => function_tokens.iter().for_each(|t| tokens.push(t.clone())),
@@ -312,31 +248,62 @@ impl BocchiVM {
                                 ),
                             }
 
-                            if !output.is_empty() {
-                                let stack_len = self.stack.len();
-                                let output_len = output.len();
-
-                                if stack_len < output_len {
-                                    println!("{file}:{line}: Typing error: stack size is lower than expected")
-                                }
-
-                                let part = self.stack[stack_len - output_len..]
-                                    .into_iter()
-                                    .map(|c| c.to_string())
-                                    .collect::<Vec<String>>();
-
-                                if &part != output {
-                                    println!("{file}:{line}: Typing error: expected {output:?}, got {part:?}")
-                                }
-
-                                drop(part);
-                            }
+                            self.check_types(output, &file, &line, TCType::Output);
                         } else {
                             println!("{file}:{line}: Unknown name: {name}")
                         }
                     }
                 },
             };
+        }
+    }
+
+    fn check_types(
+        &self,
+        expected: &Vec<String>,
+        file: &str,
+        line: &u16,
+        tctype: TCType,
+    ) {
+        let stack_len = self.stack.len();
+        let expected_len = expected.len();
+
+        if stack_len < expected_len {
+            println!("{file}:{line}: Typing error at {tctype:?}: stack size is lower than expected")
+        }
+
+        let part = self.stack[stack_len - expected_len..]
+            .into_iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<String>>();
+
+        for index in (0..expected_len) {
+            let real = part.get(index).unwrap();
+            let expected_cord = expected.get(index).unwrap();
+
+            if expected_cord == "Any" || real == "Any" || real == expected_cord
+            {
+                continue
+            }
+
+            let mut verified = false;
+
+            if expected_cord.contains("|") {
+                let expected_cords: Vec<String> = expected_cord
+                    .split("|")
+                    .map(|s| s.to_string())
+                    .collect();
+
+                for cord in expected_cords {
+                    if cord == "Any" || real == &cord {
+                        verified = true
+                    }
+                }
+            }
+
+            if verified { continue }
+
+            println!("{file}:{line}: Typing error at {tctype:?}: expected at stack pos {index}: {expected_cord:?}, got {real:?}")
         }
     }
 
@@ -362,7 +329,7 @@ impl std::fmt::Display for Cord {
             Self::Flt => write!(f, "Float"),
             Self::Int => write!(f, "Int"),
             Self::Lst => write!(f, "List"),
-            Self::Unk => write!(f, "Unknown"),
+            Self::Any => write!(f, "Any"),
             Self::Nil => write!(f, "Nil"),
         }
     }
@@ -373,7 +340,7 @@ impl Cord {
         match (self, rhs) {
             (Self::Int, Self::Int) => Self::Int,
             (Self::Flt, Self::Flt) | (Self::Flt, Self::Int) | (Self::Int, Self::Flt) => Self::Flt,
-            _ => Self::Unk,
+            _ => Self::Any  ,
         }
     }
 
@@ -382,7 +349,7 @@ impl Cord {
             (Self::Int, Self::Int) => Self::Int,
             (Self::Flt, Self::Flt) | (Self::Flt, Self::Int) | (Self::Int, Self::Flt) => Self::Flt,
             (Self::Int, Self::Str) | (Self::Str, Self::Int) => Self::Str,
-            _ => Self::Unk,
+            _ => Self::Any  ,
         }
     }
 
@@ -392,7 +359,7 @@ impl Cord {
             (Self::Int, Self::Int) => Self::Int,
             (Self::Flt, Self::Flt) | (Self::Int, Self::Flt) | (Self::Flt, Self::Int) => Self::Flt,
             (_, Self::Lst) | (Self::Lst, _) => Self::Lst,
-            _ => Self::Unk,
+            _ => Self::Any  ,
         }
     }
 
@@ -400,7 +367,7 @@ impl Cord {
         match (self, rhs) {
             (Self::Int, Self::Int) => Self::Int,
             (Self::Flt, Self::Flt) | (Self::Int, Self::Flt) | (Self::Flt, Self::Int) => Self::Flt,
-            _ => Self::Unk,
+            _ => Self::Any  ,
         }
     }
 
@@ -415,8 +382,8 @@ impl From<String> for Cord {
             "Str" => Cord::Str,
             "Int" => Cord::Int,
             "Float" => Cord::Flt,
-            "Fun" => Cord::Fun((Vec::new().as_slice().into(), true, Vec::new(), Vec::new())),
-            "Unk" => Cord::Unk,
+            "Fun" => Cord::Fun(default_fun!()),
+            "Any" => Cord::Any,
             "Nil" => Cord::Nil,
             "List" => Cord::Lst,
             _ => panic!(),
