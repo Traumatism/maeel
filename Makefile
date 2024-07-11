@@ -25,4 +25,4 @@ bench:
 	rustc maeel.rs -o maeel && hyperfine --runs 1000 "./maeel tests.maeel"
 
 clean:
-	rm maeellex maeel maeelc
+	rm -f maeellex maeel maeelc maeells
