@@ -98,17 +98,20 @@ impl BocchiVM {
         while let Some((token, file, line)) = tokens.pop() {
             match token {
                 Token::Comment(_) | Token::Annotation(_) => {},
+
                 Token::Sym(M_ADD!()) => binop!(|a, b: Cord| b.add(a), self, &file, line),
                 Token::Sym(M_SUB!()) => binop!(|a, b: Cord| b.sub(a), self, &file, line),
                 Token::Sym(M_MUL!()) => binop!(|a, b: Cord| b.mul(a), self, &file, line),
-                Token::Sym(M_DIV!()) => binop!(|a, b: Cord| b.div(a), self, &file, line),
                 Token::Sym(M_MOD!()) => binop!(|a, b: Cord| b.rem(a), self, &file, line),
+                Token::Sym(M_DIV!()) => binop!(|a, b: Cord| Cord::Flt, self, &file, line),
 
-                Token::Sym(M_EQ!()) => binop!(|a, b| Cord::Int, self, &file, line),
-                Token::Sym(M_LT!()) => binop!(|a, b| Cord::Int, self, &file, line),
-                Token::Sym(M_GT!()) => binop!(|a, b| Cord::Int, self, &file, line),
+                Token::Sym(M_EQ!())
+                | Token::Sym(M_LT!())
+                | Token::Sym(M_GT!()) => binop!(|a, b| Cord::Int, self, &file, line),
 
-                Token::Str(_) | Token::Flt(_) | Token::Int(_) => self.push(token.into()),
+                Token::Str(_)
+                | Token::Flt(_)
+                | Token::Int(_) => self.push(token.into()),
 
                 Token::Block(mut block) => {
                     block.reverse(); /* meow */
@@ -127,7 +130,7 @@ impl BocchiVM {
                 Token::Sym(M_EXEC!()) /* Manually call a function */ => {
                     let (function_tokens, inline, input, output) = match self.pop() {
                         Ok(Cord::Fun(value)) => value,
-                        Ok(Cord::Any  )        => default_fun!(),
+                        Ok(Cord::Any)        => default_fun!(),
                         Ok(other)            => emit_error!(file, line, format!("expected {:?} on the stack, got {other:?}", CordRepr::Fun)),
                         Err(_)               => emit_error!(file, line, format!("expected {:?}, got EOF", CordRepr::Fun)),
                     };
@@ -369,10 +372,6 @@ impl Cord {
             (Self::Flt, Self::Flt) | (Self::Int, Self::Flt) | (Self::Flt, Self::Int) => Self::Flt,
             _ => Self::Any  ,
         }
-    }
-
-    fn div(self, rhs: Self) -> Self {
-        Self::Flt
     }
 }
 
