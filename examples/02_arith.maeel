@@ -1,4 +1,4 @@
-"maeel" include
+include "maeel"
 
 1 1 + putsln  # will print 2
 16 16 * putsln  # will print 256

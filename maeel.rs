@@ -214,7 +214,7 @@ impl BocchiVM {
                         self.push(Cord::Lst(content_bytes))
                     }
                     M_INCLUDE!() /* This is bad */ => {
-                        let target = expect_stack!(Str, self, file, line);
+                        let target = expect_token!(Str, tokens, file, line);
 
                         let content = match target.clone().as_str() {
                             "maeel" => include_str!(M_STD_LIB!()).to_string(),

@@ -1,4 +1,4 @@
-"maeel" include
+include "maeel"
 
 fun test value supposed message (
 	message " " + dup dup

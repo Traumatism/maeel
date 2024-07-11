@@ -266,7 +266,7 @@ fun ifelse (1 rot 0 swap take4 match!)
 # Example:
 # - ``` 1 1 and ``` will return 1 (true)
 # - ``` 1 0 and ``` will return 0 (false)
-fun inline and (*)
+fun inline and [Int Int -> Int] (*)
 
 # Or function
 # Usage: a b or
@@ -276,7 +276,7 @@ fun inline and (*)
 # Example:
 # - ``` 1 0 or ``` will return 1 (true)
 # - ``` 0 0 or ``` will return 0 (false)
-fun inline or (+ 0= 1 swap-)
+fun inline or [Int Int -> Int] (+ 0= 1 swap-)
 
 # Not function
 # Usage: a not
@@ -286,7 +286,7 @@ fun inline or (+ 0= 1 swap-)
 # Example:
 # - ``` 1 not ``` will return 0 (false)
 # - ``` 0 not ``` will return 1 (true)
-fun inline not (1 swap-)
+fun inline not [Int -> Int] (1 swap-)
 
 # Xor function
 # Usage: a b xor
@@ -296,7 +296,7 @@ fun inline not (1 swap-)
 # Example:
 # - ``` 1 0 xor ``` will return 1 (true)
 # - ``` 1 1 xor ``` will return 0 (false)
-fun inline xor (+ 2 %)
+fun inline xor [Int Int -> Int] (+ 2 %)
 
 fun inline pom (dup not)
 

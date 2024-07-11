@@ -43,13 +43,24 @@ macro_rules! binop {
 enum Cord {
     Flt,
     Int,
-    Fun,
     Str,
     Lst,
+    Unk,
+    Nil,
+    Fun(FunDataB),
 }
 
-/* Used for error messages */
-#[derive(Debug)] enum CordRepr { Flt, Int, Fun, Str, Lst }
+#[derive(Debug, Clone)]
+enum CordRepr {
+    Flt,
+    Int,
+    Str,
+    Lst,
+    Unk,
+    Nil,
+    Fun,
+}
+
 
 /* Maeel Stack VM */
 struct BocchiVM { stack: Vec<Cord> }
@@ -81,7 +92,7 @@ impl BocchiVM {
 
                 Token::Block(mut block) => {
                     block.reverse(); /* meow */
-                    self.push(Cord::Fun)
+                    self.push(Cord::Fun((block.as_slice().into(), true, Vec::new(), Vec::new())))
                 }
 
                 Token::Sym(M_FUN_PUSH!()) => {
@@ -90,10 +101,70 @@ impl BocchiVM {
                         emit_error!(file, line, format!("undefined function: {function_name:?}"))
                     });
 
-                    self.push(Cord::Fun)
+                    self.push(Cord::Fun(function.clone()))
                 }
-                Token::Sym(M_EXEC!()) /* Manually call a function */ => {}
-                Token::Sym(M_THEN!()) /* Basically "if" statement */ => {}
+
+                Token::Sym(M_EXEC!()) /* Manually call a function */ => {
+                    let (function_tokens, inline, input, output) = match self.pop() {
+                        Ok(Cord::Fun(value)) => value,
+                        Ok(Cord::Unk)        => (Vec::new().as_slice().into(), true, Vec::new(), Vec::new()),
+                        Ok(other)            => emit_error!(file, line, format!("expected {:?} on the stack, got {other:?}", CordRepr::Fun)),
+                        Err(_)               => emit_error!(file, line, format!("expected {:?}, got EOF", CordRepr::Fun)),
+                    };
+
+                    if !input.is_empty() {
+                        let stack_len = self.stack.len();
+                        let input_len = input.len();
+
+                        if stack_len < input_len {
+                            println!("{file}:{line}: Typing error: stack size is lower than expected")
+                        }
+
+                        let part = self.stack[stack_len - input_len..]
+                            .into_iter()
+                            .map(|c| c.to_string())
+                            .collect::<Vec<String>>();
+
+                        if part != input {
+                            println!("{file}:{line}: Typing error: expected {input:?}, got {part:?}")
+                        }
+
+                        drop(part);
+                    }
+
+                    match inline {
+                        true  => function_tokens.iter().for_each(|t| tokens.push(t.clone())),
+                        false => self.process_tokens(
+                            &mut function_tokens.to_vec(), &mut variables.clone(), functions, true
+                        ),
+                    }
+
+                    if !output.is_empty() {
+                        let stack_len = self.stack.len();
+                        let output_len = output.len();
+
+                        if stack_len < output_len {
+                            println!("{file}:{line}: Typing error: stack size is lower than expected")
+                        }
+
+                        let part = self.stack[stack_len - output_len..]
+                            .into_iter()
+                            .map(|c| c.to_string())
+                            .collect::<Vec<String>>();
+
+                        if part != output {
+                            println!("{file}:{line}: Typing error: expected {output:?}, got {part:?}")
+                        }
+
+                        drop(part);
+                    }
+                }
+
+                Token::Sym(M_THEN!()) /* Basically "if" statement */ => {
+                    let temp_tokens = expect_token!(Block, tokens, file, line);
+                    expect_stack!(Int, self, file, line);
+                },
+
                 Token::Sym(M_FORCE_DEF!()) /* Can be pushed by interpreter only */ => {
                     variables.insert(
                         expect_token!(Name, tokens, file, line),
@@ -108,7 +179,7 @@ impl BocchiVM {
                 Token::Sym(char) => emit_error!(file, line, format!("unknown symbol: {char}.")),
                 Token::Name(name) => match name.as_str() {
                     "putsstack" => println!("{:?}", self.stack),
-                    M_PUTS!() => print!("{}", self.pop().unwrap() /* TODO: make an error message when stack is empty */),
+                    M_PUTS!() => { self.pop().unwrap(); }
                     M_ELIST!() => self.push(Cord::Lst),
                     M_FUN!() => {
                         let mut function_name   = expect_token!(Name, tokens, file, line);
@@ -155,18 +226,31 @@ impl BocchiVM {
                     M_LEN!() => {
                         match self.pop() {
                             Ok(Cord::Str) | Ok(Cord::Lst) => Cord::Int,
-                            Ok(other)                     => emit_error!(file, line, format!("expected string or list, got {other:?}")),
+                            Ok(other)                     => Cord::Unk,
                             Err(_)                        => emit_error!(file, line, "expected string or list, got EOS."),
                         };
 
                         self.push(Cord::Int)
                     }
-                    M_GET!() => {}
-                    M_READ!() => {
-                        self.push(Cord::Lst)
-                    }
+                    M_GET!() => self.push(Cord::Unk),
+                    M_READ!() => self.push(Cord::Lst),
                     M_INCLUDE!() /* This is bad */ => {
-                        let target = expect_stack!(Str, self, file, line);
+                        let target = expect_token!(Str, tokens, file, line);
+
+                        let content = match target.clone().as_str() {
+                            "maeel" => include_str!(M_STD_LIB!()).to_string(),
+                            _       => std::fs::read_to_string(&target).unwrap_or_else(|_| {
+                                emit_error!(file, line, "failed to include file")
+                            }),
+                        };
+
+                        let temp_tokens        = lex_into_tokens(&content, &target);
+                        let temp_tokens_length = temp_tokens.len();
+
+                        /* Push tokens from end to start (reverse) */
+                        for index in 0..temp_tokens_length {
+                            tokens.push(temp_tokens.get(temp_tokens_length - index - 1).unwrap().clone())
+                        }
                     }
                     name => {
                         if let Some(value) = variables.get(name) {
@@ -174,10 +258,19 @@ impl BocchiVM {
                         } else if let Some((function_tokens, inline, input, output)) = functions.get(name) {
                             if !input.is_empty() {
                                 let stack_len = self.stack.len();
-                                let part = self.stack[stack_len - input.len()..].into_iter().map(|c| c.to_string()).collect::<Vec<String>>();
+                                let input_len = input.len();
+
+                                if stack_len < input_len {
+                                    println!("{file}:{line}: Typing error: stack size is lower than expected")
+                                }
+
+                                let part = self.stack[stack_len - input_len..]
+                                    .into_iter()
+                                    .map(|c| c.to_string())
+                                    .collect::<Vec<String>>();
 
                                 if &part != input {
-                                    println!("Typing error: expected {input:?}, got {part:?}")
+                                    println!("{file}:{line}: Typing error: expected {input:?}, got {part:?}")
                                 }
 
                                 drop(part);
@@ -185,9 +278,36 @@ impl BocchiVM {
 
                             match inline {
                                 true  => function_tokens.iter().for_each(|t| tokens.push(t.clone())),
-                                false => self.process_tokens(&mut function_tokens.to_vec(), &mut variables.clone(), functions, false),
+                                false => self.process_tokens(
+                                    &mut function_tokens.to_vec(),
+                                    &mut variables.clone(),
+                                    &mut functions.clone(),
+                                    false
+                                ),
                             }
-                        } else {}
+
+                            if !output.is_empty() {
+                                let stack_len = self.stack.len();
+                                let output_len = output.len();
+
+                                if stack_len < output_len {
+                                    println!("{file}:{line}: Typing error: stack size is lower than expected")
+                                }
+
+                                let part = self.stack[stack_len - output_len..]
+                                    .into_iter()
+                                    .map(|c| c.to_string())
+                                    .collect::<Vec<String>>();
+
+                                if &part != output {
+                                    println!("{file}:{line}: Typing error: expected {output:?}, got {part:?}")
+                                }
+
+                                drop(part);
+                            }
+                        } else {
+                            println!("{file}:{line}: Unknown name: {name}")
+                        }
                     }
                 },
             };
@@ -214,10 +334,12 @@ impl std::fmt::Display for Cord {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Str  => write!(f, "Str"),
-            Self::Fun => write!(f, "Fun"),
-            Self::Flt  => write!(f, "Flt"),
+            Self::Fun(_) => write!(f, "Fun"),
+            Self::Flt  => write!(f, "Float"),
             Self::Int  => write!(f, "Int"),
             Self::Lst => write!(f, "List"),
+            Self::Unk => write!(f, "Unknown"),
+            Self::Nil => write!(f, "Nil")
         }
     }
 }
@@ -229,7 +351,7 @@ impl Cord {
             (Self::Flt, Self::Flt)
             | (Self::Flt, Self::Int)
             | (Self::Int, Self::Flt) => Self::Flt,
-            (a, b) => panic!("Cannot substract {a} and {b}"),
+            _ => Self::Unk,
         }
     }
 
@@ -240,7 +362,7 @@ impl Cord {
             | (Self::Flt, Self::Int)
             | (Self::Int, Self::Flt) => Self::Flt,
             (Self::Int, Self::Str) | (Self::Str, Self::Int) => Self::Str,
-            (a, b) => panic!("Cannot multiply {a} and {b}"),
+            _ => Self::Unk,
         }
     }
 
@@ -252,7 +374,7 @@ impl Cord {
             | (Self::Int, Self::Flt)
             | (Self::Flt, Self::Int) => Self::Flt,
             (_, Self::Lst) | (Self::Lst, _) => Self::Lst,
-            (a, b) => panic!("Cannot add {a} and {b}"),
+            _ => Self::Unk,
         }
     }
 
@@ -262,7 +384,7 @@ impl Cord {
             (Self::Flt, Self::Flt)
             | (Self::Int, Self::Flt)
             | (Self::Flt, Self::Int) => Self::Flt,
-            (a, b) => panic!("Cannot divide {a} and {b}"),
+            _ => Self::Unk,
         }
     }
 
@@ -271,13 +393,28 @@ impl Cord {
     }
 }
 
+impl From<String> for Cord {
+    fn from(val: String) -> Self {
+        match val.as_str() {
+            "Str"   => Cord::Str,
+            "Int"   => Cord::Int,
+            "Float" => Cord::Flt,
+            "Fun"   => Cord::Fun((Vec::new().as_slice().into(), true, Vec::new(), Vec::new())),
+            "Unk"   => Cord::Unk,
+            "Nil"   => Cord::Nil,
+            "List"  => Cord::Lst,
+            _ => panic!(),
+        }
+    }
+}
+
 impl From<Token> for Cord {
     fn from(val: Token) -> Self {
         match val {
-            Token::Str(x)   => Cord::Str,
-            Token::Int(x)   => Cord::Int,
-            Token::Flt(x)   => Cord::Flt,
-            Token::Block(x) => Cord::Fun,
+            Token::Str(_)   => Cord::Str,
+            Token::Int(_)   => Cord::Int,
+            Token::Flt(_)   => Cord::Flt,
+            Token::Block(x) => Cord::Fun((x.as_slice().into(), false, Vec::new(), Vec::new())),
             _               => panic!(),
         }
     }

@@ -1,4 +1,4 @@
-"maeel" include
+include "maeel"
 
 List 1 2 3 4 end (putsln) for
 "This is a sentence" (puts) for

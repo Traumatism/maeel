@@ -1,4 +1,4 @@
-"maeel" include
+include "maeel"
 
 fun proc ("hello from function" putsln)
 
