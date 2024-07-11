@@ -53,7 +53,7 @@ pub enum Token {
     Flt(M_FLOAT_SIZE),
     Sym(char),
     Comment(String),
-    Annotation(String),
+    Annotation(String)
 }
 
 /* Used for error messages */
@@ -70,11 +70,13 @@ macro_rules! emit_error {
 #[macro_export]
 macro_rules! take_with_predicate {
     ($char:expr, $chars:expr, $p:expr) => {{
-        let content = std::iter::once($char)
+        let content: String = std::iter::once($char)
             .chain($chars.clone().take_while($p))
-            .collect::<String>();
+            .collect();
 
-        for _ in (1..content.len()) { $chars.next(); }
+        (1..content.len())
+            .for_each(|_| { $chars.next(); });
+
         content
     }};
 }
@@ -88,63 +90,73 @@ pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 
     while let Some(char) = chars.next() {
         match char {
-            | '\n' => line += 1,
-            | ' ' | '\t' => continue,
-            | M_COMMENT_START!() => {
-                tokens.push((Token::Comment(take_with_predicate!(char, chars, |&c| c != '\n')), file, line));
+            '\n' => line += 1,
+            ' ' | '\t' => continue,
+            M_COMMENT_START!() => {
+                let comment = take_with_predicate!(char, chars, |&c| c != '\n');
+                tokens.push((Token::Comment(comment), file, line));
                 line += 1;
             }
-            | M_BLOCK_START!() | M_BLOCK_END!() => {
+            M_BLOCK_START!() | M_BLOCK_END!() => {
                 tokens.push((Token::Sym(char), file, line));
                 depth += if char == M_BLOCK_START!() { 1 } else { -1 };
             }
-            | M_TYPE_AN_START!() => {
-                let annotation = chars.by_ref().take_while(|&char| char != M_TYPE_AN_END!()).collect();
+            M_TYPE_AN_START!() => {
+                let annotation = chars
+                    .by_ref()
+                    .take_while(|&char| char != M_TYPE_AN_END!())
+                    .collect();
+
                 tokens.push((Token::Annotation(annotation), file, line));
             }
-            | M_STR!() /* Dirty strings */ => {
-                let content_vector = chars.by_ref().take_while(|&char| char != M_STR!()).collect::<Vec<char>>();
-                let mut idx        = 0;
-                let mut content    = String::with_capacity(content_vector.len());
+            M_STR!() /* Dirty strings */ => {
+                let content_vector: Vec<char> = chars
+                    .by_ref()
+                    .take_while(|&char| char != M_STR!())
+                    .collect();
+
+                let mut idx     = 0;
+                let mut content = String::with_capacity(content_vector.len());
 
                 while idx < content_vector.len() {
                     let char = content_vector[idx];
                     idx += 1;
 
                     content.push(match (char, content_vector.get(idx)) {
-                        | ('\\', Some(next_char)) => {
+                        ('\\', Some(next_char)) => {
                             idx += 1;
+
                             match next_char {
-                                | 'n'      => '\n',
-                                | 't'      => '\t',
-                                | '\\'     => '\\',
-                                | M_STR!() => M_STR!(),
-                                | _        => emit_error!(file, line, format!("invalid escape sequence: \\{next_char}"))
+                                'n'      => '\n',
+                                't'      => '\t',
+                                '\\'     => '\\',
+                                M_STR!() => M_STR!(),
+                                _        => emit_error!(file, line, format!("invalid escape sequence: \\{next_char}"))
                             }
                         }
-                        | ('\\', None) => emit_error!(file, line, "incomplete escape sequence"),
-                        | _ => char,
+                        ('\\', None) => emit_error!(file, line, "incomplete escape sequence"),
+                        _ => char
                     });
                 }
 
                 tokens.push((Token::Str(content), file, line))
             }
-            | 'a'..='z' | 'A'..='Z' | '_' | 'α'..='ω' /* Create some variables :3 */ => tokens.push((
+            'a'..='z' | 'A'..='Z' | '_' | 'α'..='ω' /* Create some variables :3 */ => tokens.push((
                 Token::Name(take_with_predicate!(char, chars, |&c| c.is_alphanumeric() || c == '_')),
                 file, line,
             )),
-            | '0'..='9' /* Do some maths :3 */ => {
+            '0'..='9' /* Do some maths :3 */ => {
                 let content = take_with_predicate!(char, chars, |&c| c.is_ascii_digit() || c == '.');
 
                 tokens.push((
                     match content.contains('.') {
-                        | true  => Token::Flt(content.parse().unwrap()),
-                        | false => Token::Int(content.parse().unwrap())
+                        true  => Token::Flt(content.parse().unwrap()),
+                        false => Token::Int(content.parse().unwrap())
                     },
-                    file, line,
+                    file, line
                 ));
             }
-            | _ => tokens.push((Token::Sym(char), file, line)),
+            _ => tokens.push((Token::Sym(char), file, line)),
         }
     }
 
@@ -158,24 +170,24 @@ pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 
     for token in tokens.iter() {
         match token {
-            | (Token::Sym(M_BLOCK_START!()), _, _) /* Code block inside code block, meh */ => {
+            (Token::Sym(M_BLOCK_START!()), _, _) /* Code block inside code block, meh */ => {
                 stack.push(tmp_tokens);
                 tmp_tokens = Vec::default();
             }
-            | (Token::Sym(M_BLOCK_END!()), _, _) /* Something is done, lets figure out what it is :3 */ => {
+            (Token::Sym(M_BLOCK_END!()), _, _) /* Something is done, lets figure out what it is :3 */ => {
                 let mut nested_tokens = tmp_tokens.clone(); /* This operation must be veryyy expensive in time/memory usage */
                 match stack.pop() {
-                    | Some(previous_tokens) /* Finished to parse the code block inside current code block */ => {
+                    Some(previous_tokens) /* Finished to parse the code block inside current code block */ => {
                         tmp_tokens = previous_tokens;
                         tmp_tokens.push((Token::Block(nested_tokens), file.into(), line));
                     }
-                    | None /* Current code block parsing is done */ => {
+                    None /* Current code block parsing is done */ => {
                         nested_tokens.reverse();
                         out.push((Token::Block(nested_tokens), file.to_string(), line))
                     },
                 }
             }
-            | (token, file, line) => tmp_tokens.push((token.clone(), file.to_string(), *line)),
+            (token, file, line) => tmp_tokens.push((token.clone(), file.to_string(), *line)),
         }
     }
 
@@ -186,8 +198,8 @@ pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 fn print_tokens(tokens: Vec<(Token, String, u16)>, indents: usize) {
     for (token, file, line) in tokens {
         match token {
-            | Token::Block(new_tokens) => print_tokens(new_tokens, indents + 1),
-            | _ => println!("{}{file}:{line}:{token:?}", "  ".repeat(indents))
+            Token::Block(new_tokens) => print_tokens(new_tokens, indents + 1),
+            _ => println!("{}{file}:{line}:{token:?}", "  ".repeat(indents))
         }
     }
 }

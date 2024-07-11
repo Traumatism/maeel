@@ -3,7 +3,8 @@ use std::io::Read;
 
 mod maeellex;
 
-#[macro_use] use maeellex::*;
+#[macro_use]
+use maeellex::*;
 
 type FunDataB = (std::rc::Rc<[TokenData]>, bool, Vec<String>, Vec<String>);
 
@@ -11,8 +12,16 @@ macro_rules! expect_token {
     ($token:tt, $tokens:expr, $fl:expr, $line:expr) => {{
         match $tokens.pop() {
             Some((Token::$token(value), _, _)) => value,
-            Some((other, file, line))          => emit_error!(file, line, format!("expected {:?}, got {other:?}", TokenRepr::$token)),
-            None                               => emit_error!($fl, $line, format!("expected {:?}, got EOF", TokenRepr::$token)),
+            Some((other, file, line)) => emit_error!(
+                file,
+                line,
+                format!("expected {:?}, got {other:?}", TokenRepr::$token)
+            ),
+            None => emit_error!(
+                $fl,
+                $line,
+                format!("expected {:?}, got EOF", TokenRepr::$token)
+            ),
         }
     }};
 }
@@ -21,8 +30,16 @@ macro_rules! expect_stack {
     ($tpe:tt, $stack:expr, $fl:expr, $line:expr) => {{
         match $stack.pop() {
             Ok(Cord::$tpe) => Cord::$tpe,
-            Ok(other)      => emit_error!($fl, $line, format!("expected {:?} on the stack, got {other:?}", CordRepr::$tpe)),
-            Err(_)         => emit_error!($fl, $line, format!("expected {:?}, got EOF", CordRepr::$tpe)),
+            Ok(other) => emit_error!(
+                $fl,
+                $line,
+                format!("expected {:?} on the stack, got {other:?}", CordRepr::$tpe)
+            ),
+            Err(_) => emit_error!(
+                $fl,
+                $line,
+                format!("expected {:?}, got EOF", CordRepr::$tpe)
+            ),
         }
     }};
 }
@@ -30,8 +47,12 @@ macro_rules! expect_stack {
 macro_rules! binop {
     ($app:expr, $self:expr, $file:expr, $line:expr) => {{
         let output = $app(
-            $self.pop().unwrap_or_else(|_| emit_error!($file, $line, "stack is empty! (binary operation LHS)")),
-            $self.pop().unwrap_or_else(|_| emit_error!($file, $line, "stack is empty! (binary operation RHS)")),
+            $self.pop().unwrap_or_else(|_| {
+                emit_error!($file, $line, "stack is empty! (binary operation LHS)")
+            }),
+            $self.pop().unwrap_or_else(|_| {
+                emit_error!($file, $line, "stack is empty! (binary operation RHS)")
+            }),
         );
 
         $self.push(output)
@@ -61,9 +82,10 @@ enum CordRepr {
     Fun,
 }
 
-
 /* Maeel Stack VM */
-struct BocchiVM { stack: Vec<Cord> }
+struct BocchiVM {
+    stack: Vec<Cord>,
+}
 
 impl BocchiVM {
     fn process_tokens(
@@ -73,7 +95,11 @@ impl BocchiVM {
         functions: &mut Mapper<FunDataB>,
         reverse: bool,
     ) {
-        if reverse /* Sometimes we might act like the tokens vec was a stack */ { tokens.reverse(); }
+        if reverse
+        /* Sometimes we might act like the tokens vec was a stack */
+        {
+            tokens.reverse();
+        }
 
         while let Some((token, file, line)) = tokens.pop() {
             match token {
@@ -322,10 +348,8 @@ impl BocchiVM {
     /* Drop-and-return the stack head */
     fn pop(&mut self) -> Result<Cord, Box<dyn std::error::Error>> {
         match self.stack.is_empty() {
-            true  => Err("Stack is empty".into()),
-            false => {
-                Ok(self.stack.pop().unwrap())
-            }
+            true => Err("Stack is empty".into()),
+            false => Ok(self.stack.pop().unwrap()),
         }
     }
 }
@@ -333,13 +357,13 @@ impl BocchiVM {
 impl std::fmt::Display for Cord {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Str  => write!(f, "Str"),
+            Self::Str => write!(f, "Str"),
             Self::Fun(_) => write!(f, "Fun"),
-            Self::Flt  => write!(f, "Float"),
-            Self::Int  => write!(f, "Int"),
+            Self::Flt => write!(f, "Float"),
+            Self::Int => write!(f, "Int"),
             Self::Lst => write!(f, "List"),
             Self::Unk => write!(f, "Unknown"),
-            Self::Nil => write!(f, "Nil")
+            Self::Nil => write!(f, "Nil"),
         }
     }
 }
@@ -348,9 +372,7 @@ impl Cord {
     fn sub(self, rhs: Self) -> Self {
         match (self, rhs) {
             (Self::Int, Self::Int) => Self::Int,
-            (Self::Flt, Self::Flt)
-            | (Self::Flt, Self::Int)
-            | (Self::Int, Self::Flt) => Self::Flt,
+            (Self::Flt, Self::Flt) | (Self::Flt, Self::Int) | (Self::Int, Self::Flt) => Self::Flt,
             _ => Self::Unk,
         }
     }
@@ -358,9 +380,7 @@ impl Cord {
     fn mul(self, rhs: Self) -> Self {
         match (self, rhs) {
             (Self::Int, Self::Int) => Self::Int,
-            (Self::Flt, Self::Flt)
-            | (Self::Flt, Self::Int)
-            | (Self::Int, Self::Flt) => Self::Flt,
+            (Self::Flt, Self::Flt) | (Self::Flt, Self::Int) | (Self::Int, Self::Flt) => Self::Flt,
             (Self::Int, Self::Str) | (Self::Str, Self::Int) => Self::Str,
             _ => Self::Unk,
         }
@@ -370,9 +390,7 @@ impl Cord {
         match (self, rhs) {
             (Self::Str, Self::Str) => Self::Str,
             (Self::Int, Self::Int) => Self::Int,
-            (Self::Flt, Self::Flt)
-            | (Self::Int, Self::Flt)
-            | (Self::Flt, Self::Int) => Self::Flt,
+            (Self::Flt, Self::Flt) | (Self::Int, Self::Flt) | (Self::Flt, Self::Int) => Self::Flt,
             (_, Self::Lst) | (Self::Lst, _) => Self::Lst,
             _ => Self::Unk,
         }
@@ -381,9 +399,7 @@ impl Cord {
     fn rem(self, rhs: Self) -> Self {
         match (self, rhs) {
             (Self::Int, Self::Int) => Self::Int,
-            (Self::Flt, Self::Flt)
-            | (Self::Int, Self::Flt)
-            | (Self::Flt, Self::Int) => Self::Flt,
+            (Self::Flt, Self::Flt) | (Self::Int, Self::Flt) | (Self::Flt, Self::Int) => Self::Flt,
             _ => Self::Unk,
         }
     }
@@ -396,13 +412,13 @@ impl Cord {
 impl From<String> for Cord {
     fn from(val: String) -> Self {
         match val.as_str() {
-            "Str"   => Cord::Str,
-            "Int"   => Cord::Int,
+            "Str" => Cord::Str,
+            "Int" => Cord::Int,
             "Float" => Cord::Flt,
-            "Fun"   => Cord::Fun((Vec::new().as_slice().into(), true, Vec::new(), Vec::new())),
-            "Unk"   => Cord::Unk,
-            "Nil"   => Cord::Nil,
-            "List"  => Cord::Lst,
+            "Fun" => Cord::Fun((Vec::new().as_slice().into(), true, Vec::new(), Vec::new())),
+            "Unk" => Cord::Unk,
+            "Nil" => Cord::Nil,
+            "List" => Cord::Lst,
             _ => panic!(),
         }
     }
@@ -411,11 +427,11 @@ impl From<String> for Cord {
 impl From<Token> for Cord {
     fn from(val: Token) -> Self {
         match val {
-            Token::Str(_)   => Cord::Str,
-            Token::Int(_)   => Cord::Int,
-            Token::Flt(_)   => Cord::Flt,
+            Token::Str(_) => Cord::Str,
+            Token::Int(_) => Cord::Int,
+            Token::Flt(_) => Cord::Flt,
             Token::Block(x) => Cord::Fun((x.as_slice().into(), false, Vec::new(), Vec::new())),
-            _               => panic!(),
+            _ => panic!(),
         }
     }
 }
@@ -423,12 +439,13 @@ impl From<Token> for Cord {
 fn main() {
     let file = std::env::args().nth(1).unwrap();
 
-    BocchiVM { stack: Vec::default() }
+    BocchiVM {
+        stack: Vec::default(),
+    }
     .process_tokens(
         &mut lex_into_tokens(&std::fs::read_to_string(&file).unwrap(), &file),
         &mut std::collections::HashMap::default(), /* Variables Hashmap */
         &mut std::collections::HashMap::default(), /* functions Hashmap */
         true,
     )
-
 }
