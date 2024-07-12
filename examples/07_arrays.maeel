@@ -1,6 +1,7 @@
 include "maeel"
 
 List 1 2 3 4 5 end         ~ this_is_a_list
+
 this_is_a_list (1+) map    ~ added_one
 added_one (2*) map         ~ mul_by_two
 mul_by_two (+) 0 reduce    ~ this_is_the_sum

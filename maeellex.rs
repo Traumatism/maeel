@@ -43,19 +43,6 @@ pub type TokenData        /* Token and its file name, line           */   = (Tok
 pub type FunData          /* Fun tokens and inline descriptor        */   = (std::rc::Rc<[TokenData]>, bool);
 pub type Mapper<T>        /* Map values of type T with their names   */   = std::collections::HashMap<String, T>;
 
-/* Tokens used by the lexer */
-#[derive(Clone, Debug)]
-pub enum Token {
-    Block(Vec<TokenData>),
-    Str(String),
-    Name(String),
-    Int(M_INT_SIZE),
-    Flt(M_FLOAT_SIZE),
-    Sym(char),
-    Comment(String),
-    Annotation(String)
-}
-
 /* Used for error messages */
 #[derive(Debug)] pub enum TokenRepr { Block, Str, Name, Int, Flt, Sym, Comment, Annotation }
 
@@ -74,13 +61,24 @@ macro_rules! take_with_predicate {
             .chain($chars.clone().take_while($p))
             .collect();
 
-        (1..content.len())
-            .for_each(|_| { $chars.next(); });
+        (1..content.len()).for_each(|_| { $chars.next(); });
 
         content
     }};
 }
 
+/* Tokens used by the lexer */
+#[derive(Clone, Debug)]
+pub enum Token {
+    Block(Vec<TokenData>),
+    Str(String),
+    Name(String),
+    Int(M_INT_SIZE),
+    Flt(M_FLOAT_SIZE),
+    Sym(char),
+    Comment(String),
+    Annotation(String)
+}
 
 pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
     let mut depth  = 0;
@@ -109,7 +107,7 @@ pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 
                 tokens.push((Token::Annotation(annotation), file, line));
             }
-            M_STR!() /* Dirty strings */ => {
+            M_STR!() => {
                 let content_vector: Vec<char> = chars
                     .by_ref()
                     .take_while(|&char| char != M_STR!())
@@ -141,11 +139,11 @@ pub fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
 
                 tokens.push((Token::Str(content), file, line))
             }
-            'a'..='z' | 'A'..='Z' | '_' | 'α'..='ω' /* Create some variables :3 */ => tokens.push((
+            'a'..='z' | 'A'..='Z' | '_' => tokens.push((
                 Token::Name(take_with_predicate!(char, chars, |&c| c.is_alphanumeric() || c == '_')),
                 file, line,
             )),
-            '0'..='9' /* Do some maths :3 */ => {
+            '0'..='9' => {
                 let content = take_with_predicate!(char, chars, |&c| c.is_ascii_digit() || c == '.');
 
                 tokens.push((
@@ -207,7 +205,5 @@ fn print_tokens(tokens: Vec<(Token, String, u16)>, indents: usize) {
 fn main() {
     let file = std::env::args().nth(1).unwrap();
 
-    print_tokens(lex_into_tokens(
-        &std::fs::read_to_string(&file).unwrap(), &file
-    ), 0);
+    print_tokens(lex_into_tokens(&std::fs::read_to_string(&file).unwrap(), &file), 0);
 }

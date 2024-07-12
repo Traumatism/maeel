@@ -6,6 +6,8 @@
 # Example:
 # - ``` 1 2 3 drop ``` will result in the stack: 1 2
 fun inline drop __ ()
+fun inline drp __ ()
+
 
 # Dup function
 # Usage: a dup
@@ -35,6 +37,7 @@ fun inline rot __a __b __c (__c __a __b)
 # - ``` 1 2 swap ``` will result in the stack: 2 1
 # - ``` {1 2} {3 4} swap ``` will result in the stack: {3 4} {1 2}
 fun inline swap __a __b (__b __a)
+fun inline swp __a __b (__b __a)
 
 # Over function
 # Usage: a b over
@@ -44,6 +47,7 @@ fun inline swap __a __b (__b __a)
 # Example:
 # - ``` 1 2 over ``` will result in the stack: 1 2 1
 fun inline over __a __b (__a __b __a)
+fun inline ovr __a __b (__a __b __a)
 
 # While function
 # Usage: __fn __pr while

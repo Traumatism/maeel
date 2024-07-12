@@ -2,9 +2,7 @@ use std::fs::File;
 use std::io::Read;
 
 mod maeellex;
-
-#[macro_use]
-use maeellex::*;
+#[macro_use] use maeellex::*;
 
 macro_rules! expect_token {
     ($token:tt, $tokens:expr, $fl:expr, $line:expr) => {{

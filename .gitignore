@@ -4,7 +4,6 @@ basic.maeel
 *.out
 *.o
 maeelc
-*.py
 selfhosted/
 hack.maeel
 ignore*
@@ -29,3 +28,6 @@ Cargo.lock
 maeel_ocaml/
 ignore/
 maeells
+__pycache__
+.mypy_cache
+py.typed
