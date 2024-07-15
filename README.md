@@ -22,7 +22,13 @@ The interpreter is made of ~ 600 lines of code :3 Indeed a lot of maeel features
 
 ## Run program
 
-`$ ./maeel program.maeel`
+`$ ./maeel run program.maeel`
+
+## Other commands
+
+`$ ./maeel tokenize program.maeel` (Parse program tokens)
+`$ ./maeel compile program.maeel` (Compile to x86_64 assembly)
+`$ ./maeel check program.maeel` (Type checking)
 
 ## Hello, world!
 

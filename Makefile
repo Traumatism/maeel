@@ -9,10 +9,7 @@ vscode:
 	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && cp -r editor_impls/vscode ~/.vscode/extensions/maeel-syntax-highlighting
 
 test:
-	rustc src/maeel.rs -o maeel && ./maeel tests.maeel
+	rustc src/maeel.rs -o maeel && ./maeel run tests.maeel
 
 bench:
-	rustc src/maeel.rs -o maeel && hyperfine --runs 1000 "./maeel tests.maeel"
-
-clean:
-	rm -f maeellex maeel maeelc maeells
+	rustc src/maeel.rs -o maeel && hyperfine --runs 1000 "./maeel run tests.maeel"
