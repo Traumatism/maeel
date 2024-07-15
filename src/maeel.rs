@@ -1,3 +1,5 @@
+#![allow(non_camel_case_types)]
+
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::env::args;
@@ -21,9 +23,23 @@ type Mapper<T>    /* Map values of type T with their names   */ = HashMap<String
 type Tokens                                                     = Vec<TokenData>;
 
 /* Assign names to literals */
-#[macro_export]
 macro_rules! alias {
     ($($name:ident, $value:expr),* $(,)?) => { $(#[macro_export] macro_rules! $name {() => { $value }} )* }
+}
+
+macro_rules! print_usage {
+    () => {
+        panic!(r#"
+Usage: ./maeel <command> <file>
+
+Commands
+========
+(i)   run        -*- Run maeel program
+(ii)  tokenize   -*- Parse maeel program into tokens
+(iii) compile    -~- Compile maeel program to x86_64 assembly
+(iv)  check      -~- Type check maeel program
+        "#)
+    };
 }
 
 macro_rules! default_fun {
@@ -168,11 +184,9 @@ enum Cord {
 /* Used for error messages */
 #[derive(Debug)]
 enum CordRepr {
-    Float,
     Int,
     Fun,
-    Str,
-    List
+    Str
 }
 
 /* Types that are used by the type checker */
@@ -188,11 +202,7 @@ enum CordB {
 
 #[derive(Debug, Clone)]
 enum CordBRepr {
-    Float,
     Int,
-    Str,
-    List,
-    Any,
     Fun
 }
 
@@ -413,7 +423,7 @@ fn compile_tokens(tokens: &mut Tokens, rev: bool)
                 stack_pointer += 1;
             }
             Token::Name(name) => {
-                if let Some(&pos) = symbol_table.get(&name)
+                if let Some(&_pos) = symbol_table.get(&name)
                 {
                     instructions.push(Instruction::Load(name.clone()));
                 }
@@ -491,7 +501,6 @@ fn compile_tokens(tokens: &mut Tokens, rev: bool)
                     println!("   syscall");
                     println!("   push rax");
                 }
-                _ => unreachable!()
             },
             Instruction::Store(name) => {
                 println!("   ;; store variable {}", name);
@@ -525,9 +534,7 @@ fn compile_tokens(tokens: &mut Tokens, rev: bool)
                     println!("   sub rbx, rax");
                     println!("   push rbx");
                 }
-                _ => unreachable!()
-            },
-            _ => unreachable!()
+            }
         }
     }
 
@@ -995,11 +1002,11 @@ impl BocchiVMB {
 
                 Token::Sym(M_MOD!()) => binop_b!(|a, b: CordB| b.rem(a), self, &file, line),
 
-                Token::Sym(M_DIV!()) => binop_b!(|a, b: CordB| CordB::Float, self, &file, line),
+                Token::Sym(M_DIV!()) => binop_b!(|_, _: CordB| CordB::Float, self, &file, line),
 
                 Token::Sym(M_EQ!())
                 | Token::Sym(M_LT!())
-                | Token::Sym(M_GT!()) => binop_b!(|a, b| CordB::Int, self, &file, line),
+                | Token::Sym(M_GT!()) => binop_b!(|_, _| CordB::Int, self, &file, line),
 
                 Token::Str(_)
                 | Token::Float(_)
@@ -1040,7 +1047,7 @@ impl BocchiVMB {
                 }
 
                 Token::Sym(M_THEN!()) /* Basically "if" statement */ => {
-                    let temp_tokens = expect_token!(Block, tokens, file, line);
+                    expect_token!(Block, tokens, file, line);
                     expect_stack_b!(Int, self, file, line);
                 },
 
@@ -1113,7 +1120,7 @@ impl BocchiVMB {
                         match self.stack.pop() {
                             Some(CordB::Str)
                             | Some(CordB::List) => CordB::Int,
-                            Some(other) => CordB::Any,
+                            Some(_) => CordB::Any,
                             None => emit_error!(file, line, "expected string or list, got EOS."),
                         };
 
@@ -1332,12 +1339,25 @@ impl From<Token> for CordB
 
 fn main()
 {
-    let file = args().nth(1).unwrap();
+    let action = args().nth(1).unwrap_or_else(|| String::default());
+    let file = args().nth(2).unwrap_or_else(|| print_usage!());
+    let file_content = &read_to_string(&file).unwrap();
 
-    BocchiVM { head: null_mut() }.process_tokens(
-        &mut lex_into_tokens(&read_to_string(&file).unwrap(), &file),
-        &mut HashMap::default(), /* Variables Hashmap */
-        &mut HashMap::default(), /* functions Hashmap */
-        true,
-    )
+    match action.as_str() {
+        "run" => BocchiVM { head: null_mut() }.process_tokens(
+            &mut lex_into_tokens(file_content, &file),
+            &mut HashMap::default(), /* Variables Hashmap */
+            &mut HashMap::default(), /* functions Hashmap */
+            true,
+        ),
+        "compile" => compile_tokens(&mut lex_into_tokens(file_content, &file), true),
+        "tokenize" => print_tokens(lex_into_tokens(file_content, &file), 0),
+        "check" => BocchiVMB { stack: Vec::default() }.process_tokens(
+            &mut lex_into_tokens(file_content, &file),
+            &mut HashMap::default(), /* Variables Hashmap */
+            &mut HashMap::default(), /* functions Hashmap */
+            true,
+        ),
+        _ => print_usage!()
+    }
 }
