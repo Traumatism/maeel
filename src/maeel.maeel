@@ -1,3 +1,9 @@
+fun inline add (+)
+fun inline sub (-)
+fun inline mul (*)
+fun inline div (/)
+fun inline mod (%)
+
 # Drop function
 # Usage: a drop
 #

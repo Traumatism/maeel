@@ -1,4 +1,4 @@
-maeellex
+maeel
 basic.maeel
 *.asm
 *.out
@@ -10,7 +10,6 @@ ignore*
 /target
 .DS_Store
 .vscode
-maeel
 maeel.tmp
 Cargo.lock
 *.tex
