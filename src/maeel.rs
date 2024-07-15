@@ -130,11 +130,11 @@ macro_rules! emit_error {
 
 macro_rules! take_with_predicate {
     ($char:expr, $chars:expr, $p:expr) => {{
-        let content: String = once($char).chain($chars.clone().take_while($p)).collect();
+        let content: String = once($char)
+            .chain($chars.clone().take_while($p))
+            .collect();
 
-        (1..content.len()).for_each(|_| {
-            $chars.next();
-        });
+        (1..content.len()).for_each(|_| { $chars.next(); });
 
         content
     }};
@@ -822,7 +822,8 @@ impl BocchiVM {
     }
 
     /* Drop-and-return the stack head */
-    fn pop(&mut self) -> Result<Cord, Box<dyn Error>> {
+    fn pop(&mut self) -> Result<Cord, Box<dyn Error>>
+    {
         match self.head.is_null() {
             true => Err("Stack is empty".into()),
             false => {
@@ -834,8 +835,10 @@ impl BocchiVM {
     }
 }
 
-impl Display for Cord {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl Display for Cord
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result
+    {
         match self {
             Self::Str(x) => write!(f, "{}", x),
             Self::Fun(_) => write!(f, "Fun"),
@@ -853,8 +856,10 @@ impl Display for Cord {
     }
 }
 
-impl PartialOrd for Cord {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+impl PartialOrd for Cord
+{
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering>
+    {
         match (self, other) {
             (Self::Int(a), Self::Int(b)) => Some(a.cmp(b)),
             (Self::Float(a), Self::Float(b)) => Some(a.total_cmp(b)),
@@ -862,13 +867,15 @@ impl PartialOrd for Cord {
             | (Self::Float(b), Self::Int(a)) => {
                 Some(b.total_cmp(&(*a as M_FLOAT_SIZE)))
             }
-            (a, b) => panic!("Cannot compare {} and {}", a, b),
+            (a, b) => panic!("Cannot compare {} and {}", a, b)
         }
     }
 }
 
-impl PartialEq for Cord {
-    fn eq(&self, other: &Self) -> bool {
+impl PartialEq for Cord
+{
+    fn eq(&self, other: &Self) -> bool
+    {
         match (self, other) {
             (Self::Str(a), Self::Str(b)) => a == b,
             (Self::List(a), Self::List(b)) => a == b,
@@ -878,13 +885,15 @@ impl PartialEq for Cord {
             | (Self::Float(b), Self::Int(a)) => {
                 (*a as M_FLOAT_SIZE) == *b
             }
-            _ => false,
+            _ => false
         }
     }
 }
 
-impl Cord {
-    fn sub(self, rhs: Self) -> Self {
+impl Cord
+{
+    fn sub(self, rhs: Self) -> Self
+    {
         match (self, rhs) {
             (Self::Int(m), Self::Int(n)) => Self::Int(m - n),
             (Self::Float(x), Self::Float(y)) => Self::Float(x - y),
@@ -892,11 +901,12 @@ impl Cord {
             | (Self::Int(m), Self::Float(x)) => {
                 Self::Float(m as M_FLOAT_SIZE - x)
             }
-            (a, b) => panic!("Cannot substract {} and {}", a, b),
+            (a, b) => panic!("Cannot substract {} and {}", a, b)
         }
     }
 
-    fn mul(self, rhs: Self) -> Self {
+    fn mul(self, rhs: Self) -> Self
+    {
         match (self, rhs) {
             (Self::Int(m), Self::Int(n)) => Self::Int(m * n),
             (Self::Float(x), Self::Float(y)) => Self::Float(x * y),
@@ -908,11 +918,12 @@ impl Cord {
             | (Self::Str(s), Self::Int(m)) => {
                 Self::Str(s.repeat(m as usize))
             }
-            (a, b) => panic!("Cannot multiply {} and {}", a, b),
+            (a, b) => panic!("Cannot multiply {} and {}", a, b)
         }
     }
 
-    fn add(self, rhs: Self) -> Self {
+    fn add(self, rhs: Self) -> Self
+    {
         match (self, rhs) {
             (Self::Str(a), Self::Str(b)) => Self::Str(a + &b),
             (Self::Int(m), Self::Int(n)) => Self::Int(m + n),
@@ -926,17 +937,18 @@ impl Cord {
                 xs.push(other);
                 Self::List(xs)
             }
-            (a, b) => panic!("Cannot add {} and {}", a, b),
+            (a, b) => panic!("Cannot add {} and {}", a, b)
         }
     }
 
-    fn rem(self, rhs: Self) -> Self {
+    fn rem(self, rhs: Self) -> Self
+    {
         match (self, rhs) {
             (Self::Int(m), Self::Int(n)) => Self::Int(m % n),
             (Self::Float(x), Self::Float(y)) => Self::Float(x % y),
             (Self::Int(m), Self::Float(x)) => Self::Float(m as M_FLOAT_SIZE % x),
             (Self::Float(x), Self::Int(m)) => Self::Float(x % m as M_FLOAT_SIZE),
-            (a, b) => panic!("Cannot divide {} and {}", a, b),
+            (a, b) => panic!("Cannot divide {} and {}", a, b)
         }
     }
 
@@ -946,7 +958,7 @@ impl Cord {
             (Self::Float(x), Self::Float(y)) => Self::Float(x / y),
             (Self::Int(m), Self::Float(x)) => Self::Float(m as M_FLOAT_SIZE / x),
             (Self::Float(x), Self::Int(m)) => Self::Float(x / m as M_FLOAT_SIZE),
-            (a, b) => panic!("Cannot divide {} and {}", a, b),
+            (a, b) => panic!("Cannot divide {} and {}", a, b)
         }
     }
 }
@@ -958,31 +970,34 @@ impl From<Token> for Cord {
             Token::Int(x) => Cord::Int(x),
             Token::Float(x) => Cord::Float(x),
             Token::Block(x) => Cord::Fun((x.as_slice().into(), false)),
-            _ => panic!(),
+            _ => panic!()
         }
     }
 }
 
-fn print_tokens(tokens: Vec<(Token, String, u16)>, indents: usize) {
+fn print_tokens(tokens: Vec<(Token, String, u16)>, indents: usize)
+{
     for (token, file, line) in tokens {
         match token {
             Token::Block(new_tokens) => print_tokens(new_tokens, indents + 1),
-            _ => println!("{}{file}:{line}:{token:?}", "  ".repeat(indents)),
+            _ => println!("{}{file}:{line}:{token:?}", "  ".repeat(indents))
         }
     }
 }
 
-struct BocchiVMB {
+struct BocchiVMB
+{
     stack: Vec<CordB>
 }
 
-impl BocchiVMB {
+impl BocchiVMB
+{
     fn process_tokens(
         &mut self,
         tokens: &mut Tokens,
         variables: &mut Mapper<CordB>,
         functions: &mut Mapper<FunDataB>,
-        reverse: bool,
+        reverse: bool
     ) {
         if reverse
         /* Sometimes we might act like the tokens vec was a stack */
@@ -1031,16 +1046,18 @@ impl BocchiVMB {
                         Some(CordB::Fun(value)) => value,
                         Some(CordB::Any) => default_fun!(),
                         Some(other) => emit_error!(file, line, format!("expected {:?} on the stack, got {other:?}", CordBRepr::Fun)),
-                        None => emit_error!(file, line, format!("expected {:?}, got EOF", CordBRepr::Fun)),
+                        None => emit_error!(file, line, format!("expected {:?}, got EOF", CordBRepr::Fun))
                     };
 
                     self.check_types(&input, &file, &line, TCType::Input);
 
                     match inline {
-                        true => function_tokens.iter().for_each(|t| tokens.push(t.clone())),
+                        true => function_tokens
+                            .iter()
+                            .for_each(|t| tokens.push(t.clone())),
                         false => self.process_tokens(
                             &mut function_tokens.to_vec(), &mut variables.clone(), functions, true
-                        ),
+                        )
                     }
 
                     self.check_types(&output, &file, &line, TCType::Output);
@@ -1054,14 +1071,16 @@ impl BocchiVMB {
                 Token::Sym(M_FORCE_DEF!()) /* Can be pushed by interpreter only */ => {
                     variables.insert(
                         expect_token!(Name, tokens, file, line),
-                        self.stack.pop().unwrap_or_else(|| emit_error!(file, line, "stack is empty! (maeel)")),
+                        self.stack.pop()
+                            .unwrap_or_else(|| emit_error!(file, line, "stack is empty! (maeel)"))
                     );
                 }
 
                 Token::Sym(M_DEF!()) /* Assign stack top value to next name */ => {
                     let name = expect_token!(Name, tokens, file, line);
-                    if name.starts_with("__") /* Private field */ { panic!(/* TODO: make the error message */) }
-                    variables.insert(name, self.stack.pop().unwrap_or_else(|| emit_error!(file, line, "stack is empty!")));
+                    if name.starts_with("__") { panic!(/* TODO: make the error message */) }
+                    variables.insert(name, self.stack.pop()
+                        .unwrap_or_else(|| emit_error!(file, line, "stack is empty!")));
                 }
 
                 Token::Sym(char) => emit_error!(file, line, format!("unknown symbol: {char}.")),
@@ -1076,32 +1095,40 @@ impl BocchiVMB {
                     M_FUN!() => {
                         let mut function_name = expect_token!(Name, tokens, file, line);
                         let mut function_tokens = Vec::default();
-                        let is_inline = function_name == M_INLINE!();
-
-                        if is_inline { function_name = expect_token!(Name, tokens, file, line) }
-
                         let mut input = Vec::default();
                         let mut output = Vec::default();
+                        let is_inline = function_name == M_INLINE!();
+
+                        if is_inline
+                        {
+                            function_name = expect_token!(Name, tokens, file, line)
+                        }
 
                         while let Some(temp_token) = tokens.pop() {
                             match temp_token.clone() {
                                 (Token::Annotation(annotation), _, _) => {
-                                    let mut iter = annotation.split(" -> ")
+                                    let mut iter = annotation
+                                        .split(" -> ")
                                         .map(|p| p.split(" ").map(|s| s.to_string()).collect());
 
-                                    input = iter.next().unwrap_or_else(|| vec![String::from("Any")]);
-                                    output = iter.next().unwrap_or_else(|| vec![String::from("Any")]);
-                                },
+                                    input = iter
+                                        .next()
+                                        .unwrap_or_else(|| vec![String::from("Any")]);
 
+                                    output = iter
+                                        .next()
+                                        .unwrap_or_else(|| vec![String::from("Any")]);
+                                },
                                 (Token::Block(temp_tokens), _, _) => {
-                                    function_tokens.reverse(); /* uhm */
+                                    function_tokens.reverse();
                                     function_tokens.extend(temp_tokens);
-                                    function_tokens.reverse(); /* never ask if maeel could be faster */
-                                    break; /* TODO: remove this break, f*ck breaks */
+                                    function_tokens.reverse();
+                                    break
                                 }
                                 (Token::Name(_), file, line) => {
                                     function_tokens.push(temp_token);
-                                    function_tokens.push((Token::Sym(M_FORCE_DEF!()), file, line));
+                                    function_tokens
+                                        .push((Token::Sym(M_FORCE_DEF!()), file, line));
                                 }
                                 (other, file, line) => {
                                     emit_error!(
@@ -1121,7 +1148,7 @@ impl BocchiVMB {
                             Some(CordB::Str)
                             | Some(CordB::List) => CordB::Int,
                             Some(_) => CordB::Any,
-                            None => emit_error!(file, line, "expected string or list, got EOS."),
+                            None => emit_error!(file, line, "expected string or list, got EOS.")
                         };
 
                         self.stack.push(CordB::Int)
@@ -1138,7 +1165,7 @@ impl BocchiVMB {
                             "maeel" => include_str!(M_STD_LIB!()).to_string(),
                             _ => read_to_string(&target).unwrap_or_else(|_| {
                                 emit_error!(file, line, "failed to include file")
-                            }),
+                            })
                         };
 
                         let temp_tokens = lex_into_tokens(&content, &target);
