@@ -1,5 +1,7 @@
 include "maeel"
 
-fun fib n [Int -> Int] (n 1< (1) (n 1- fib n 2- fib +) ifelse)
+fun fib_rec n (
+    n 1< (1) (n 1- fib_rec n 2- fib_rec +) ifelse
+)
 
-1 10 range (fib) map putsln
+1 10 range (fib_rec) map putsln
