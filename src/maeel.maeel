@@ -44,8 +44,6 @@ fun or p q (
 
 fun inline while __while_fn __pr (__pr! (__while_fn! __while_fn __pr while) then)
 
-fun inline loop ((True) while)
-
 fun inline for __xs __for_fn (
     __xs len :__xs_len 0 :__idx
     (__xs __idx get __for_fn! __idx 1+ :__idx) (__idx __xs_len <)
@@ -53,7 +51,9 @@ fun inline for __xs __for_fn (
 )
 
 fun take1 (list+)
+
 fun take2 (list++)
+
 fun take3 (list+++)
 
 fun inline List ("__maeel_list_start")
