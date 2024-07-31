@@ -18,40 +18,11 @@ The interpreter is made of ~ 600 lines of code :3 Indeed a lot of maeel features
 
 `$ ./maeel program.maeel`
 
-## Hello, world!
+## Implemented in maeel
 
-```
-"Hello, world" puts
-```
+- Stack functions (drop, dup, rot, over, swap)
+- Booleans functions (and, or, not)
+- Conditions (ifelse, then)  (s/o Turring)
+- Loops (while, for)
+- Lists definition (List ... end)
 
-## Variables
-
-```
-<anything on the stack> ~ <variable name>
-```
-
-```
-"hello" ~ hello
-```
-
-## Functions
-
-```
-fun name x y z (x y + z *)
-```
-
-maeel also supports inline functions:
-
-```
-fun inline name (+ *)
-```
-
-## Conditions
-
-```
-<boolean on the stack> ? (<executed if boolean is 1>)
-```
-
-```
-<boolean on the stack> (<executed if true>) (<executed if false>) ifelse
-```

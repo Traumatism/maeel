@@ -90,8 +90,8 @@ enum CordRepr {
 }
 
 /* Tokens used by the lexer */
-#[derive(Clone, Debug)]
-pub enum Token {
+#[derive(Clone, Debug, PartialEq)]
+enum Token {
     Block(Stack<TokenData>),
     Str(String),
     Name(String),
@@ -100,10 +100,34 @@ pub enum Token {
     Symbol(char),
 }
 
+macro_rules! True {
+    ($l:expr, $f:expr) => {
+        Cord::Fun((
+            [(Token::Name("drop".to_string()), $f, $l)]
+                .as_slice()
+                .into(),
+            true,
+        ))
+    };
+}
+
+macro_rules! False {
+    ($l:expr, $f:expr) => {
+        Cord::Fun((
+            [
+                (Token::Name("drop".to_string()), $f, $l),
+                (Token::Name("swap".to_string()), $f, $l),
+            ]
+            .as_slice()
+            .into(),
+            true,
+        ))
+    };
+}
+
 /* Used for error messages */
 #[derive(Debug)]
-pub enum TokenRepr {
-    Block,
+enum TokenRepr {
     Str,
     Name,
 }
@@ -191,7 +215,6 @@ fn lex_into_tokens(code: &str, file: &str) -> Stack<TokenData> {
     assert_eq!(depth, 0);
 
     /* We need to parse differents code blocks now */
-    /* TODO: rework on this algorithm */
     let mut stack = Vec::default();
     let mut output = Vec::default();
     let mut temp_tokens = Vec::default();
@@ -257,31 +280,30 @@ impl BocchiVM {
             tokens.reverse();
         }
 
+        let match_bool = |i: bool, l: u16, f: &String| match i {
+            false => False!(l, f.clone()),
+            true => True!(l, f.clone()),
+        };
+
         while let Some((token, file, line)) = tokens.pop() {
             match token {
-                Token::Str(_) | Token::Float(_) | Token::Int(_) => self.push(token.into()),
-
+                Token::Str(_) | Token::Float(_) | Token::Int(_) => self.push(match token {
+                    Token::Str(x) => Cord::Str(x),
+                    Token::Int(x) => Cord::Int(x),
+                    _ => unreachable!(),
+                }),
                 Token::Symbol('+') => binop!(|a, b: Cord| b.add(a), self, &file, line),
-
                 Token::Symbol('-') => binop!(|a, b: Cord| b.sub(a), self, &file, line),
-
                 Token::Symbol('*') => binop!(|a, b: Cord| b.mul(a), self, &file, line),
-
                 Token::Symbol('/') => binop!(|a, b: Cord| b.div(a), self, &file, line),
-
                 Token::Symbol('%') => binop!(|a, b: Cord| b.rem(a), self, &file, line),
-
-                Token::Symbol('=') => binop!(|a, b| Cord::Int((b == a) as i32), self, &file, line),
-
-                Token::Symbol('<') => binop!(|a, b| Cord::Int((b < a) as i32), self, &file, line),
-
-                Token::Symbol('>') => binop!(|a, b| Cord::Int((b > a) as i32), self, &file, line),
-
+                Token::Symbol('=') => binop!(|a, b| match_bool(b == a, line, &file), self, &file, line),
+                Token::Symbol('<') => binop!(|a, b| match_bool(b < a, line, &file), self, &file, line),
+                Token::Symbol('>') => binop!(|a, b| match_bool(b > a, line, &file), self, &file, line),
                 Token::Block(mut block) => {
                     block.reverse(); /* meow */
                     self.push(Cord::Fun((block.as_slice().into(), true)))
                 }
-
                 Token::Symbol('!') /* Manually call a function */ => {
                     let (function_tokens, is_inline) = expect_stack!(Fun, self, file, line);
 
@@ -292,46 +314,24 @@ impl BocchiVM {
                         )
                     }
                 }
-
-                Token::Symbol('?') /* Basically "if" statement */ => {
-                    let temp_tokens = expect_token!(Block, tokens, file, line);
-
-                    if expect_stack!(Int, self, file, line) /* The boolean (actually an integer, anyways :3) */ == 1 {
-                        let temp_tokens_length = temp_tokens.len();
-
-                        (0..temp_tokens_length).for_each(|index| { /* Pushing from end to start */
-                            let temp_token = temp_tokens
-                                .get(temp_tokens_length - index - 1)
-                                .unwrap();
-
-                            tokens.push(temp_token.clone())
-                        });
-                    }
-                }
-
-                Token::Symbol('~') /* Assign stack top value to next name */ => {
+                Token::Symbol(':') | Token::Symbol('~') /* Assign stack top value to next name */ => {
                     let name = expect_token!(Name, tokens, file, line);
                     let value = self.pop()
                         .unwrap_or_else(|_| emit_error!(file, line, "stack is empty!"));
                     variables.insert(name, value);
                 }
-
                 Token::Symbol(char) => emit_error!(file, line, format!("unknown symbol: {char}.")),
-
                 Token::Name(name) => match name.as_str() {
-                    "puts" => print!("{}", self.pop().unwrap() /* TODO: make an error message when stack is empty */),
-
+                    "puts" => print!("{}", self.pop().unwrap()),
                     "list" => self.push(Cord::List(Vec::default())),
-
                     "fun" => {
                         let mut function_name = expect_token!(Name, tokens, file, line);
                         let mut function_tokens = Vec::default();
-
                         let is_inline = function_name == "inline";
+
                         if is_inline { function_name = expect_token!(Name, tokens, file, line) }
 
-                        while let Some(temp_token) = tokens.pop()
-                        {
+                        while let Some(temp_token) = tokens.pop() {
                             match temp_token.clone() {
                                 (Token::Block(temp_tokens), _, _) => {
                                     function_tokens.reverse(); /* uhm */
@@ -355,7 +355,6 @@ impl BocchiVM {
 
                         functions.insert(function_name.clone(), (function_tokens.as_slice().into(), is_inline));
                     }
-
                     "len" => {
                         let length = match self.pop() {
                             Ok(Cord::Str(string)) => Cord::Int(string.len() as i32),
@@ -366,7 +365,6 @@ impl BocchiVM {
 
                         self.push(length)
                     }
-
                     "get" => {
                         let index = expect_stack!(Int, self, file, line) as usize;
 
@@ -387,7 +385,6 @@ impl BocchiVM {
                             _ => emit_error!(file, line, format!("unindexable: EOF")),
                         }
                     }
-
                     "include" /* This is bad */ => {
                         let target = expect_token!(Str, tokens, file, line);
                         let content = match target.clone().as_str() {
@@ -405,14 +402,10 @@ impl BocchiVM {
                             tokens.push(temp_tokens.get(temp_tokens_length - index - 1).unwrap().clone())
                         }
                     }
-
                     name => {
-                        if let Some(value) = variables.get(name)
-                        {
+                        if let Some(value) = variables.get(name) {
                             self.push(value.clone())
-                        }
-                        else if let Some((function_tokens, inline)) = functions.get(name)
-                        {
+                        } else if let Some((function_tokens, inline)) = functions.get(name) {
                             match inline {
                                 true => function_tokens
                                     .iter()
@@ -421,9 +414,7 @@ impl BocchiVM {
                                     &mut function_tokens.to_vec(), &mut variables.clone(), functions, false
                                 )
                             }
-                        }
-                        else
-                        {
+                        } else {
                             emit_error!(file, line, format!("unknown name {name}"))
                         }
                     }
@@ -500,6 +491,7 @@ impl PartialEq for Cord {
             (Self::Int(a), Self::Int(b)) => a == b,
             (Self::Float(a), Self::Float(b)) => a == b,
             (Self::Int(a), Self::Float(b)) | (Self::Float(b), Self::Int(a)) => (*a as f32) == *b,
+            (Self::Fun(a), Self::Fun(b)) => a == b, /* perf issue */
             _ => false,
         }
     }
@@ -564,16 +556,6 @@ impl Cord {
             (Self::Int(m), Self::Float(x)) => Self::Float(m as f32 / x),
             (Self::Float(x), Self::Int(m)) => Self::Float(x / m as f32),
             (_, _) => unreachable!(),
-        }
-    }
-}
-
-impl From<Token> for Cord {
-    fn from(val: Token) -> Self {
-        match val {
-            Token::Str(x) => Cord::Str(x),
-            Token::Int(x) => Cord::Int(x),
-            _ => unreachable!(),
         }
     }
 }

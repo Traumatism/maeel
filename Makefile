@@ -1,15 +1,29 @@
+CC=rustc
+CCARGS=-Ctarget-feature=+crt-static -Copt-level=3 -Cstrip=symbols -v
+SRC=src/maeel.rs
+TESTS=tests.maeel
+EXE=maeel
+
+
 all: build
 
+fmt:
+	rustfmt $(SRC)
+
 build:
-	rustc src/maeel.rs -Copt-level=3 -o maeel
+	$(CC) $(CCARGS) $(SRC) -o $(EXE)
+
 nvim:
-	rm ~/.config/nvim/syntax/maeel.vim && cp editor_impls/vim/maeel.vim ~/.config/nvim/syntax
+	rm -f ~/.config/nvim/syntax/maeel.vim
+	cp editor_impls/vim/maeel.vim ~/.config/nvim/syntax
 
 vscode:
-	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null && cp -r editor_impls/vscode ~/.vscode/extensions/maeel-syntax-highlighting
+	rm -rf ~/.vscode/extensions/maeel-syntax-highlighting 2>/dev/null
+	cp -r editor_impls/vscode ~/.vscode/extensions/maeel-syntax-highlighting
 
-test:
-	rustc src/maeel.rs -o maeel && ./maeel tests.maeel
+test:	build
+	./$(EXE) $(TESTS) 
 
-bench:
-	rustc src/maeel.rs -o maeel && hyperfine --runs 1000 "./maeel tests.maeel"
+bench:	build
+	hyperfine --runs 1000 "./$(EXE) $(TESTS)"
+

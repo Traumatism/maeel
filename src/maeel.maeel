@@ -1,418 +1,66 @@
-fun inline add (+)
-fun inline sub (-)
-fun inline mul (*)
-fun inline div (/)
-fun inline mod (%)
-
-# Drop function
-# Usage: a drop
-#
-# Removes the top element from the stack.
-#
-# Example:
-# - ``` 1 2 3 drop ``` will result in the stack: 1 2
-fun inline drop __ ()
-fun inline drp __ ()
-
-
-# Dup function
-# Usage: a dup
-#
-# Duplicates the top element of the stack.
-#
-# Examples:
-# - ``` 1 dup ``` will result in the stack: 1 1
-# - ``` {1 2 3} dup ``` will result in the stack: {1 2 3} {1 2 3}
-fun inline dup __a (__a __a)
-
-# Rot function
-# Usage: a b c rot
-#
-# Rotates the top three elements of the stack.
-#
-# Example:
-# - ``` 1 2 3 rot ``` will result in the stack: 3 1 2
-fun inline rot __a __b __c (__c __a __b)
-
-# Swap function
-# Usage: a b swap
-#
-# Swaps the top two elements of the stack.
-#
-# Examples:
-# - ``` 1 2 swap ``` will result in the stack: 2 1
-# - ``` {1 2} {3 4} swap ``` will result in the stack: {3 4} {1 2}
-fun inline swap __a __b (__b __a)
-fun inline swp __a __b (__b __a)
-
-# Over function
-# Usage: a b over
-#
-# Copies the second element from the top of the stack to the top.
-#
-# Example:
-# - ``` 1 2 over ``` will result in the stack: 1 2 1
-fun inline over __a __b (__a __b __a)
-fun inline ovr __a __b (__a __b __a)
-
-# While function
-# Usage: __fn __pr while
-#
-# Executes a loop block while a predicate is true.
-#
-# Example:
-# - ``` (1-) (dup 0 >) while ``` will decrement the top of the stack until it is no longer greater than 0.
-fun inline while __fn __pr (
-    __pr!  # execute the predicate function (should return 0 or 1)
-    ? (  # if predicate returns 1
-        __fn!  # execute loop block
-        __fn __pr while  # recursive call
-    )
-)
-
-# For function
-# Usage: xs __for_loop_fn for
-#
-# Iterates over a list and executes a function for each element.
-#
-# Example:
-# - ``` {1 2 3} (1+) for ``` will result in the stack: {2 3 4}
-fun inline for __xs __for_loop_fn (
-    __xs len ~ _maeel_for_loop_xs_len  # max index
-
-    0 ~ _maeel_for_loop_index  # current index in list
-
-    (
-        __xs _maeel_for_loop_index get  # push list current element
-        __for_loop_fn!                  # execute loop block
-        _maeel_for_loop_index 1 +~ _maeel_for_loop_index  # increment current index
-    )
-
-    # make sure we aren't doing an "index out of range" [1]
-    (_maeel_for_loop_index _maeel_for_loop_xs_len <)
-
-    while  # continue until: index = len(xs) [1]
-)
-
-# Match function
-# Usage: value mapper predicate match
-#
-# Applies a predicate function to elements in a mapper and returns the first match.
-#
-# Example:
-# - ``` 5 {1 3 5 7 9} (=) match ``` will return 5 if 5 is in the list.
-fun matchp value mapper predicate (
-    mapper len ~ mapper_len
-
-    list 0 (
-        dup 2 % 0= ? (
-            mapper over get value predicate!
-            ? (mapper over 1+ get rot rot+ swap)
-        ) 1+
-    ) (dup mapper_len <) while
-
-    drop
-)
-
-fun inline match ((=) matchp 0 get)
-
-# Reverse function
-# Usage: xs reverse
-#
-# Reverses the elements of a list.
-#
-# Example:
-# - ``` {1 2 3} reverse ``` will return {3 2 1}
-fun reverse xs (
-    list ~ ys
-    xs len (1- dup xs swap get ys +~ ys) (dup 1 < not) while drop ys
-)
-
-# Contains function
-# Usage: xs x contains
-#
-# Checks if an element is in a list.
-#
-# Example:
-# - ``` {1 2 3} 2 contains ``` will return 1 (true)
-# - ``` {1 2 3} 4 contains ``` will return 0 (false)
-fun contains xs x (
-    xs len ~xs_len 0 ~i 0 (xs i get x = ? (drop 1) i 1+ ~i) (i xs_len <) while
-)
-
-"__maeel_list_start"   ~ List
-"__maeel_mapper_start" ~ Mapper
-
-# End function
-# Usage: end
-#
-# Processes a list or mapper and returns the result.
-#
-# Example:
-# - ``` {1 2 3} end ``` will process the list and return the result.
-fun end (
-    list
-        List  +
-        Mapper +
-
-    ~ stop_keywords
-
-    list ~ output
-    (output +~ output) (dup stop_keywords swap contains not) while
-
-    list
-        List+ (output reverse)+
-
-        Mapper+ (
-            0 ~ i
-            output len ~ lst_len
-            list ~ mapper
-            output (
-                i 2% 0= ? (list output i 1+ get+ output i get+ mapper +~ mapper) i 1 +~ i
-            ) (i lst_len <) while
-
-            mapper
-        )+
-
-    match!
-)
-
-fun take1 a (List a end)
-
-fun take2 a b (List a b end)
-
-fun take3 a b c (List a b c end)
-
-fun take4 a b c d (List a b c d end)
-
-fun inline take (0 swap range list swap (drop +) for reverse)
-
-
-# Count function
-# Usage: xs x count
-#
-# Pushes the number of occurence of x in xs.
-#
-# Examples:
-# - {1 2 3 3 4} 3 count will return 2
-# - {1 2 3 3 4} 4 count will return 1
-# - {1 2 3 3 4} 42 count will return 0
-fun count x (0 swap (x = pom ? (0) ? (1 swap) +) for)
-
-# Range function
-# Usage: a b range
-#
-# Pushes an array with all the numbers N such that a-1 < N < b
-#
-# Example:
-# - 1 10 range will return {1 2 3 4 5 6 7 8 9}
-fun range b (list swap (dup rot+ swap 1+) (dup b<) while drop)
-
-# Last function
-# Usage: xs last
-#
-# Pushes the last element of an array (drops the array)
-#
-# Examples:
-# - {3 2 1} last will return 1
-# - {1 2 3} last will return 3
-# - {2} last will return 2
-fun inline last (dup len 1- get)
-
-# Merge function
-# Usage: xs ys range
-#
-# Merges two arrays togather
-#
-# Examples:
-# - {1 2 3} {4 5 6} merge will return {1 2 3 4 5 6}
-# - {1} {1} merge will return {1 1}
-fun inline merge (list rot rot (+) for swap (+) for)
-
-# Map function
-# Usage xs f map
-#
-# Applies f(x) for each element x of xs
-#
-# Examples:
-# - ``` {1 2 3} (1+) map ``` will return {2 3 4}
-# - ``` {1 2 3} (4*) map ``` will return {4 8 12}
-fun inline map (list rot swap (over! rot rot+ swap) for drop)
-
-
-# Reduce function
-# Usage: xs __reduce_fn reduce
-#
-# Reduces a list using a provided function.
-#
-# Example:
-# - ``` {1 2 3 4} (+) 0 reduce ``` will return 10
-fun inline reduce (swap ~ _reduce_fn swap (swap _reduce_fn!) for)
-fun inline reduceR (swap ~ _reduce_fn swap reverse (swap _reduce_fn!) for)
-
-# Filter function
-# Usage: xs pr filter
-#
-# Filters a list based on a predicate function.
-#
-# Example:
-# - ``` {1 2 3 4} (2%) filter ``` will return {2 4}
-fun filter pr (list ~ xs (dup pr! ? (xs swap +~ xs)) for xs)
-
-# Ifelse function
-# Usage: a b c ifelse
-#
-# Executes one of two functions based on a condition.
-#
-# Example:
-# - ``` 1 2 3 ifelse ``` will execute the second function if the top of the stack is 1, otherwise the third.
-fun ifelse (1 rot 0 swap take4 match!)
-
-# And function
-# Usage: a b and
-#
-# Performs a logical AND on the top two elements of the stack.
-#
-# Example:
-# - ``` 1 1 and ``` will return 1 (true)
-# - ``` 1 0 and ``` will return 0 (false)
-fun inline and (*)
-
-# Or function
-# Usage: a b or
-#
-# Performs a logical OR on the top two elements of the stack.
-#
-# Example:
-# - ``` 1 0 or ``` will return 1 (true)
-# - ``` 0 0 or ``` will return 0 (false)
-fun inline or (+ 0= 1 swap-)
-
-# Not function
-# Usage: a not
-#
-# Performs a logical NOT on the top element of the stack.
-#
-# Example:
-# - ``` 1 not ``` will return 0 (false)
-# - ``` 0 not ``` will return 1 (true)
-fun inline not (1 swap-)
-
-# Xor function
-# Usage: a b xor
-#
-# Performs a logical XOR on the top two elements of the stack.
-#
-# Example:
-# - ``` 1 0 xor ``` will return 1 (true)
-# - ``` 1 1 xor ``` will return 0 (false)
-fun inline xor (+ 2 %)
-
-fun inline pom (dup not)
-
-fun inline mop (pom swap)
-
-# Fact function
-# Usage: n fact
-#
-# Calculates the factorial of a number using recursion.
-#
-# Example:
-# - ``` 5 fact ``` will return 120
-fun fact (dup (1- dup rot * swap) (dup 1 >) while drop)
-
-# Fact1 function
-# Usage: n fact1
-#
-# Calculates the factorial of a number using range and reduce.
-#
-# Example:
-# - ``` 5 fact1 ``` will return 120
-fun fact1 (1+ 1 swap range (*) 1 reduce)
-
-# Sqrt function
-# Usage: x sqrt
-#
-# Calculates the square root of a number using the Babylonian method.
-#
-# Example:
-# - ``` 9 sqrt ``` will return 3.0
-fun sqrt x (x 0.5* 0 5 range (swap dup x swap/ swap+ 0.5* swap drop) for)
-
-# Log function
-# Usage: base x log
-#
-# Calculates the logarithm of a number to a given base.
-#
-# Example:
-# - ``` 10 100 log ``` will return 2
-fun log base x (0 (1+ x base /~ x) (x base < not) while)
-
-# Pow function
-# Usage: base exp pow
-#
-# Calculates the power of a base raised to an exponent.
-#
-# Example:
-# - ``` 2 3 pow ``` will return 8
-fun pow base exp (list 0 exp range (drop base+) for (*) 1 reduce )
-
-# Print function
-# Usage: x print
-#
-# Prints the top element of the stack.
-#
-# Example:
-# - ``` 42 print ``` will output 42
 fun inline print (dup puts)
 
-# Puts_digit function
-# Usage: x puts_digit
-#
-# Converts an integer to a character and prints it.
-#
-# Example:
-# - ``` 4 puts_digit ``` will output '4'
-fun inline puts_digit (int2char print drop)
-
-# Putsln function
-# Usage: x putsln
-#
-# Prints the top element of the stack followed by a newline.
-#
-# Example:
-# - ``` 42 putsln ``` will output 42 followed by a newline
-fun inline putsln (puts "\n" puts)
-
-# Println function
-# Usage: x println
-#
-# Prints the top element of the stack followed by a newline.
-#
-# Example:
-# - ``` 42 println ``` will output 42 followed by a newline
 fun inline println (print "\n" puts)
 
-fun format (
-    "" ~ output
-    (dup ~ char "%" = (output swap) (output char) ifelse +~ output) for
-    output
+fun inline putsln (puts "\n" puts)
+
+fun inline drop __ ()
+
+fun inline dup __a (__a __a)
+
+fun inline rot __a __b __c (__c __a __b)
+
+fun inline swap __a __b (__b __a)
+
+fun inline over __a __b (__a __b __a)
+
+fun inline true ((drop))
+
+fun inline false ((swap drop))
+
+fun inline ifelse (rot rot!!)
+
+fun inline then (() ifelse)
+
+fun inline bool_to_string (("true") ("false") ifelse)
+
+fun inline bool_to_int ((1) (0) ifelse)
+
+fun inline not ((false) (true) ifelse)
+
+fun and p q (
+    1 0 p! 1=
+	(1 0 q! 1= (true) (false) ifelse)
+	(false)
+    ifelse
 )
 
-# Int function
-# Usage: s int
-#
-# Converts a string to an integer.
-#
-# Example:
-# - ``` "123" int ``` will return 123
-fun inline int (
-    0 swap (
-        swap 10 * swap
-        List
-            "0" 0 "1" 1 "2" 2 "3" 3 "4" 4
-            "5" 5 "6" 6 "7" 7 "8" 8 "9" 9
-        end
-        match+
-    ) for
+fun or p q (
+    1 0 p! 1=
+	(true)
+	(1 0 q! 1= (true) (false) ifelse)
+    ifelse
 )
+
+fun inline while __while_fn __pr (__pr! (__while_fn! __while_fn __pr while) then)
+
+fun inline loop ((True) while)
+
+fun inline for __xs __for_fn (
+    __xs len :__xs_len 0 :__idx
+    (__xs __idx get __for_fn! __idx 1+ :__idx) (__idx __xs_len <)
+    while
+)
+
+fun take1 (list+)
+fun take2 (list++)
+fun take3 (list+++)
+
+fun inline List ("__maeel_list_start")
+
+fun inline end2 (list (+) (over List= not) while swap drop)
+
+fun inline reverse (List swap () for end2)
+
+fun inline end (list (+) (over List= not) while swap drop reverse)
+
