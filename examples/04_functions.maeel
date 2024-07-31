@@ -37,13 +37,10 @@ fun inline calling_itself (calling_itself)
 
 
 
-("hello from code block" putsln) ~ hello_fun
+("hello from code block" putsln) : hello_fun
 
 hello_fun  # will push a code block
 drop ()  # ignore me
 !  # use "!" to execute the code block
 
 hello_fun!  # will print "hello from codeblock"
-
-&proc  # will push the code block assiociated with the "hello" function (l3)
-!  # will print "hello from function"

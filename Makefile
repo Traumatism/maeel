@@ -1,5 +1,5 @@
 CC=rustc
-CCARGS=-Ctarget-feature=+crt-static -Copt-level=3 -Cstrip=symbols -v
+CCARGS=-Copt-level=3 -Cstrip=symbols -v
 SRC=src/maeel.rs
 TESTS=tests.maeel
 EXE=maeel
@@ -9,6 +9,9 @@ all: build
 
 fmt:
 	rustfmt $(SRC)
+
+fast:
+	$(CC) $(SRC) -o $(EXE)
 
 build:
 	$(CC) $(CCARGS) $(SRC) -o $(EXE)

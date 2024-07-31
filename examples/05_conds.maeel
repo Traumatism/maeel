@@ -1,8 +1,1 @@
-include "maeel"
-
-1 1+ 2= ? ("Yep!" putsln)
-
-2 20 pow 3 15 pow <
-    ("2^20 is lower than 3^15" putsln)
-    ("2^20 is greater than 3^15" putsln)
-ifelse
+# TODO

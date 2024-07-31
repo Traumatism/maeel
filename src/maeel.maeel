@@ -26,7 +26,15 @@ fun inline bool_to_string (("true") ("false") ifelse)
 
 fun inline bool_to_int ((1) (0) ifelse)
 
+fun inline neg (0 swap -)
+
 fun inline not ((false) (true) ifelse)
+
+fun mod a b (
+    a 0 < ((a b +: a) (a 0 <) while) then
+    (a b -: a) (a b > a b = or) while
+    a
+)
 
 fun and p q (
     1 0 p! 1=
@@ -63,4 +71,26 @@ fun inline end2 (list (+) (over List= not) while swap drop)
 fun inline reverse (List swap () for end2)
 
 fun inline end (list (+) (over List= not) while swap drop reverse)
+
+fun map xs fn (
+    List
+	xs (fn!) for
+    end
+)
+
+fun range a b (
+    List
+	a (dup 1+) (dup b<) while
+    end
+)
+
+fun inline unpack (
+    fun inline unpack_aux (
+	dup 0= (get) (
+	    over over get rot 1- unpack_aux
+	) ifelse
+    )
+
+    dup len 1- unpack_aux
+)
 

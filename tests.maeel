@@ -23,6 +23,8 @@ fun test value supposed message (
 1 2 3 swap take3  1 3 2 take3                      "swap"               test
 3 2 +             2 3 +                            "add commutativity"  test
 3 2 *             2 3 *                            "mul commutativity"  test
+true 		  bool_to_string "true"		   "bool_to_string 1"   test
+false		  bool_to_string "false"	   "bool_to_string 2"   test
 true true and     bool_to_string "true"            "and 1"              test
 true false and    bool_to_string "false"           "and 2"              test
 false true and    bool_to_string "false"           "and 3"              test
