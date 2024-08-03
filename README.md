@@ -1,7 +1,5 @@
 # maeel
 
-![](./preview.png)
-
 ### a minimalistic stack based programming language.
 
 The interpreter (including lexer) is made up of 500 lines of code.

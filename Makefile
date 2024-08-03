@@ -1,6 +1,6 @@
 CC=rustc
 CCARGS=-Copt-level=3 -Cstrip=symbols -v
-SRC=src/maeel.rs
+SRC=maeel.rs
 TESTS=tests.maeel
 EXE=maeel
 

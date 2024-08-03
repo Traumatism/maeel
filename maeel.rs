@@ -330,6 +330,7 @@ impl BocchiVM {
                     }
                     "include" /* This is bad */ => {
                         let target = expect_token!(Str, tokens, file, line);
+
                         let content = match target.clone().as_str() {
                             "maeel" => include_str!("maeel.maeel").to_string(),
                             _ => read_to_string(&target).unwrap_or_else(|_| {
@@ -339,6 +340,7 @@ impl BocchiVM {
 
                         let temp_tokens = lex_into_tokens(&content, &target);
                         let temp_tokens_length = temp_tokens.len();
+
                         for index in 0..temp_tokens_length {
                             tokens.push(temp_tokens.get(temp_tokens_length - index - 1).unwrap().clone())
                         }
@@ -502,11 +504,12 @@ fn main() {
     let file_content = &read_to_string(&file).unwrap();
 
     let mut tokens = lex_into_tokens(file_content, &file);
+
     tokens.reverse();
 
     BocchiVM { head: null_mut() }.process_tokens(
         &mut tokens,
         &mut HashMap::default(), /* Variables Hashmap */
-        &mut HashMap::default(), /* functions Hashmap */
+        &mut HashMap::default(), /* Functions Hashmap */
     )
 }

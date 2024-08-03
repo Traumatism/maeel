@@ -1,7 +1,0 @@
-include "maeel"
-
-1 1 + putsln  # will print 2
-16 16 * putsln  # will print 256
-0 1 - putsln  # will print -1
-1 2 / putsln  # 0.5
-7 3 % putsln  # 1

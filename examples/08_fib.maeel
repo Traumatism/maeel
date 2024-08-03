@@ -1,7 +1,0 @@
-include "maeel"
-
-fun fib_rec n (
-    n 1< (1) (n 1- fib_rec n 2- fib_rec +) ifelse
-)
-
-1 10 range (fib_rec) map putsln
