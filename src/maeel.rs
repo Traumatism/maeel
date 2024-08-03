@@ -178,7 +178,7 @@ fn lex_into_tokens(code: &str, file: &str) -> Vec<TokenData> {
                 temp_tokens = Vec::default();
             }
             (Token::Symbol(')'), _, _) /* Something is done, lets figure out what it is :3 */ => {
-                let mut nested_tokens = temp_tokens.clone(); /* This operation must be veryyy expensive in time/memory usage */
+                let mut nested_tokens = temp_tokens.clone();
 
                 match stack.pop() {
                     Some(previous_tokens) /* Finished to parse the code block inside current code block */ => {
