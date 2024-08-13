@@ -1,7 +1,10 @@
 include "maeel"
 
-fun inline fact (
-    dup 1 = (drop 1) (dup 1- fact*) ifelse
+fun inline rec_fact (
+    dup 1 =
+	(drop 1)
+	(dup 1- fact*)
+    ifelse
 )
 
 fun inline fib (
@@ -9,4 +12,5 @@ fun inline fib (
 )
 
 1 10 range (fib) map putsln
+1 10 range (rec_fact) map putsln
 1 10 range (fact) map putsln

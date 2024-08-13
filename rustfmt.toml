@@ -1,0 +1,7 @@
+trailing_comma = "Never"
+trailing_semicolon = false
+brace_style = "AlwaysNextLine"
+control_brace_style = "AlwaysNextLine"
+match_arm_blocks = false
+match_arm_leading_pipes = "Always"
+max_width = 60

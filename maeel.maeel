@@ -66,11 +66,18 @@ fun take3 (list+++)
 
 fun inline List ("__maeel_list_start")
 
-fun inline end2 (list (+) (over List= not) while swap drop)
+fun inline end_aux (
+    list
+	(+)
+	(over List= not)
+    while swap drop
+)
 
-fun inline reverse (List swap () for end2)
+fun inline reverse (List swap () for end_aux)
 
-fun inline end (list (+) (over List= not) while swap drop reverse)
+fun inline end (
+    end_aux reverse
+)
 
 fun map xs fn (
     List
@@ -78,11 +85,32 @@ fun map xs fn (
     end
 )
 
-fun range a b (
+fun filter xs fn (
     List
-	a (dup 1+) (dup b<) while
+	xs (
+	    dup fn!
+		() (drop)
+	    ifelse
+	) for
     end
 )
+
+fun inline reduce (rot for)
+
+fun inline sum ((+) 0 reduce)
+
+fun inline product ((*) 1 reduce)
+
+fun range a b (
+    List
+	a
+	    (dup 1+)
+	    (dup 1+ b <)
+	while
+    end
+)
+
+fun factorial n (1 n range product)
 
 fun inline unpack (
     fun inline unpack_aux (

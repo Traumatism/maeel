@@ -1,5 +1,5 @@
 CC=rustc
-CCARGS=-Copt-level=3 -Cstrip=symbols -v
+CCARGS=-Copt-level=3 -Cstrip=symbols --allow unused_variables -v
 SRC=maeel.rs
 TESTS=tests.maeel
 EXE=maeel
