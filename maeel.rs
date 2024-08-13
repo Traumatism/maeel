@@ -7,7 +7,7 @@ use std::fmt::Formatter;
 use std::fs::read_to_string;
 use std::iter::once;
 use std::panic;
-use std::panic::PanicHookInfo;
+use std::panic::PanicInfo;
 use std::ptr::null_mut;
 use std::rc::Rc;
 
@@ -717,7 +717,7 @@ impl PartialEq for Cord
 fn main()
 {
     let custom_panic_handler = /* Rust default is bloated */
-        |panic_info: &PanicHookInfo| {
+        |panic_info: &PanicInfo| {
             println!("{}", panic_info)
         };
 
