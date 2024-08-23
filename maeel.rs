@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::env::args;
-use std::error::Error;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::fs::read_to_string;
@@ -32,12 +31,12 @@ macro_rules! expect_stack {
     ($t:tt, $s:expr, $f:expr, $l:expr) => {{
         match $s.pop()
         {
-            | Ok(Cord::$t(value)) => value,
-            | Ok(other) => panic!(
+            | Some(Cord::$t(value)) => value,
+            | Some(other) => panic!(
                 "{}:{} got unexpected {:?} on the stack",
                 $f, $l, other
             ),
-            | Err(_) => panic!("{}:{} got unexpected EOF", $f, $l)
+            | None => panic!("{}:{} got unexpected EOF", $f, $l)
         }
     }};
 }
@@ -47,9 +46,11 @@ macro_rules! take_with_predicate {
         let content: String = once($char)
             .chain($chars.clone().take_while($p))
             .collect();
+
         (1..content.len()).for_each(|_| {
             $chars.next();
         });
+
         content
     }};
 }
@@ -92,8 +93,10 @@ enum Cord
     Str(String),
 
     /* Composed types */
-    List(Vec<Self>),
-    Fun(Rc<[TokenData]>)
+    List(Vec<Self> /* Lists are mutable */),
+    Fun(
+        Rc<[TokenData]> /* Funs tokens are unmutable */
+    )
 }
 
 /* Tokens used by the lexer */
@@ -143,12 +146,12 @@ fn lex_into_tokens(
                     line
                 ));
 
-                depth += /* Code block ((((depth)))) */ match chr
-                    {
-                        '(' => 1,
-                        ')' => -1,
-                        _ => unreachable!()
-                    }
+                depth += match chr
+                {
+                    | '(' => 1,
+                    | ')' => -1,
+                    | _ => unreachable!()
+                }
             }
 
             | '"' =>
@@ -170,7 +173,8 @@ fn lex_into_tokens(
 
                     index += 1;
 
-                    content.push(match (chr, content_vector.get(index))
+                    let escaped =
+                        match (chr, content_vector.get(index))
                     {
                         | ('\\', Some(next_char)) =>
                         {
@@ -189,7 +193,9 @@ fn lex_into_tokens(
                         | ('\\', None) => panic!("{}:{} incomplete escape sequence", file, line),
 
                         | _ => chr
-                    });
+                    };
+
+                    content.push(escaped)
                 }
 
                 tokens.push((
@@ -331,69 +337,129 @@ impl BocchiVM
     {
         while let Some((token, file, line)) = tokens.pop()
         {
-            match token {
-                Token::Str(_) | Token::Float(_) | Token::Int(_) => self.push(match token {
-                    | Token::Str(x) => Cord::Str(x),
-                    | Token::Int(x) => Cord::Int(x),
-                    | Token::Float(x) => Cord::Float(x),
-                    | _ => unreachable!()
-                }),
+            match token
+            {
+                | Token::Str(_)
+                | Token::Float(_)
+                | Token::Int(_) =>
+                {
+                    let cord = match token
+                    {
+                        | Token::Str(x) => Cord::Str(x),
+                        | Token::Int(x) => Cord::Int(x),
+                        | Token::Float(x) => Cord::Float(x),
+                        | _ => unreachable!()
+                    };
 
-                Token::Symbol('+') => self.add(),
-
-                Token::Symbol('-') => self.sub(),
-
-                Token::Symbol('*') => self.mul(),
-
-                Token::Symbol('/') => self.div(),
-
-                Token::Symbol('=') => {
-                    let (rhs, lhs) = (self.pop().unwrap(), self.pop().unwrap());
-
-                    self.push(match_bool!(lhs == rhs, line, file.clone()))
+                    self.push(cord)
                 }
 
-                Token::Symbol('<') => {
-                    let (rhs, lhs) = (self.pop().unwrap(), self.pop().unwrap());
+                | Token::Symbol('+') => self.add(),
 
-                    self.push(match_bool!(lhs < rhs, line, file.clone()))
+                | Token::Symbol('-') => self.sub(),
+
+                | Token::Symbol('*') => self.mul(),
+
+                | Token::Symbol('/') => self.div(),
+
+                | Token::Symbol('=') =>
+                {
+                    let (rhs, lhs) = (
+                        self.pop().unwrap(),
+                        self.pop().unwrap()
+                    );
+
+                    let cord = match_bool!(
+                        lhs == rhs,
+                        line,
+                        file.clone()
+                    );
+
+                    self.push(cord)
                 }
 
-                Token::Symbol('>') => {
-                    let (rhs, lhs) = (self.pop().unwrap(), self.pop().unwrap());
+                | Token::Symbol('<') =>
+                {
+                    let (rhs, lhs) = (
+                        self.pop().unwrap(),
+                        self.pop().unwrap()
+                    );
 
-                    self.push(match_bool!(lhs > rhs, line, file.clone()))
+                    let cord = match_bool!(
+                        lhs < rhs,
+                        line,
+                        file.clone()
+                    );
+
+                    self.push(cord)
                 }
 
-                Token::Block(mut block) => {
-                    block.reverse(); /* meow */
+                | Token::Symbol('>') =>
+                {
+                    let (rhs, lhs) = (
+                        self.pop().unwrap(),
+                        self.pop().unwrap()
+                    );
 
-                    self.push(Cord::Fun(block.as_slice().into()))
+                    let cord = match_bool!(
+                        lhs > rhs,
+                        line,
+                        file.clone()
+                    );
+
+                    self.push(cord)
                 }
 
-                Token::Symbol('!') => /* Push tokens from a block on the tokens stack */
+                | Token::Block(mut block) =>
+                {
+                    block.reverse();
+
+                    let fake_fun =
+                        Cord::Fun(block.as_slice().into());
+
+                    self.push(fake_fun)
+                }
+
+                | Token::Symbol('!') =>
+                /* Push tokens from a block on the tokens stack */
                     expect_stack!(Fun, self, file, line)
                         .iter()
-                        .for_each(|t| tokens.push(t.clone())),
+                        .for_each(|t| {
+                            tokens.push(t.clone())
+                        }),
 
-                Token::Symbol(':') | Token::Symbol('~') /* Assign stack top value to next name */ => {
-                    let name = expect_token!(Name, tokens, file, line);
+                | Token::Symbol(':') =>
+                {
+                    let name = expect_token!(
+                        Name, tokens, file, line
+                    );
 
-                    let value = self.pop()
-                        .unwrap_or_else(|_| panic!("{}:{} stack is empty", file, line));
+                    let value =
+                        self.pop().unwrap_or_else(|| {
+                            panic!(
+                                "{}:{} stack is empty",
+                                file, line
+                            )
+                        });
 
                     vars.insert(name, value);
                 }
 
-                Token::Symbol(chr) => panic!("{}:{} unknown symbol: {}", file, line, chr),
+                | Token::Symbol(chr) => panic!(
+                    "{}:{} unknown symbol: {}",
+                    file, line, chr
+                ),
 
-                Token::Name(name) => match name.as_str() {
+                | Token::Name(name) => match name.as_str() {
                     "puts" => print!("{}", self.pop().unwrap()),
 
-                    "list" => self.push(Cord::List(Vec::default())),
+                    "list" => {
+                        let cord = Cord::List(Vec::default());
+                        self.push(cord)
+                    }
 
                     "fun" => {
-                        let (fun_name, is_inline) =
+                        let (fun_name, inline) =
                             match expect_token!(Name, tokens, file, line).as_str()
                         {
                             "inline" => {
@@ -409,19 +475,21 @@ impl BocchiVM
                         {
                             match tmp_token.clone()
                             {
-                                (Token::Block(tmp_tokens), _, _) => {
-                                    fun_tokens.reverse(); /* uhm */
+                                | (Token::Block(tmp_tokens), _, _) => {
+
+                                    fun_tokens.reverse();
                                     fun_tokens.extend(tmp_tokens);
-                                    fun_tokens.reverse(); /* never ask if maeel could be faster */
+                                    fun_tokens.reverse();
+
                                     break
                                 }
 
-                                (Token::Name(_), file, line) => {
+                                | (Token::Name(_), file, line) => {
                                     fun_tokens.push(tmp_token);
                                     fun_tokens.push((Token::Symbol(':'), file, line))
                                 }
 
-                                (_, file, line) => panic!(
+                                | (_, file, line) => panic!(
                                     "{}:{} expected param(s) or a code block after 'fun {}'",
                                     file,
                                     line,
@@ -432,47 +500,57 @@ impl BocchiVM
 
                         funs.insert(
                             fun_name,
-                            (fun_tokens.as_slice().into(), is_inline)
+                            (fun_tokens.as_slice().into(), inline)
                         );
                     }
 
-                    "len" => match self.pop() {
-                        Ok(Cord::Str(string)) => self.push(Cord::Int(string.len() as i128)),
-                        Ok(Cord::List(xs)) => self.push(Cord::Int(xs.len() as i128)),
-                        Ok(other) => panic!(
-                            "{}:{} expected string or list, got {:?}",
-                            file,
-                            line,
-                            other
-                        ),
-                        Err(_) => panic!(
-                            "{}:{} expected string or list, got EOS",
-                            file,
-                            line
-                        )
-                    },
+                    "len" => {
+                        let cord = match self.pop() {
+                            | Some(Cord::Str(string)) => Cord::Int(string.len() as i128),
+                            | Some(Cord::List(xs)) => Cord::Int(xs.len() as i128),
+                            | Some(other) => panic!(
+                                "{}:{} expected string or list, got {:?}",
+                                file,
+                                line,
+                                other
+                            ),
+                            | None => panic!(
+                                "{}:{} expected string or list, got EOS",
+                                file,
+                                line
+                            )
+                        };
+
+                        self.push(cord)
+                    }
 
                     "get" => {
                         let index = expect_stack!(Int, self, file, line) as usize;
 
-                        match self.pop()
+                        let cord = match self.pop()
                         {
-                            Ok(Cord::List(xs)) => self.push(
-                                xs.get(index)
-                                    .unwrap_or_else(|| panic!("{}:{} unknown index: {}", file, line, index))
-                                    .clone()
-                            ),
+                            Some(Cord::List(xs)) => xs.get(index)
+                                .unwrap_or_else(
+                                    || panic!("{}:{} unknown index: {}", file, line, index)
+                                )
+                                .clone(),
 
-                            Ok(Cord::Str(string)) => self.push(Cord::Str(
+                            Some(Cord::Str(string)) => Cord::Str(
                                 string
                                     .chars()
                                     .nth(index)
-                                    .unwrap_or_else(|| panic!("{}:{} unknown index: {}", file, line, index))
+                                    .unwrap_or_else(
+                                        || panic!("{}:{} unknown index: {}", file, line, index)
+                                    )
                                     .to_string()
-                            )),
-                            Ok(other) => panic!("{}:{} unindexable: {:?}", file, line, other),
-                            _ => panic!("{}:{} unindexable: EOF", file, line)
-                        }
+                            ),
+
+                            Some(other) => panic!("{}:{} unindexable: {:?}", file, line, other),
+
+                            None => panic!("{}:{} unindexable: EOF", file, line)
+                        };
+
+                        self.push(cord)
                     }
 
                     "include" /* This is bad */ => {
@@ -482,7 +560,6 @@ impl BocchiVM
                             match target.clone().as_str()
                             {
                                 "maeel" => include_str!("maeel.maeel").to_string(),
-
                                 _ => read_to_string(&target)
                                     .unwrap_or_else(
                                         |_| panic!("{}:{} failed to include file", file, line)
@@ -541,7 +618,7 @@ impl BocchiVM
 
         if !self.head.is_null()
         {
-            unsafe /* still safe tho */ {
+            unsafe {
                 (*future_head).next = self.head;
             }
         }
@@ -550,11 +627,11 @@ impl BocchiVM
     }
 
     /* Drop-and-return the stack head */
-    fn pop(&mut self) -> Result<Cord, Box<dyn Error>>
+    fn pop(&mut self) -> Option<Cord>
     {
         if self.head.is_null()
         {
-            Err("Stack is empty".into())
+            None
         }
         else
         {
@@ -563,7 +640,7 @@ impl BocchiVM
 
             self.head = current_head.next; /* Update the head */
 
-            Ok(current_head.value)
+            Some(current_head.value)
         }
     }
 
