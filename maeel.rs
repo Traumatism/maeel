@@ -39,7 +39,7 @@ macro_rules! take_with_predicate {
         let content: String = once($char).chain($chars.clone().take_while($p)).collect();
 
         (1..content.len()).for_each(|_| {
-            $chars.next();
+        $chars.next();
         });
 
         content
@@ -125,7 +125,6 @@ fn lex_into_tokens(
                     .collect::<Vec<char>>();
 
                 let mut content = String::with_capacity(content_vector.len());
-
                 let mut index = 0;
 
                 while index < content_vector.len() {
@@ -156,13 +155,13 @@ fn lex_into_tokens(
             }
             'a'..='z' | 'A'..='Z' | '_' => {
                 let content =
-                    take_with_predicate!(chr, chars, |&c| c.is_alphanumeric() || c == '_');
+                take_with_predicate!(chr, chars, |&c| c.is_alphanumeric() || c == '_');
 
                 tokens.push((Token::Name(content), file, line))
             }
             '0'..='9' => {
                 let content = /* integer/float as a string */
-                    take_with_predicate!(chr, chars, |&c| c.is_ascii_digit() || c == '.');
+                take_with_predicate!(chr, chars, |&c| c.is_ascii_digit() || c == '.');
 
                 let tokenized = if content.contains('.') {
                     Token::Float(content.parse().unwrap())
@@ -305,9 +304,11 @@ impl BocchiVM {
 
                     self.push(fake_fun)
                 }
-                Token::Symbol('!') => expect_stack!(Fun, self, file, line)
-                    .iter()
-                    .for_each(|t| tokens.push(t.clone())),
+                Token::Symbol('!') => {
+                    expect_stack!(Fun, self, file, line)
+                        .iter()
+                        .for_each(|t| tokens.push(t.clone()));
+                }
                 Token::Symbol(':') => {
                     let name = expect_token!(Name, tokens, file, line);
 
@@ -517,7 +518,7 @@ impl BocchiVM {
             (_, _) => unreachable!(),
         };
 
-    self.push(output)
+        self.push(output)
     }
 
     fn mul(&mut self) {
@@ -624,9 +625,9 @@ impl PartialEq for Cord {
 
 fn main() {
     let custom_panic_handler = /* Rust default is bloated */
-        |panic_info: &PanicInfo| {
-            println!("{}", panic_info)
-        };
+    |panic_info: &PanicInfo| {
+        println!("{}", panic_info)
+    };
 
     panic::set_hook(Box::new(custom_panic_handler));
 
