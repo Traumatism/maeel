@@ -23,7 +23,6 @@ Cargo.lock
 *.cmi
 *.cmx
 *.o
-*.ml
 maeel_ocaml/
 ignore/
 maeells
