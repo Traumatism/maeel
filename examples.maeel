@@ -1,16 +1,1 @@
-include "maeel"
-
-fun inline rec_fact (
-    dup 1 =
-	(drop 1)
-	(dup 1- fact*)
-    ifelse
-)
-
-fun inline fib (
-    dup 1 < (drop 1) (dup 1- fib swap 2- fib+) ifelse
-)
-
-1 10 range (fib) map putsln
-1 10 range (rec_fact) map putsln
-1 10 range (fact) map putsln
+fun f x y (x 1 +)

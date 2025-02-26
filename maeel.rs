@@ -39,7 +39,7 @@ macro_rules! take_with_predicate {
         let content: String = once($char).chain($chars.clone().take_while($p)).collect();
 
         (1..content.len()).for_each(|_| {
-        $chars.next();
+            $chars.next();
         });
 
         content
@@ -155,7 +155,7 @@ fn lex_into_tokens(
             }
             'a'..='z' | 'A'..='Z' | '_' => {
                 let content =
-                take_with_predicate!(chr, chars, |&c| c.is_alphanumeric() || c == '_');
+                    take_with_predicate!(chr, chars, |&c| c.is_alphanumeric() || c == '_');
 
                 tokens.push((Token::Name(content), file, line))
             }
@@ -448,29 +448,23 @@ impl BocchiVM {
                         }
 
                         name => {
-                            if let Some(value) = vars.get(name)
-                            {
+                            if let Some(value) = vars.get(name) {
                                 self.push(value.clone())
                             }
                             else if let Some((fun_tokens, inline)) = funs.get(name)
                             {
-                                if *inline
-                                {
+                                if *inline {
                                     fun_tokens
                                         .iter()
                                         .for_each(|t| tokens.push(t.clone()))
-                                }
-                                else
-                                {
+                                } else {
                                     self.process_tokens(
                                         &mut fun_tokens.to_vec(),
                                         &mut vars.clone(),
                                         funs
                                     )
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 panic!("{}:{} unknown name {}", file, line, name)
                             }
                         }
@@ -632,7 +626,6 @@ fn main() {
     panic::set_hook(Box::new(custom_panic_handler));
 
     let file = args().nth(1).expect("Please provide a file to execute");
-
     let file_content = read_to_string(&file).expect("Invalid file");
 
     let mut tokens = lex_into_tokens(&file_content, &file);
