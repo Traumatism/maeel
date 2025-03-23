@@ -76,10 +76,9 @@ let inv : obj -> obj option = function
 
 let tokenize (code : string) : token stack =
   let line = ref 1
-  and tokens : token list ref = ref []
   and chars : char list ref = ref (code |> String.to_seq |> List.of_seq) in
 
-  let rec parse_chars () : unit =
+  let rec parse_chars acc =
     let rec take_while (pred : char -> bool) (acc : string) : string =
       match !chars with
       | c :: tl when pred c ->
@@ -89,53 +88,50 @@ let tokenize (code : string) : token stack =
     and is_alpha : char -> bool = function
       | 'a' .. 'z' | 'A' .. 'Z' -> true
       | _ -> false
-    and is_digit : char -> bool = function '0' .. '9' -> true | _ -> false
-    and ( $ ) (obj : 'a) (xs : 'a list ref) : unit = xs := obj :: !xs in
-
+    and is_digit : char -> bool = function '0' .. '9' -> true | _ -> false in
     match !chars with
-    | [] -> ()
-    | c :: tl ->
+    | [] -> acc
+    | c :: tl -> (
         let () = chars := tl in
-        let () =
-          match c with
-          | '\n' -> incr line
-          | ' ' | '\t' -> ()
-          | '#' ->
-              let _ = take_while (fun c -> c <> '\n') "" in
-              incr line
-          | '"' ->
-              let rec aux (acc : string) : string =
-                match !chars with
-                | c :: tl when c <> '"' ->
-                    let () = chars := tl in
-                    aux (acc ^ String.make 1 c)
-                | _ -> acc
-              in
-              (Str (aux ""), !line) $ tokens
-          | 'a' .. 'z' | 'A' .. 'Z' | '_' ->
-              let content =
-                take_while
-                  (fun c -> is_digit c || is_alpha c || c = '_')
-                  (String.make 1 c)
-              in
-              (Name content, !line) $ tokens
-          | '0' .. '9' ->
-              let content =
-                take_while (fun c -> is_digit c || c = '.') (String.make 1 c)
-              in
-              let tokenized =
-                if String.contains content '.' then
-                  Float (float_of_string content)
-                else Int (int_of_string content)
-              in
-              (tokenized, !line) $ tokens
-          | _ -> (Symbol c, !line) $ tokens
-        in
-
-        parse_chars ()
+        match c with
+        | '\n' ->
+            incr line;
+            parse_chars acc
+        | ' ' | '\t' -> parse_chars acc
+        | '#' ->
+            let _ = take_while (fun c -> c <> '\n') "" in
+            incr line;
+            parse_chars acc
+        | '"' ->
+            let rec aux (acc : string) : string =
+              match !chars with
+              | c :: tl when c <> '"' ->
+                  let () = chars := tl in
+                  aux (acc ^ String.make 1 c)
+              | _ -> acc
+            in
+            parse_chars ((Str (aux ""), !line) :: acc)
+        | 'a' .. 'z' | 'A' .. 'Z' | '_' ->
+            let content =
+              take_while
+                (fun c -> is_digit c || is_alpha c || c = '_')
+                (String.make 1 c)
+            in
+            parse_chars ((Name content, !line) :: acc)
+        | '0' .. '9' ->
+            let content =
+              take_while (fun c -> is_digit c || c = '.') (String.make 1 c)
+            in
+            let tokenized =
+              if String.contains content '.' then
+                Float (float_of_string content)
+              else Int (int_of_string content)
+            in
+            parse_chars ((tokenized, !line) :: acc)
+        | _ -> parse_chars ((Symbol c, !line) :: acc))
   in
 
-  let () = parse_chars () in
+  let tokens = parse_chars [] in
   let rec parse_blocks (tokens : token list) (stack : token list list)
       (tmp : token list) (acc : token stack) : token stack =
     match tokens with
@@ -152,7 +148,7 @@ let tokenize (code : string) : token stack =
             parse_blocks tl stack [] acc)
     | h :: tl -> parse_blocks tl stack (h :: tmp) acc
   in
-  parse_blocks (List.rev !tokens) [] [] (Stack.create ())
+  parse_blocks (List.rev tokens) [] [] (Stack.create ())
 
 and run_tokens (tokens_stack : token stack) : unit =
   let vm_stack = Stack.create ()
