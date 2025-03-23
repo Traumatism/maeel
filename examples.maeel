@@ -1,1 +1,71 @@
-fun f x y (x 1 +)
+
+fn drop _ ()
+
+fn dup x (x x)
+
+fn swap x y (y x)
+
+fn rot x y z (z x y)
+
+fn over x y (x y x)
+
+fn true ((drop))
+
+fn false ((swap drop))
+
+fn ifelse (rot rot!!)
+
+fn then (() ifelse)
+
+fn not ((false) (true) ifelse)
+
+fn List (1337.12843987947)
+
+fn endlist (
+    fn aux acc
+        (dup List= (acc) (acc+ aux) ifelse)
+
+    list aux
+)
+
+fn while p b (p! (b! p b while) then)
+
+fn len xs
+    (xs list = (0) (xs~ drop len 1+) ifelse)
+
+fn is_empty
+    (len 0=)
+
+fn get xs n
+    (n 1= (xs~ swap drop) (xs~ drop n 1- get) ifelse)
+
+fn iter xs fun
+    (xs is_empty not (xs~ fun! fun iter) then)
+
+fn revmap xs fun (
+    fn aux xs acc
+        (xs is_empty (acc) (xs~ fun! acc+ aux) ifelse)
+
+    xs list aux
+)
+
+fn reverse
+    (() revmap)
+
+fn map
+    (revmap reverse)
+
+fn upto n (
+    List
+        fn aux i (i n= not (i dup 1+ aux) then)
+        0 aux
+    endlist
+)
+
+fn range a b
+    (b a - upto (a+) map)
+
+fn min a b
+    (a b < (a) (b) ifelse)
+
+"a" puts

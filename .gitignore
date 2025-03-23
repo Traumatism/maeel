@@ -1,3 +1,5 @@
+*.cmi
+*.cmo
 maeel
 basic.maeel
 *.asm
