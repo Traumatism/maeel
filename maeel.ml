@@ -78,7 +78,7 @@ let tokenize (code : string) : token stack =
   let line = ref 1
   and chars : char list ref = ref (code |> String.to_seq |> List.of_seq) in
 
-  let rec parse_chars acc =
+  let rec parse_chars () : token list =
     let rec take_while (pred : char -> bool) (acc : string) : string =
       match !chars with
       | c :: tl when pred c ->
@@ -90,19 +90,19 @@ let tokenize (code : string) : token stack =
       | _ -> false
     and is_digit : char -> bool = function '0' .. '9' -> true | _ -> false in
     match !chars with
-    | [] -> acc
+    | [] -> []
     | c :: tl -> (
         let () = chars := tl in
         match c with
         | '\n' ->
-            incr line;
-            parse_chars acc
-        | ' ' | '\t' -> parse_chars acc
+            let () = incr line in
+            parse_chars ()
+        | ' ' | '\t' -> parse_chars ()
         | '#' ->
-            let _ = take_while (fun c -> c <> '\n') "" in
-            incr line;
-            parse_chars acc
+            let _ = take_while (fun c -> c <> '\n') "" and () = incr line in
+            parse_chars ()
         | '"' ->
+            (* TODO: figure out why this is not working *)
             let rec aux (acc : string) : string =
               match !chars with
               | c :: tl when c <> '"' ->
@@ -110,14 +110,14 @@ let tokenize (code : string) : token stack =
                   aux (acc ^ String.make 1 c)
               | _ -> acc
             in
-            parse_chars ((Str (aux ""), !line) :: acc)
+            (Str (aux ""), !line) :: parse_chars ()
         | 'a' .. 'z' | 'A' .. 'Z' | '_' ->
             let content =
               take_while
                 (fun c -> is_digit c || is_alpha c || c = '_')
                 (String.make 1 c)
             in
-            parse_chars ((Name content, !line) :: acc)
+            (Name content, !line) :: parse_chars ()
         | '0' .. '9' ->
             let content =
               take_while (fun c -> is_digit c || c = '.') (String.make 1 c)
@@ -127,11 +127,11 @@ let tokenize (code : string) : token stack =
                 Float (float_of_string content)
               else Int (int_of_string content)
             in
-            parse_chars ((tokenized, !line) :: acc)
-        | _ -> parse_chars ((Symbol c, !line) :: acc))
+            (tokenized, !line) :: parse_chars ()
+        | _ -> (Symbol c, !line) :: parse_chars ())
   in
 
-  let tokens = parse_chars [] in
+  let tokens = parse_chars () in
   let rec parse_blocks (tokens : token list) (stack : token list list)
       (tmp : token list) (acc : token stack) : token stack =
     match tokens with
@@ -148,7 +148,7 @@ let tokenize (code : string) : token stack =
             parse_blocks tl stack [] acc)
     | h :: tl -> parse_blocks tl stack (h :: tmp) acc
   in
-  parse_blocks (List.rev tokens) [] [] (Stack.create ())
+  parse_blocks tokens [] [] (Stack.create ())
 
 and run_tokens (tokens_stack : token stack) : unit =
   let vm_stack = Stack.create ()

@@ -68,5 +68,7 @@ fn range a b
 fn min a b
     (a b < (a) (b) ifelse)
 
+fn max a b
+    (a b < (b) (a) ifelse)
 
 1 10 range puts
